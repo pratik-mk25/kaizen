@@ -214,3 +214,89 @@ def create_user_by_admin(email: str, password: str, username: str, display_name:
 def get_all_users_detailed():
     """Return all profiles with id, username, display_name, role, created_at."""
     return supabase.table("profiles").select("id, username, display_name, role, created_at").order("created_at").execute().data
+
+# ---------- Multi-Assignee ----------
+def get_assignees(task_id: str) -> list[dict]:
+    """Return list of user profiles assigned to a task."""
+    res = supabase.table("task_assignees").select("user_id, profiles!inner(id, username, display_name, role)").eq("task_id", task_id).execute()
+    # The nested select might need adjustment. Simpler: get user_ids then fetch profiles.
+    # We'll do a two-step for clarity.
+    assignee_rows = supabase.table("task_assignees").select("user_id").eq("task_id", task_id).execute().data
+    user_ids = [r["user_id"] for r in assignee_rows]
+    if not user_ids:
+        return []
+    # Fetch profiles with those ids
+    profiles = supabase.table("profiles").select("id, username, display_name, role").in_("id", user_ids).execute().data
+    return profiles
+
+def assign_users_to_task(task_id: str, user_ids: list[str], admin_id: str):
+    """Replace all assignees for a task with the given list."""
+    # Remove existing
+    supabase.table("task_assignees").delete().eq("task_id", task_id).execute()
+    # Add new
+    for uid in user_ids:
+        supabase.table("task_assignees").insert({"task_id": task_id, "user_id": uid}).execute()
+    # Log (simplified)
+    log_action(admin_id, "task_assignees_updated", "task", task_id,
+               new_values={"assignee_ids": user_ids})
+
+def get_tasks_for_user(user_id: str) -> list[dict]:
+    """Return tasks where the user is an assignee."""
+    rows = supabase.table("task_assignees").select("task_id").eq("user_id", user_id).execute().data
+    task_ids = [r["task_id"] for r in rows]
+    if not task_ids:
+        return []
+    return supabase.table("tasks").select("*").in_("id", task_ids).execute().data
+
+# Modify monthly progress to use junction table
+def get_monthly_progress(month: str):
+    start_date = f"{month}-01T00:00:00Z"
+    year, mon = month.split("-")
+    y, m = int(year), int(mon)
+    if m == 12:
+        end_month = f"{y+1}-01"
+    else:
+        end_month = f"{y}-{m+1:02d}"
+    end_date = f"{end_month}-01T00:00:00Z"
+
+    # Completed tasks in the month
+    completed_tasks = supabase.table("tasks").select("*")\
+                .gte("updated_at", start_date)\
+                .lt("updated_at", end_date)\
+                .eq("status", "done").execute().data
+
+    all_tasks = supabase.table("tasks").select("*").execute().data
+    missions = supabase.table("missions").select("id, name").execute().data
+    projects = supabase.table("projects").select("id, name, mission_id").execute().data
+
+    # Mission/project totals
+    mission_stats = {}
+    for m in missions:
+        mission_stats[m["id"]] = {"name": m["name"], "projects": {}}
+    for p in projects:
+        mission_stats[p["mission_id"]]["projects"][p["id"]] = {"name": p["name"], "total": 0, "completed": 0}
+    for t in all_tasks:
+        pid = t["project_id"]
+        for p in projects:
+            if p["id"] == pid:
+                mid = p["mission_id"]
+                mission_stats[mid]["projects"][pid]["total"] += 1
+                break
+    for c in completed_tasks:
+        pid = c["project_id"]
+        for p in projects:
+            if p["id"] == pid:
+                mid = p["mission_id"]
+                mission_stats[mid]["projects"][pid]["completed"] += 1
+                break
+
+    # Per-assignee completions (using junction table)
+    assignee_stats = {}
+    for c in completed_tasks:
+        # get all assignees for this completed task
+        assignees = supabase.table("task_assignees").select("user_id").eq("task_id", c["id"]).execute().data
+        for a in assignees:
+            uid = a["user_id"]
+            assignee_stats[uid] = assignee_stats.get(uid, 0) + 1
+
+    return mission_stats, assignee_stats

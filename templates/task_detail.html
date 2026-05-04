@@ -7,28 +7,19 @@
 <p>Assigned to: {{ username_map.get(task.assignee_id, 'Unassigned') }}</p>
 
 {% if user.role in ('lead', 'admin') %}
-    <h3>Update Status</h3>
-    <form action="/tasks/{{ task.id }}/update-status" method="post">
-        {% if task.status == 'todo' %}
-            <input type="hidden" name="new_status" value="in_progress">
-            <button type="submit">Start Progress</button>
-        {% elif task.status == 'in_progress' %}
-            <input type="hidden" name="new_status" value="done">
-            <button type="submit">Mark Complete</button>
-        {% endif %}
-    </form>
-
-    <h3>Assign</h3>
+    <h3>Assignees</h3>
+    <p>Current: {% for a in assignees %}{{ a.username or a.display_name or a.id }}{% if not loop.last %}, {% endif %}{% else %}None{% endfor %}</p>
+    <h3>Update Assignees</h3>
     <form action="/tasks/{{ task.id }}/assign" method="post">
-        <select name="assignee_id">
-            <option value="">-- Unassigned --</option>
+        <select name="assignee_ids" multiple size="5">
             {% for u in assignable_users %}
-                <option value="{{ u.id }}" {% if task.assignee_id == u.id %}selected{% endif %}>
+                <option value="{{ u.id }}" {% if u.id in assignees|map(attribute='id')|list %}selected{% endif %}>
                     {{ u.username or u.display_name or u.id }} ({{ u.role }})
                 </option>
             {% endfor %}
         </select>
-        <button type="submit">Update Assignee</button>
+        <br><small>Hold Ctrl/Cmd to select multiple</small><br>
+        <button type="submit">Update Assignees</button>
     </form>
 {% endif %}
 

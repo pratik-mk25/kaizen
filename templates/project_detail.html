@@ -27,7 +27,13 @@
         <strong>{{ task.title }}</strong> 
         <span>[{{ task.status }}]</span>
         <a href="/tasks/{{ task.id }}">Details</a>
-        <small>Assignee: {{ username_map.get(task.assignee_id, 'Unassigned') }}</small>
+        <small>Assignees: 
+    {% for a in task_assignees.get(task.id, []) %}
+        {{ a.username or a.display_name or a.id }}{% if not loop.last %}, {% endif %}
+    {% else %}
+        Unassigned
+    {% endfor %}
+</small>
         {% if user.role in ('lead', 'admin') %}
             <form action="/tasks/{{ task.id }}/update-status" method="post" style="display:inline;">
                 {% if task.status == 'todo' %}

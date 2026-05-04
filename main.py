@@ -133,8 +133,12 @@ async def project_detail(request: Request, project_id: str, user: dict = Depends
     tasks = crud.get_tasks_for_project(project_id)
     assignable_users = crud.get_all_users_detailed()
     username_map = get_username_map()
+    # Fetch assignees for all tasks
+    task_assignees = {}
+    for t in tasks:
+        task_assignees[t["id"]] = crud.get_assignees(t["id"])
     return render_template("project_detail.html", request, user=user, project=project, tasks=tasks,
-                           assignable_users=assignable_users, username_map=username_map)
+                           assignable_users=assignable_users, username_map=username_map, task_assignees=task_assignees)
 
 # Admin: project CRUD
 @app.get("/admin/projects/create")
@@ -170,7 +174,10 @@ async def delete_project(project_id: str, user: dict = Depends(admin_required)):
 async def add_task(request: Request, project_id: str, title: str = Form(...), description: str = Form(""), assignee_id: str = Form(None),
                    user: dict = Depends(lead_or_admin_required)):
     assignee = assignee_id if assignee_id else None
-    crud.create_task(title, description, project_id, assignee, user["id"])
+    new_task = crud.create_task(title, description, project_id, assignee, user["id"])
+    # If assignee provided, add to junction table
+    if assignee:
+        crud.assign_users_to_task(new_task["id"], [assignee], user["id"])
     return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
 
 @app.post("/tasks/{task_id}/update-status")
@@ -183,10 +190,16 @@ async def update_task_status(task_id: str, new_status: str = Form(...), user: di
     return RedirectResponse(url=f"/projects/{task['project_id']}", status_code=303)
 
 @app.post("/tasks/{task_id}/assign")
-async def assign_task_endpoint(task_id: str, assignee_id: str = Form(""), user: dict = Depends(lead_or_admin_required)):
-    assignee = assignee_id if assignee_id else None
-    crud.assign_task(task_id, assignee, user["id"])
-    task = crud.get_task(task_id)
+async def assign_task_endpoint(
+    task_id: str,
+    request: Request,  # need to read form list
+    user: dict = Depends(lead_or_admin_required)
+):
+    # Get selected user IDs as a list from the form
+    form_data = await request.form()
+    # The multi-select will send multiple values with the same name "assignee_ids"
+    assigned = form_data.getlist("assignee_ids")  # returns list of strings
+    crud.assign_users_to_task(task_id, assigned, user["id"])
     return RedirectResponse(url=f"/tasks/{task_id}", status_code=303)
 
 @app.get("/tasks/{task_id}")
@@ -195,8 +208,10 @@ async def task_detail(request: Request, task_id: str, user: dict = Depends(get_c
     assignable_users = crud.get_all_users_detailed()
     comments = crud.get_comments_for_task(task_id)
     username_map = get_username_map()
+    assignees = crud.get_assignees(task_id)  # list of profiles
     return render_template("task_detail.html", request, user=user, task=task,
-                           assignable_users=assignable_users, comments=comments, username_map=username_map)
+                           assignable_users=assignable_users, comments=comments,
+                           username_map=username_map, assignees=assignees)
 
 # ---------- Comments ----------
 @app.post("/tasks/{task_id}/comment")
