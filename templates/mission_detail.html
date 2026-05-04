@@ -5,7 +5,6 @@
 <div class="mb-6">
     <a href="/dashboard" class="text-sm text-gray-500 hover:text-sky-600">← Dashboard</a>
 </div>
-
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
         <h1 class="text-2xl font-bold">{{ mission.name }}</h1>
@@ -23,9 +22,7 @@
     </div>
     {% endif %}
 </div>
-
 <h2 class="text-xl font-semibold mb-4">Projects</h2>
-
 {% if projects %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {% for project in projects %}

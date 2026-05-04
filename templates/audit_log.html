@@ -1,26 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Audit Log{% endblock %}
 {% block content %}
-<h1>Audit Log</h1>
-<table border="1">
-    <tr>
-        <th>Time</th>
-        <th>User</th>
-        <th>Action</th>
-        <th>Entity</th>
-        <th>Details</th>
-    </tr>
-    {% for log in logs %}
-    <tr>
-        <td>{{ log.created_at }}</td>
-        <td>{{ log.user_id }}</td>
-        <td>{{ log.action }}</td>
-        <td>{{ log.entity_type }} ({{ log.entity_id }})</td>
-        <td>
-            {% if log.new_values %}<small>New: {{ log.new_values }}</small>{% endif %}
-            {% if log.old_values %}<br><small>Old: {{ log.old_values }}</small>{% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<h1 class="text-2xl font-bold mb-4">Audit Log</h1>
+<div class="overflow-x-auto">
+    <table class="w-full border-collapse">
+        <thead>
+            <tr class="bg-gray-100 dark:bg-gray-800">
+                <th class="px-4 py-2 text-left">Time</th>
+                <th class="px-4 py-2 text-left">User</th>
+                <th class="px-4 py-2 text-left">Action</th>
+                <th class="px-4 py-2 text-left">Entity</th>
+                <th class="px-4 py-2 text-left">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr class="border-b dark:border-gray-700">
+                <td class="px-4 py-2 text-sm">{{ log.created_at[:19] }}</td>
+                <td class="px-4 py-2 text-sm">{{ log.user_id }}</td>
+                <td class="px-4 py-2 text-sm">{{ log.action }}</td>
+                <td class="px-4 py-2 text-sm">{{ log.entity_type }} ({{ log.entity_id }})</td>
+                <td class="px-4 py-2 text-sm">
+                    {% if log.new_values %}<span class="text-green-600">New: {{ log.new_values }}</span>{% endif %}
+                    {% if log.old_values %}<br><span class="text-red-600">Old: {{ log.old_values }}</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

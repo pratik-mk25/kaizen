@@ -1,31 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mission Tracker{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body>
-    <nav class="container-fluid">
-        <ul>
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/search">Search</a></li>
-            {% if user %}
-                <li><a href="/progress">Progress</a></li>
-                {% if user.role == 'admin' %}
-                    <li><a href="/admin/missions/create">New Mission</a></li>
-                    <li><a href="/admin/users">Manage Users</a></li>
-                    <li><a href="/admin/audit-log">Audit Log</a></li>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <nav class="bg-white dark:bg-gray-800 shadow" x-data="{ open: false }">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+            <a href="/dashboard" class="text-xl font-bold">Mission Tracker</a>
+            <button @click="open = !open" class="md:hidden p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="hidden md:flex space-x-4">
+                {% if user %}
+                    <a href="/dashboard" class="hover:text-sky-600">Dashboard</a>
+                    <a href="/my-tasks" class="hover:text-sky-600">My Tasks</a>
+                    <a href="/search" class="hover:text-sky-600">Search</a>
+                    <a href="/progress" class="hover:text-sky-600">Progress</a>
+                    {% if user.role == 'admin' %}
+                        <a href="/admin/users" class="hover:text-sky-600">Users</a>
+                        <a href="/admin/audit-log" class="hover:text-sky-600">Audit Log</a>
+                    {% endif %}
+                    <a href="/logout" class="hover:text-red-600">Logout</a>
+                {% else %}
+                    <a href="/login" class="hover:text-sky-600">Login</a>
                 {% endif %}
-                <li><a href="/logout">Logout ({{ user.email }})</a></li>
+            </div>
+        </div>
+        <div x-show="open" x-cloak @click.away="open = false" class="md:hidden bg-white dark:bg-gray-800 p-4 space-y-2">
+            {% if user %}
+                <a href="/dashboard" class="block">Dashboard</a>
+                <a href="/my-tasks" class="block">My Tasks</a>
+                <a href="/search" class="block">Search</a>
+                <a href="/progress" class="block">Progress</a>
+                {% if user.role == 'admin' %}
+                    <a href="/admin/users" class="block">Users</a>
+                    <a href="/admin/audit-log" class="block">Audit Log</a>
+                {% endif %}
+                <a href="/logout" class="block text-red-600">Logout</a>
             {% else %}
-                <li><a href="/login">Login</a></li>
+                <a href="/login" class="block">Login</a>
             {% endif %}
-        </ul>
+        </div>
     </nav>
-    <main class="container">
+    <main class="max-w-7xl mx-auto px-4 py-6">
         {% block content %}{% endblock %}
     </main>
 </body>

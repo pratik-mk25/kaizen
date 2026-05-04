@@ -1,30 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Monthly Progress{% endblock %}
 {% block content %}
-<h1>Monthly Progress</h1>
-<form method="get">
-    <input type="month" name="month" value="{{ month }}">
-    <button type="submit">View</button>
+<h1 class="text-2xl font-bold mb-4">Monthly Progress</h1>
+<form method="get" class="mb-6 flex items-center gap-2">
+    <input type="month" name="month" value="{{ month }}"
+           class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+    <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">View</button>
 </form>
 
-<h2>Mission / Project Breakdown for {{ month }}</h2>
+<h2 class="text-xl font-semibold mb-2">Mission / Project Breakdown for {{ month }}</h2>
 {% for mid, mdata in mission_stats.items() %}
-    <h3>{{ mdata.name }}</h3>
-    <ul>
-    {% for pid, pdata in mdata.projects.items() %}
-        <li>{{ pdata.name }}: {{ pdata.completed }}/{{ pdata.total }} done 
-            {% if pdata.total > 0 %}({{ (pdata.completed / pdata.total * 100) | round(1) }}%){% endif %}
-        </li>
-    {% endfor %}
-    </ul>
+    <div class="mb-4">
+        <h3 class="font-bold text-lg">{{ mdata.name }}</h3>
+        <ul class="space-y-1">
+            {% for pid, pdata in mdata.projects.items() %}
+                <li class="flex items-center gap-2">
+                    <span>{{ pdata.name }}:</span>
+                    <span>{{ pdata.completed }}/{{ pdata.total }} done</span>
+                    {% if pdata.total > 0 %}
+                        <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ (pdata.completed / pdata.total * 100)|round }}%"></div>
+                        </div>
+                        <span>{{ (pdata.completed / pdata.total * 100)|round }}%</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
 {% endfor %}
 
-<h2>Per‑Assignee Completions in {{ month }}</h2>
-<ul>
-{% for aid, count in assignee_stats.items() %}
-    <li>{{ username_map.get(aid, aid) }}: {{ count }} tasks completed</li>
-{% else %}
-    <li>No completions</li>
-{% endfor %}
+<h2 class="text-xl font-semibold mb-2 mt-6">Per‑Assignee Completions in {{ month }}</h2>
+<ul class="list-disc pl-5">
+    {% for aid, count in assignee_stats.items() %}
+        <li>{{ username_map.get(aid, aid) }}: {{ count }} tasks completed</li>
+    {% else %}
+        <li>No completions.</li>
+    {% endfor %}
 </ul>
 {% endblock %}

@@ -2,8 +2,6 @@
 {% from "macros.html" import badge, status_badge, empty_state with context %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-
-{# Stat cards #}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <div class="bg-white dark:bg-gray-800 rounded shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Missions</div>
@@ -11,9 +9,8 @@
     </div>
     <div class="bg-white dark:bg-gray-800 rounded shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Tasks</div>
-        <div class="text-3xl font-bold">{{ missions|sum(attribute='mission_count') if missions else 0 }}</div>
+        <div class="text-3xl font-bold">{{ missions|sum(attribute='task_count') if missions else 0 }}</div>
     </div>
-    {# You can compute overdue count later — for now placeholder #}
     <div class="bg-white dark:bg-gray-800 rounded shadow p-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Overdue</div>
         <div class="text-3xl font-bold text-red-500">0</div>
@@ -23,15 +20,11 @@
         <div class="text-3xl font-bold text-green-500">0</div>
     </div>
 </div>
-
-{# Admin quick action #}
 {% if user.role == 'admin' %}
 <div class="mb-4">
     <a href="/admin/missions/create" class="inline-block bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700">+ New Mission</a>
 </div>
 {% endif %}
-
-{# Missions grid #}
 {% if missions %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {% for item in missions %}
@@ -63,5 +56,4 @@
 {% else %}
     {{ empty_state('No missions yet. Create one to get started!') }}
 {% endif %}
-
 {% endblock %}

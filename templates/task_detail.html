@@ -1,23 +1,35 @@
 {% extends "base.html" %}
+{% from "macros.html" import badge, status_badge, priority_badge, due_pill, empty_state with context %}
 {% block title %}{{ task.title }}{% endblock %}
 {% block content %}
-<h1>Task: {{ task.title }}</h1>
-<p>{{ task.description }}</p>
-<p>Status: <strong>{{ task.status }}</strong></p>
-
-<h3>Assignees</h3>
-<p>Current: 
-    {% for a in assignees %}
-        {{ a.username or a.display_name or a.id }}{% if not loop.last %}, {% endif %}
-    {% else %}
-        None
-    {% endfor %}
-</p>
-
-{% if user.role in ('lead', 'admin') %}
-    <h3>Update Assignees</h3>
-    <form action="/tasks/{{ task.id }}/assign" method="post">
-        <select name="assignee_ids" multiple size="5">
+<div class="mb-4">
+    <a href="/projects/{{ task.project_id }}" class="text-sm text-gray-500 hover:text-sky-600">← Back to Project</a>
+</div>
+<div class="bg-white dark:bg-gray-800 rounded shadow p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h1 class="text-2xl font-bold">{{ task.title }}</h1>
+        <div class="flex space-x-2 mt-2 sm:mt-0">
+            {{ priority_badge(task.priority) }}
+            {{ status_badge(task.status) }}
+            {{ due_pill(task.due_date) }}
+        </div>
+    </div>
+    {% if task.description %}
+        <p class="text-gray-600 dark:text-gray-300 mb-4">{{ task.description }}</p>
+    {% endif %}
+    <div class="mb-4">
+        <h3 class="font-semibold mb-1">Assignees</h3>
+        <p>
+            {% for a in assignees %}
+                {{ a.username or a.display_name or a.id }}{% if not loop.last %}, {% endif %}
+            {% else %}
+                <span class="text-gray-500">None</span>
+            {% endfor %}
+        </p>
+    </div>
+    {% if user.role in ('lead', 'admin') %}
+    <form action="/tasks/{{ task.id }}/assign" method="post" class="mb-4">
+        <select name="assignee_ids" multiple size="5" class="border rounded p-2 w-full dark:bg-gray-700">
             {% for u in assignable_users %}
                 {% set uid = u.id %}
                 <option value="{{ uid }}" {% if uid in assignees|map(attribute='id')|list %}selected{% endif %}>
@@ -25,47 +37,58 @@
                 </option>
             {% endfor %}
         </select>
-        <br><small>Hold Ctrl/Cmd to select multiple</small><br>
-        <button type="submit">Update Assignees</button>
+        <button type="submit" class="mt-2 px-3 py-1 bg-sky-600 text-white rounded hover:bg-sky-700 text-sm">Update Assignees</button>
     </form>
-{% endif %}
-
-{% if user.role in ('lead', 'admin') %}
-    <h3>Update Status</h3>
-    <form action="/tasks/{{ task.id }}/update-status" method="post">
-        {% if task.status == 'todo' %}
-            <input type="hidden" name="new_status" value="in_progress">
-            <button type="submit">Start Progress</button>
-        {% elif task.status == 'in_progress' %}
-            <input type="hidden" name="new_status" value="done">
-            <button type="submit">Mark Complete</button>
-        {% endif %}
-    </form>
-{% endif %}
-
-<!-- Comments Section -->
-<h2>Comments</h2>
-<div id="comments-list">
-    {% for comment in comments %}
-        <div style="border-left:3px solid #ccc; margin:5px; padding:5px;">
-            <small>{{ username_map.get(comment.user_id, 'Unknown') }} - {{ comment.created_at }}</small>
-            <p>{{ comment.content }}</p>
-        </div>
-    {% else %}
-        <p>No comments yet.</p>
-    {% endfor %}
+    <div class="mb-4">
+        <form action="/tasks/{{ task.id }}/update-status" method="post" class="inline">
+            {% if task.status == 'todo' %}
+                <input type="hidden" name="new_status" value="in_progress">
+                <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Start Progress</button>
+            {% elif task.status == 'in_progress' %}
+                <input type="hidden" name="new_status" value="done">
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">Mark Done</button>
+            {% endif %}
+        </form>
+    </div>
+    {% endif %}
 </div>
-
-{% if user.role in ('lead', 'admin') %}
-    <h3>Add Comment</h3>
+<!-- Attachments -->
+<div class="bg-white dark:bg-gray-800 rounded shadow p-6 mb-6">
+    <h2 class="text-xl font-semibold mb-4">Attachments</h2>
+    <div id="attachment-list">
+        {% include "_attachment_list.html" %}
+    </div>
+    {% if user.role in ('lead', 'admin') %}
+    <form hx-post="/tasks/{{ task.id }}/attachments" 
+          hx-encoding="multipart/form-data" 
+          hx-target="#attachment-list" 
+          hx-swap="innerHTML" 
+          class="mt-4">
+        <input type="file" name="file" required class="border rounded p-1 dark:bg-gray-700">
+        <button type="submit" class="ml-2 px-3 py-1 bg-sky-600 text-white rounded hover:bg-sky-700 text-sm">Upload</button>
+    </form>
+    {% endif %}
+</div>
+<!-- Comments -->
+<div class="bg-white dark:bg-gray-800 rounded shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Comments</h2>
+    <div id="comments-list" class="space-y-3">
+        {% for comment in comments %}
+            {% set username = username_map.get(comment.user_id, 'Unknown') %}
+            {% include "_comment.html" %}
+        {% else %}
+            {{ empty_state('No comments yet.') }}
+        {% endfor %}
+    </div>
+    {% if user.role in ('lead', 'admin') %}
     <form hx-post="/tasks/{{ task.id }}/comment" 
           hx-target="#comments-list" 
           hx-swap="beforeend" 
-          hx-on::after-request="this.reset()">
-        <textarea name="content" required></textarea>
-        <button type="submit">Post Comment</button>
+          hx-on::after-request="this.reset()"
+          class="mt-4 flex space-x-2">
+        <textarea name="content" required class="flex-1 border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600" rows="2"></textarea>
+        <button type="submit" class="px-3 py-1 bg-sky-600 text-white rounded hover:bg-sky-700 text-sm">Post</button>
     </form>
-{% endif %}
-
-<p><a href="/projects/{{ task.project_id }}">← Back to Project</a></p>
+    {% endif %}
+</div>
 {% endblock %}

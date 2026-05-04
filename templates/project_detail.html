@@ -5,7 +5,6 @@
 <div class="mb-4">
     <a href="/missions/{{ project.mission_id }}" class="text-sm text-gray-500 hover:text-sky-600">← Back to Mission</a>
 </div>
-
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
         <h1 class="text-2xl font-bold">{{ project.name }}</h1>
@@ -20,13 +19,11 @@
     </div>
     {% endif %}
 </div>
-
-{# Add Task form (hidden by default) #}
 {% if user.role in ('lead', 'admin') %}
 <div x-data="{ showAddTask: false }">
     <form x-show="showAddTask" @click.away="showAddTask = false" 
           hx-post="/projects/{{ project.id }}/tasks/create"
-          hx-target="#task-list,#kanban-todo"
+          hx-target="#task-list"
           hx-swap="innerHTML"
           class="bg-white dark:bg-gray-800 rounded shadow p-4 mb-6 space-y-3"
           hx-on::after-request="this.reset(); showAddTask = false">
@@ -50,29 +47,21 @@
     </form>
 </div>
 {% endif %}
-
-{# View toggle #}
 <div x-data="{ view: 'list' }" class="mb-4">
     <div class="flex space-x-2 mb-4">
         <button @click="view = 'list'" :class="view === 'list' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" class="px-3 py-1 rounded text-sm">List</button>
         <button @click="view = 'kanban'" :class="view === 'kanban' ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-gray-700'" class="px-3 py-1 rounded text-sm">Kanban</button>
     </div>
-
-    {# List view #}
     <div x-show="view === 'list'">
         <div id="task-list">
             {% include "_task_list.html" %}
         </div>
     </div>
-
-    {# Kanban view #}
     <div x-show="view === 'kanban'" class="grid grid-cols-1 md:grid-cols-3 gap-4" x-data="kanban()">
         {% set statuses = ['todo', 'in_progress', 'done'] %}
         {% set status_labels = {'todo': 'To Do', 'in_progress': 'In Progress', 'done': 'Done'} %}
         {% for status in statuses %}
-        <div class="bg-gray-100 dark:bg-gray-800 rounded p-3" 
-             data-status="{{ status }}"
-             x-ref="column{{ loop.index }}">
+        <div class="bg-gray-100 dark:bg-gray-800 rounded p-3" data-status="{{ status }}">
             <h3 class="font-semibold mb-2 flex items-center justify-between">
                 {{ status_labels[status] }}
                 <span class="text-xs text-gray-500">{{ tasks|selectattr('status','equalto',status)|list|length }}</span>
@@ -86,42 +75,34 @@
         {% endfor %}
     </div>
 </div>
-
 {% endblock %}
-
 {% block scripts %}
 <script>
     function kanban() {
         return {
             init() {
-                const self = this;
                 this.$nextTick(() => {
                     const columns = this.$el.querySelectorAll('[data-status]');
                     columns.forEach(col => {
                         const status = col.dataset.status;
-                        const kanbanList = col.querySelector(`#kanban-${status}`);
-                        if (kanbanList) {
-                            new Sortable(kanbanList, {
+                        const list = col.querySelector(`#kanban-${status}`);
+                        if (list) {
+                            new Sortable(list, {
                                 group: 'tasks',
                                 animation: 150,
                                 onEnd: function(evt) {
                                     const taskId = evt.item.querySelector('[data-task-id]')?.dataset.taskId;
                                     const newStatus = evt.to.closest('[data-status]')?.dataset.status;
                                     if (taskId && newStatus) {
-                                        // Send status update via fetch (HTMX-like but we need to update UI too)
                                         fetch(`/tasks/${taskId}/update-status`, {
                                             method: 'POST',
-                                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                                             body: `new_status=${newStatus}`
-                                        })
-                                        .then(res => res.text())
-                                        .then(html => {
-                                            // Replace the card with the updated one (HTMX response)
+                                        }).then(res => res.text()).then(html => {
                                             const temp = document.createElement('div');
                                             temp.innerHTML = html;
                                             const newCard = temp.firstElementChild;
                                             evt.item.replaceWith(newCard);
-                                            // Re-initialize the count badge
                                             updateCounters();
                                         });
                                     }
@@ -129,7 +110,6 @@
                             });
                         }
                     });
-                    // Initial counters
                     updateCounters();
                 });
             }

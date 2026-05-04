@@ -1,6 +1,4 @@
-<div data-task-id="{{ task.id }}" 
-     class="bg-white dark:bg-gray-700 rounded shadow-sm p-3 flex items-center justify-between gap-2 
-            {% if view == 'kanban' %}cursor-grab{% endif %}">
+<div data-task-id="{{ task.id }}" class="bg-white dark:bg-gray-700 rounded shadow-sm p-3 flex items-center justify-between gap-2 cursor-grab">
     <div class="flex-1 min-w-0">
         <div class="font-medium truncate">
             <a href="/tasks/{{ task.id }}" class="hover:text-sky-600">{{ task.title }}</a>
@@ -23,9 +21,8 @@
     <div class="flex-shrink-0">
         <form hx-post="/tasks/{{ task.id }}/update-status" 
               hx-target="closest [data-task-id]" 
-              hx-swap="outerHTML"
-              hx-trigger="change">
-            <select name="new_status" class="border rounded text-xs px-2 py-1 dark:bg-gray-600 dark:border-gray-500">
+              hx-swap="outerHTML">
+            <select name="new_status" class="border rounded text-xs px-2 py-1 dark:bg-gray-600 dark:border-gray-500" onchange="this.form.requestSubmit()">
                 <option value="" disabled selected>Move...</option>
                 {% if task.status == 'todo' %}
                     <option value="in_progress">Start</option>

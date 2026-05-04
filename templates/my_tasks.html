@@ -3,7 +3,6 @@
 {% block title %}My Tasks{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold mb-4">My Tasks</h1>
-
 {% for title, task_list in groups %}
     {% if task_list %}
     <div x-data="{ open: true }" class="mb-6">
@@ -33,7 +32,6 @@
     </div>
     {% endif %}
 {% endfor %}
-
 {% if not groups[0][1] and not groups[1][1] and not groups[2][1] and not groups[3][1] and not groups[4][1] %}
     {{ empty_state('You have no tasks assigned yet.') }}
 {% endif %}

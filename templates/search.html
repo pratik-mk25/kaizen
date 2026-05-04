@@ -1,66 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Advanced Search{% endblock %}
+{% block title %}Search{% endblock %}
 {% block content %}
-<h1>Search & Filter Tasks</h1>
-
-<form method="get" style="margin-bottom:20px;">
-    <!-- Text search -->
-    <input type="text" name="q" value="{{ query }}" placeholder="Search tasks...">
-    
-    <!-- Mission dropdown -->
-    <select name="mission_id" onchange="this.form.submit()">
+<h1 class="text-2xl font-bold mb-4">Search Tasks</h1>
+<form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search tasks..."
+           class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+    <select name="mission_id" onchange="this.form.submit()"
+            class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
         <option value="">-- All Missions --</option>
         {% for m in missions %}
             <option value="{{ m.id }}" {% if selected_mission == m.id %}selected{% endif %}>{{ m.name }}</option>
         {% endfor %}
     </select>
-    
-    <!-- Project dropdown (populated only when mission is selected) -->
-    <select name="project_id">
+    <select name="project_id"
+            class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
         <option value="">-- All Projects --</option>
         {% for p in projects %}
             <option value="{{ p.id }}" {% if selected_project == p.id %}selected{% endif %}>{{ p.name }}</option>
         {% endfor %}
     </select>
-    
-    <!-- Status -->
-    <select name="status">
+    <select name="status"
+            class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
         <option value="" {% if not selected_status %}selected{% endif %}>-- Any Status --</option>
         <option value="todo" {% if selected_status == 'todo' %}selected{% endif %}>To Do</option>
         <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>In Progress</option>
         <option value="done" {% if selected_status == 'done' %}selected{% endif %}>Done</option>
     </select>
-    
-    <!-- Month range -->
-    <label>From: <input type="month" name="start_month" value="{{ start_month }}"></label>
-    <label>To: <input type="month" name="end_month" value="{{ end_month }}"></label>
-    
-    <button type="submit">Filter</button>
+    <div class="flex items-center gap-2">
+        <input type="month" name="start_month" value="{{ start_month }}"
+               class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        <span class="dark:text-gray-300">to</span>
+        <input type="month" name="end_month" value="{{ end_month }}"
+               class="border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+    </div>
+    <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">Filter</button>
 </form>
 
-<h2>Results ({{ results|length }})</h2>
-{% if results %}
-    <table border="1" width="100%">
-        <tr>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Assignee</th>
-            <th>Project</th>
-            <th>Mission</th>
-            <th>Created</th>
-        </tr>
-        {% for task in results %}
-        <tr>
-            <td><a href="/tasks/{{ task.id }}">{{ task.title }}</a></td>
-            <td>{{ task.status }}</td>
-            <td>{{ username_map.get(task.assignee_id, 'Unassigned') }}</td>
-            <td>{{ task.project_id }}</td>
-            <td>...</td>  {# We could fetch project name, but for brevity skip #}
-            <td>{{ task.created_at[:10] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-{% else %}
-    <p>No tasks match the filters.</p>
+{% if query or selected_mission or selected_project or selected_status or start_month or end_month %}
+    <h2 class="text-lg font-semibold mb-2">Results ({{ results|length }})</h2>
+    {% if results %}
+        <div class="space-y-2">
+            {% for task in results %}
+                <div class="bg-white dark:bg-gray-800 rounded shadow p-3 flex flex-wrap items-center gap-2">
+                    <div>
+                        <a href="/tasks/{{ task.id }}" class="font-medium hover:text-sky-600">{{ task.title }}</a>
+                        <span class="text-sm text-gray-500">[{{ task.status }}]</span>
+                    </div>
+                    <span class="text-sm text-gray-500">Assigned to {{ username_map.get(task.assignee_id, 'Unassigned') }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-500">No tasks match.</p>
+    {% endif %}
 {% endif %}
 {% endblock %}

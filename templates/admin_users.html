@@ -1,31 +1,38 @@
 {% extends "base.html" %}
 {% block title %}User Management{% endblock %}
 {% block content %}
-<h1>Users</h1>
-<a href="/admin/users/add">+ Add New User</a>
-<table border="1" style="margin-top: 10px;">
-    <tr>
-        <th>Username</th>
-        <th>Display Name</th>
-        <th>Role</th>
-        <th>Change Role</th>
-    </tr>
-    {% for p in profiles %}
-    <tr>
-        <td>{{ p.username or 'No username' }}</td>
-        <td>{{ p.display_name or p.id }}</td>
-        <td>{{ p.role }}</td>
-        <td>
-            <form action="/admin/users/{{ p.id }}/role" method="post">
-                <select name="new_role">
-                    <option value="member" {% if p.role == 'member' %}selected{% endif %}>Member</option>
-                    <option value="lead" {% if p.role == 'lead' %}selected{% endif %}>Lead</option>
-                    <option value="admin" {% if p.role == 'admin' %}selected{% endif %}>Admin</option>
-                </select>
-                <button type="submit">Update</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<h1 class="text-2xl font-bold mb-4">Users</h1>
+<a href="/admin/users/add" class="inline-block mb-4 px-4 py-2 bg-sky-600 text-white rounded hover:bg-sky-700">+ Add New User</a>
+
+<div class="overflow-x-auto">
+    <table class="w-full border-collapse">
+        <thead>
+            <tr class="bg-gray-100 dark:bg-gray-800">
+                <th class="px-4 py-2 text-left">Username</th>
+                <th class="px-4 py-2 text-left">Display Name</th>
+                <th class="px-4 py-2 text-left">Role</th>
+                <th class="px-4 py-2 text-left">Change Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in profiles %}
+            <tr class="border-b dark:border-gray-700">
+                <td class="px-4 py-2">{{ p.username or 'No username' }}</td>
+                <td class="px-4 py-2">{{ p.display_name or p.id }}</td>
+                <td class="px-4 py-2">{{ p.role }}</td>
+                <td class="px-4 py-2">
+                    <form action="/admin/users/{{ p.id }}/role" method="post" class="flex gap-2">
+                        <select name="new_role" class="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="member" {% if p.role == 'member' %}selected{% endif %}>Member</option>
+                            <option value="lead" {% if p.role == 'lead' %}selected{% endif %}>Lead</option>
+                            <option value="admin" {% if p.role == 'admin' %}selected{% endif %}>Admin</option>
+                        </select>
+                        <button type="submit" class="px-3 py-1 bg-sky-600 text-white rounded text-sm hover:bg-sky-700">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

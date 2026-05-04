@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
-from database import supabase
+from database import supabase, supabase_admin
 import uuid
 import json
 
 def log_action(user_id: str, action: str, entity_type: str, entity_id: str,
                old_values: dict | None = None, new_values: dict | None = None):
-    """Insert an audit log entry."""
     supabase.table("audit_logs").insert({
         "user_id": user_id,
         "action": action,
@@ -47,12 +46,7 @@ def get_project(project_id: str):
     return supabase.table("projects").select("*").eq("id", project_id).single().execute().data
 
 def create_project(name: str, description: str | None, mission_id: str, lead_id: str | None, user_id: str):
-    data = {
-        "name": name,
-        "description": description,
-        "mission_id": mission_id,
-        "lead_id": lead_id
-    }
+    data = {"name": name, "description": description, "mission_id": mission_id, "lead_id": lead_id}
     res = supabase.table("projects").insert(data).execute().data[0]
     log_action(user_id, "project_created", "project", res["id"], new_values=data)
     return res
@@ -102,7 +96,6 @@ def update_task_status(task_id: str, new_status: str, user_id: str):
 
 # ---------- Multi-Assignees ----------
 def get_assignees(task_id: str) -> list[dict]:
-    """Return list of user profiles assigned to a task."""
     assignee_rows = supabase.table("task_assignees").select("user_id").eq("task_id", task_id).execute().data
     user_ids = [r["user_id"] for r in assignee_rows]
     if not user_ids:
@@ -111,18 +104,14 @@ def get_assignees(task_id: str) -> list[dict]:
     return profiles
 
 def assign_users_to_task(task_id: str, user_ids: list[str], admin_id: str):
-    """Replace all assignees for a task with the given list."""
-    # Remove existing
     supabase.table("task_assignees").delete().eq("task_id", task_id).execute()
-    # Add new
-    for uid in user_ids:
-        if uid:  # ignore empty strings
-            supabase.table("task_assignees").insert({"task_id": task_id, "user_id": uid}).execute()
+    rows = [{"task_id": task_id, "user_id": uid} for uid in user_ids if uid]
+    if rows:
+        supabase.table("task_assignees").insert(rows).execute()
     log_action(admin_id, "task_assignees_updated", "task", task_id,
                new_values={"assignee_ids": user_ids})
 
 def get_tasks_for_user(user_id: str) -> list[dict]:
-    """Return tasks where the user is an assignee."""
     rows = supabase.table("task_assignees").select("task_id").eq("user_id", user_id).execute().data
     task_ids = [r["task_id"] for r in rows]
     if not task_ids:
@@ -140,25 +129,54 @@ def add_comment(task_id: str, content: str, user_id: str):
     log_action(user_id, "comment_added", "comment", res["id"], new_values=data)
     return res
 
+# ---------- Attachments ----------
+def get_attachments(task_id: str) -> list[dict]:
+    return supabase.table("task_attachments").select("*").eq("task_id", task_id).order("created_at").execute().data
+
+def add_attachment(task_id: str, uploader_id: str, file_name: str, storage_path: str,
+                   mime_type: str | None, file_size: int) -> dict:
+    data = {
+        "task_id": task_id,
+        "uploader_id": uploader_id,
+        "file_name": file_name,
+        "storage_path": storage_path,
+        "mime_type": mime_type,
+        "file_size": file_size,
+    }
+    res = supabase.table("task_attachments").insert(data).execute().data[0]
+    log_action(uploader_id, "attachment_uploaded", "task_attachment", res["id"], new_values=data)
+    return res
+
+def delete_attachment(attachment_id: str, user_id: str):
+    old = supabase.table("task_attachments").select("*").eq("id", attachment_id).single().execute().data
+    if old:
+        try:
+            supabase_admin.storage.from_("task-attachments").remove([old["storage_path"]])
+        except:
+            pass
+        supabase.table("task_attachments").delete().eq("id", attachment_id).execute()
+        log_action(user_id, "attachment_deleted", "task_attachment", attachment_id, old_values=old)
+
 # ---------- Users ----------
 def get_all_users():
-    """Returns all profiles (id, role)."""
     return supabase.table("profiles").select("id, role").execute().data
 
 def get_users_by_role(role: str):
-    """Return profiles with a specific role, including username and display_name."""
     return supabase.table("profiles").select("id, role, username, display_name").eq("role", role).execute().data
 
 def get_all_users_detailed():
-    """Return all profiles with id, username, display_name, role, created_at."""
     return supabase.table("profiles").select("id, username, display_name, role, created_at").order("created_at").execute().data
 
 def create_user_by_admin(email: str, password: str, username: str, display_name: str, role: str, admin_id: str):
     try:
-        auth_res = supabase.auth.sign_up({"email": email, "password": password})
+        auth_res = supabase_admin.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True
+        })
         user_id = auth_res.user.id
     except Exception as e:
-        raise Exception(f"Auth signup failed: {e}")
+        raise Exception(f"Auth create failed: {e}")
     supabase.table("profiles").update({
         "username": username,
         "display_name": display_name,
@@ -210,11 +228,13 @@ def get_monthly_progress(month: str):
 
     # Per-assignee completions (using junction table)
     assignee_stats = {}
-    for c in completed_tasks:
-        assignees = supabase.table("task_assignees").select("user_id").eq("task_id", c["id"]).execute().data
-        for a in assignees:
-            uid = a["user_id"]
-            assignee_stats[uid] = assignee_stats.get(uid, 0) + 1
+    if completed_tasks:
+        task_ids = [t["id"] for t in completed_tasks]
+        all_rows = supabase.table("task_assignees").select("task_id, user_id").in_("task_id", task_ids).execute().data
+        for row in all_rows:
+            uid = row["user_id"]
+            if uid:
+                assignee_stats[uid] = assignee_stats.get(uid, 0) + 1
 
     return mission_stats, assignee_stats
 
