@@ -25,6 +25,7 @@
                     <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Action Type</th>
                     <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Entity Details</th>
                     <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Mutation Data</th>
+                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Action</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -73,6 +74,17 @@
                             </div>
                             {% endif %}
                         </div>
+                    </td>
+                    <td class="px-6 py-5 text-right">
+                        {% if not log.action.startswith('reverted_') %}
+                        <form action="/admin/undo/{{ log.id }}" method="post">
+                            <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:text-brand-700 bg-brand-50 dark:bg-brand-900/20 px-3 py-1.5 rounded-lg border border-brand-100 dark:border-brand-800 transition-all active:scale-90">
+                                Undo
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reverted</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

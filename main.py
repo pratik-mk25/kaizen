@@ -416,6 +416,14 @@ async def audit_log_view(request: Request, user: dict = Depends(admin_required))
     username_map = get_username_map()
     return render_template("audit_log.html", request, user=user, logs=logs, username_map=username_map)
 
+@app.post("/admin/undo/{log_id}")
+async def undo_action(log_id: str, user: dict = Depends(admin_required)):
+    try:
+        crud.revert_action(log_id, user["id"])
+    except Exception:
+        pass
+    return RedirectResponse(url="/admin/audit-log", status_code=303)
+
 # ---------- Progress Dashboard ----------
 @app.get("/progress")
 async def progress_dashboard(request: Request, month: str = None, user: dict = Depends(get_current_user)):

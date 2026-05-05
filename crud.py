@@ -255,10 +255,61 @@ def get_monthly_progress(month: str):
     return mission_stats, assignee_stats
 
 # ---------- Audit Logs ----------
-def get_audit_logs(limit=50, user_id=None, entity_type=None):
-    query = supabase.table("audit_logs").select("*").order("created_at", desc=True).limit(limit)
-    if user_id:
-        query = query.eq("user_id", user_id)
-    if entity_type:
-        query = query.eq("entity_type", entity_type)
-    return query.execute().data
+def get_audit_log(log_id: str):
+    return supabase.table("audit_logs").select("*").eq("id", log_id).single().execute().data
+
+def revert_action(log_id: str, admin_id: str):
+    log = get_audit_log(log_id)
+    if not log:
+        raise Exception("Log not found")
+    
+    action = log["action"]
+    entity_type = log["entity_type"]
+    entity_id = log["entity_id"]
+    old_values = json.loads(log["old_values"]) if log["old_values"] else None
+    
+    if not old_values:
+        # If it was a 'created' action, undoing it means deleting the entity
+        if "created" in action or "added" in action or "uploaded" in action:
+            supabase.table(f"{entity_type}s" if not entity_type.endswith('s') else entity_type).delete().eq("id", entity_id).execute()
+            log_action(admin_id, f"reverted_{action}", entity_type, entity_id, old_values=json.loads(log["new_values"]) if log["new_values"] else None)
+            return True
+        raise Exception("Nothing to revert to (no old values)")
+
+    # Status Reversal
+    if action == "task_status_changed":
+        supabase.table("tasks").update({"status": old_values["status"]}).eq("id", entity_id).execute()
+    
+    # Metadata/Edit Reversal
+    elif action in ("mission_updated", "project_updated"):
+        table = "missions" if action == "mission_updated" else "projects"
+        # We only restore fields that were in the edit form
+        data = {k: v for k, v in old_values.items() if k in ("name", "description", "lead_id")}
+        supabase.table(table).update(data).eq("id", entity_id).execute()
+    
+    # Role Reversal
+    elif action == "role_updated":
+        supabase.table("profiles").update({"role": old_values["role"]}).eq("id", entity_id).execute()
+    
+    # Assignees Reversal
+    elif action == "task_assignees_updated":
+        supabase.table("task_assignees").delete().eq("task_id", entity_id).execute()
+        rows = [{"task_id": entity_id, "user_id": uid} for uid in old_values.get("assignee_ids", []) if uid]
+        if rows:
+            supabase.table("task_assignees").insert(rows).execute()
+
+    # Deletion Reversal (Restore)
+    elif "deleted" in action:
+        table = f"{entity_type}s" if not entity_type.endswith('s') else entity_type
+        # Special case for task_attachments as the table name is different
+        if entity_type == "task_attachment":
+             table = "task_attachments"
+        supabase.table(table).insert(old_values).execute()
+    
+    else:
+        raise Exception(f"Action '{action}' cannot be automatically reverted yet.")
+
+    log_action(admin_id, f"reverted_{action}", entity_type, entity_id, 
+               old_values=json.loads(log["new_values"]) if log["new_values"] else None,
+               new_values=old_values)
+    return True
