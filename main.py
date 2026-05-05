@@ -264,15 +264,19 @@ async def task_detail(request: Request, task_id: str, user: dict = Depends(get_c
     comments = crud.get_comments_for_task(task_id)
     username_map = get_username_map()
     assignees = crud.get_assignees(task_id)
-    attachments = crud.get_attachments(task_id)
-    if attachments:
-        for att in attachments:
-            try:
-                signed = supabase_admin.storage.from_("task-attachments") \
-                    .create_signed_url(att["storage_path"], 3600)
-                att["signed_url"] = signed["signedURL"] if signed else None
-            except:
-                att["signed_url"] = None
+    attachments = []
+    try:
+        attachments = crud.get_attachments(task_id)
+        if attachments:
+            for att in attachments:
+                try:
+                    signed = supabase_admin.storage.from_("task-attachments") \
+                        .create_signed_url(att["storage_path"], 3600)
+                    att["signed_url"] = signed["signedURL"] if signed else None
+                except:
+                    att["signed_url"] = None
+    except:
+        attachments = []
     return render_template("task_detail.html", request, user=user, task=task,
                            assignable_users=assignable_users, comments=comments,
                            username_map=username_map, assignees=assignees,
