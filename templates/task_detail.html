@@ -121,7 +121,7 @@
                         {{ (a.username or a.display_name or '?')[:1].upper() }}
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ a.username or a.display_name or a.id }}</p>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ a.username or a.display_name or 'Unknown Member' }}</p>
                         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{{ a.role }}</span>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
                             {% for u in assignable_users %}
                                 {% set uid = u.id %}
                                 <option value="{{ uid }}" {% if uid in assignees|map(attribute='id')|list %}selected{% endif %}>
-                                    {{ u.username or u.display_name or u.id }}
+                                    {{ u.username or u.display_name or 'Unknown Member' }}
                                 </option>
                             {% endfor %}
                         </select>

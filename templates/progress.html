@@ -87,10 +87,10 @@
                 <div class="flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                            {{ username_map.get(aid, aid)[:1].upper() }}
+                            {{ username_map.get(aid, 'Unknown')[:1].upper() }}
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ username_map.get(aid, aid) }}</p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ username_map.get(aid, 'Unknown Member') }}</p>
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Contributor</span>
                         </div>
                     </div>

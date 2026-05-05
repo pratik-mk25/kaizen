@@ -115,7 +115,7 @@
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                {{ username_map.get(task.assignee_id, '?')[:1].upper() }}
+                                {{ username_map.get(task.assignee_id, 'Unknown')[:1].upper() }}
                             </div>
                             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Assigned to {{ username_map.get(task.assignee_id, 'Unassigned') }}</span>
                         </div>

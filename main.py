@@ -19,6 +19,9 @@ env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")), autoesca
 
 def render_template(template_name: str, request: Request, **kwargs) -> HTMLResponse:
     template = env.get_template(template_name)
+    # Automatically inject username_map if not provided
+    if "username_map" not in kwargs:
+        kwargs["username_map"] = get_username_map()
     html_content = template.render(request=request, today=date.today(), **kwargs)
     return HTMLResponse(html_content)
 

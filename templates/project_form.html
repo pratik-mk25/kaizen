@@ -39,7 +39,7 @@
                     <option value="">-- Assign a Lead (Optional) --</option>
                     {% for lead in leads %}
                         <option value="{{ lead.id }}" {% if project and project.lead_id == lead.id %}selected{% endif %}>
-                            {{ lead.username or lead.display_name or lead.id }}
+                            {{ lead.username or lead.display_name or 'Unknown Lead' }}
                         </option>
                     {% endfor %}
                 </select>
