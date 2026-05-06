@@ -34,7 +34,12 @@ async def get_current_user(request: Request) -> dict:
     if not profile_response.data:
         raise HTTPException(status_code=401, detail="Profile not found")
     profile = profile_response.data[0]
-    return {"id": user.id, "email": user.email, "role": profile["role"]}
+    return {
+        "id": user.id, 
+        "email": user.email, 
+        "role": profile["role"],
+        "organization_id": profile.get("organization_id")
+    }
 
 async def admin_required(user: dict = Depends(get_current_user)):
     if user["role"] != "admin":
