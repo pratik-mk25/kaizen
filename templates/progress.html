@@ -34,58 +34,6 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-...
-{% endblock %}
-
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mission Pie Chart
-        const missionLabels = [];
-        const missionSeries = [];
-        {% for mid, mdata in mission_stats.items() %}
-            missionLabels.push("{{ mdata.name }}");
-            {% set total = 0 %}
-            {% for pid, pdata in mdata.projects.items() %}{% set total = total + pdata.total %}{% endfor %}
-            missionSeries.push({{ total }});
-        {% endfor %}
-
-        if (missionSeries.length > 0) {
-            new ApexCharts(document.querySelector("#mission-pie-chart"), {
-                series: missionSeries,
-                labels: missionLabels,
-                chart: { type: 'donut', height: 300, background: 'transparent' },
-                theme: { mode: 'dark', monochrome: { enabled: true, color: '#00f0ff' } },
-                stroke: { show: false },
-                legend: { position: 'bottom' },
-                dataLabels: { enabled: false }
-            }).render();
-        }
-
-        // Contributor Bar Chart
-        const contributorLabels = [];
-        const contributorSeries = [];
-        {% for aid, count in assignee_stats.items() %}
-            contributorLabels.push("{{ username_map.get(aid, 'User') }}");
-            contributorSeries.push({{ count }});
-        {% endfor %}
-
-        if (contributorSeries.length > 0) {
-            new ApexCharts(document.querySelector("#contributor-bar-chart"), {
-                series: [{ name: 'Tasks Completed', data: contributorSeries }],
-                chart: { type: 'bar', height: 300, toolbar: { show: false }, background: 'transparent' },
-                plotOptions: { bar: { borderRadius: 10, columnWidth: '50%', distributed: true } },
-                colors: ['#00f0ff', '#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
-                theme: { mode: 'dark' },
-                xaxis: { categories: contributorLabels, labels: { style: { fontSize: '10px', fontFamily: 'JetBrains Mono' } } },
-                grid: { borderColor: '#1e293b' },
-                legend: { show: false }
-            }).render();
-        }
-    });
-</script>
-{% endblock %}
     <!-- Main Stats Column -->
     <div class="lg:col-span-2 space-y-8">
         <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 px-2">
@@ -172,4 +120,56 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mission Pie Chart
+        const missionLabels = [];
+        const missionSeries = [];
+        {% for mid, mdata in mission_stats.items() %}
+            missionLabels.push("{{ mdata.name }}");
+            {% set total_tasks = 0 %}
+            {% for pid, pdata in mdata.projects.items() %}
+                {% set total_tasks = total_tasks + pdata.total %}
+            {% endfor %}
+            missionSeries.push({{ total_tasks }});
+        {% endfor %}
+
+        if (missionSeries.length > 0) {
+            new ApexCharts(document.querySelector("#mission-pie-chart"), {
+                series: missionSeries,
+                labels: missionLabels,
+                chart: { type: 'donut', height: 300, background: 'transparent' },
+                theme: { mode: 'dark', monochrome: { enabled: true, color: '#00f0ff' } },
+                stroke: { show: false },
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: false }
+            }).render();
+        }
+
+        // Contributor Bar Chart
+        const contributorLabels = [];
+        const contributorSeries = [];
+        {% for aid, count in assignee_stats.items() %}
+            contributorLabels.push("{{ username_map.get(aid, 'User') }}");
+            contributorSeries.push({{ count }});
+        {% endfor %}
+
+        if (contributorSeries.length > 0) {
+            new ApexCharts(document.querySelector("#contributor-bar-chart"), {
+                series: [{ name: 'Tasks Completed', data: contributorSeries }],
+                chart: { type: 'bar', height: 300, toolbar: { show: false }, background: 'transparent' },
+                plotOptions: { bar: { borderRadius: 10, columnWidth: '50%', distributed: true } },
+                colors: ['#00f0ff', '#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+                theme: { mode: 'dark' },
+                xaxis: { categories: contributorLabels, labels: { style: { fontSize: '10px', fontFamily: 'JetBrains Mono' } } },
+                grid: { borderColor: '#1e293b' },
+                legend: { show: false }
+            }).render();
+        }
+    });
+</script>
 {% endblock %}
