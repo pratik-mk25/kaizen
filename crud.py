@@ -4,17 +4,21 @@ import uuid
 import json
 
 def log_action(user_id: str, action: str, entity_type: str, entity_id: str,
-               old_values: dict | None = None, new_values: dict | None = None):
+               old_values: dict | None = None, new_values: dict | None = None, org_id: str | None = None):
     client = supabase_admin if supabase_admin else supabase
     try:
-        client.table("audit_logs").insert({
+        data = {
             "user_id": user_id,
             "action": action,
             "entity_type": entity_type,
             "entity_id": str(entity_id),
             "old_values": json.dumps(old_values) if old_values else None,
             "new_values": json.dumps(new_values) if new_values else None,
-        }).execute()
+        }
+        if org_id:
+            data["organization_id"] = org_id
+            
+        client.table("audit_logs").insert(data).execute()
     except Exception as e:
         print(f"DEBUG: Failed to log action {action}: {e}")
 
@@ -36,19 +40,19 @@ def create_mission(name: str, description: str | None, user_id: str, org_id: str
     if org_id:
         data["organization_id"] = org_id
     res = supabase.table("missions").insert(data).execute().data[0]
-    log_action(user_id, "mission_created", "mission", res["id"], new_values=data)
+    log_action(user_id, "mission_created", "mission", res["id"], new_values=data, org_id=org_id)
     return res
 
 def update_mission(mission_id: str, name: str, description: str | None, user_id: str, org_id: str = None):
     old = get_mission(mission_id, org_id)
     new_data = {"name": name, "description": description}
     supabase.table("missions").update(new_data).eq("id", mission_id).execute()
-    log_action(user_id, "mission_updated", "mission", mission_id, old_values=old, new_values=new_data)
+    log_action(user_id, "mission_updated", "mission", mission_id, old_values=old, new_values=new_data, org_id=org_id)
 
 def delete_mission(mission_id: str, user_id: str, org_id: str = None):
     old = get_mission(mission_id, org_id)
     supabase.table("missions").delete().eq("id", mission_id).execute()
-    log_action(user_id, "mission_deleted", "mission", mission_id, old_values=old)
+    log_action(user_id, "mission_deleted", "mission", mission_id, old_values=old, org_id=org_id)
 
 # ---------- Projects ----------
 def get_projects_for_mission(mission_id: str, org_id: str = None):
@@ -68,19 +72,19 @@ def create_project(name: str, description: str | None, mission_id: str, lead_id:
     if org_id:
         data["organization_id"] = org_id
     res = supabase.table("projects").insert(data).execute().data[0]
-    log_action(user_id, "project_created", "project", res["id"], new_values=data)
+    log_action(user_id, "project_created", "project", res["id"], new_values=data, org_id=org_id)
     return res
 
 def update_project(project_id: str, name: str, description: str | None, lead_id: str | None, user_id: str, org_id: str = None):
     old = get_project(project_id, org_id)
     new_data = {"name": name, "description": description, "lead_id": lead_id}
     supabase.table("projects").update(new_data).eq("id", project_id).execute()
-    log_action(user_id, "project_updated", "project", project_id, old_values=old, new_values=new_data)
+    log_action(user_id, "project_updated", "project", project_id, old_values=old, new_values=new_data, org_id=org_id)
 
 def delete_project(project_id: str, user_id: str, org_id: str = None):
     old = get_project(project_id, org_id)
     supabase.table("projects").delete().eq("id", project_id).execute()
-    log_action(user_id, "project_deleted", "project", project_id, old_values=old)
+    log_action(user_id, "project_deleted", "project", project_id, old_values=old, org_id=org_id)
 
 # ---------- Tasks ----------
 def get_tasks_for_project(project_id: str, org_id: str = None):
@@ -108,7 +112,7 @@ def create_task(title: str, description: str | None, project_id: str, user_id: s
     if org_id:
         data["organization_id"] = org_id
     res = supabase.table("tasks").insert(data).execute().data[0]
-    log_action(user_id, "task_created", "task", res["id"], new_values=data)
+    log_action(user_id, "task_created", "task", res["id"], new_values=data, org_id=org_id)
     return res
 
 def update_task_status(task_id: str, new_status: str, user_id: str, org_id: str = None):
@@ -124,7 +128,7 @@ def update_task_status(task_id: str, new_status: str, user_id: str, org_id: str 
     
     # Let's make it more flexible for SaaS
     supabase.table("tasks").update({"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}).eq("id", task_id).execute()
-    log_action(user_id, "task_status_changed", "task", task_id, old_values={"status": old["status"]}, new_values={"status": new_status})
+    log_action(user_id, "task_status_changed", "task", task_id, old_values={"status": old["status"]}, new_values={"status": new_status}, org_id=org_id)
 
 # ---------- Multi-Assignees ----------
 def get_assignees(task_id: str) -> list[dict]:
