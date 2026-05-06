@@ -32,24 +32,40 @@ async def get_current_user(request: Request) -> dict:
 
     # Use supabase_admin to bypass RLS for the initial profile fetch
     # This ensures we can always get the user's role and org_id
-    if supabase_admin:
+    if supabase_admin is not None:
         client = supabase_admin
+        print("DEBUG: Using supabase_admin for profile fetch")
     else:
         # Fallback to regular supabase client if service role key is missing
         # Note: We attempt to set the auth header for this request
         client = supabase
-        if hasattr(client, "postgrest"):
-            client.postgrest.auth(token)
+        print("DEBUG: supabase_admin is None, falling back to supabase client")
+        if client is not None and hasattr(client, "postgrest"):
+            # Set the Authorization header for this client instance
+            client.postgrest.headers["Authorization"] = f"Bearer {token}"
+            print("DEBUG: Set Bearer token in postgrest headers")
 
-    if not client:
+    if client is None:
+        print("DEBUG: CRITICAL - Client is None before table access")
         raise HTTPException(status_code=500, detail="Supabase client not initialized")
 
     try:
+        print(f"DEBUG: Attempting to fetch profile for user {user.id}")
+        if not hasattr(client, "table"):
+            print(f"DEBUG: CRITICAL - Client of type {type(client)} has no 'table' attribute")
+            raise AttributeError(f"Client {type(client)} has no 'table' attribute")
+            
         profile_response = client.table("profiles").select("*").eq("id", user.id).execute()
         if not profile_response.data:
+            print(f"DEBUG: Profile not found for user {user.id}")
             raise HTTPException(status_code=401, detail="Profile not found")
         profile = profile_response.data[0]
+        print(f"DEBUG: Profile found, role: {profile.get('role')}")
+    except AttributeError as ae:
+        print(f"DEBUG: AttributeError during profile fetch: {ae}")
+        raise HTTPException(status_code=500, detail=f"Client configuration error: {str(ae)}")
     except Exception as e:
+        print(f"DEBUG: Exception during profile fetch: {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     return {

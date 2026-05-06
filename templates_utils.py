@@ -9,8 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent
 env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")), autoescape=True)
 
 def get_username_map(org_id: str = None):
-    users = crud.get_all_users_detailed(org_id)
-    return {u["id"]: u["display_name"] or u["username"] or "Member" for u in users}
+    try:
+        users = crud.get_all_users_detailed(org_id)
+        return {u["id"]: u["display_name"] or u["username"] or "Member" for u in users}
+    except Exception as e:
+        print(f"DEBUG: get_username_map failed: {e}")
+        return {}
 
 def render_template(template_name: str, request: Request, **kwargs) -> HTMLResponse:
     template = env.get_template(template_name)
