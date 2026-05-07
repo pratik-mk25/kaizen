@@ -105,6 +105,9 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 -- 3. Add organization_id to existing tables if they were already created without it
 DO $$ 
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='email') THEN
+        ALTER TABLE public.profiles ADD COLUMN email TEXT;
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='organization_id') THEN
         ALTER TABLE public.profiles ADD COLUMN organization_id UUID REFERENCES organizations(id);
     END IF;
@@ -211,10 +214,16 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- 7. Additional Profiles Policies
+-- 7. Helper Function for Non-Recursive Policy Checks
+CREATE OR REPLACE FUNCTION public.is_admin() 
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
+
+-- 8. Additional Profiles Policies
 DROP POLICY IF EXISTS "Admins can view all profiles in their org" ON public.profiles;
-CREATE POLICY "Admins can view all profiles in their org" ON public.profiles FOR SELECT USING (
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin' 
-    AND 
-    (SELECT organization_id FROM public.profiles WHERE id = auth.uid()) = organization_id
-);
+CREATE POLICY "Admins can view all profiles in their org" ON public.profiles 
+FOR SELECT USING (public.is_admin());
