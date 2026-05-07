@@ -1,215 +1,235 @@
 <!DOCTYPE html>
-<!-- FORCE DARK MODE FOR SCI-FI MINIMAL -->
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SYS.OP // MISSION TRACKER{% endblock %}</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}Mission Tracker{% endblock %}</title>
     
-    <!-- Sci-Fi Typography: Space Grotesk & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e5e2e1;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .scanline-overlay {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.05;
+        }
+        .hud-border {
+            border: 1px solid #1E1B4B;
+        }
+        .hud-border-active {
+            border: 1px solid #8B5CF6;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+        }
+        .glow-indicator {
+            box-shadow: 0 0 8px #8B5CF6;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        [x-cloak] { display: none !important; }
+        
+        /* Custom Scrollbar for SaaS look */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #131313; }
+        ::-webkit-scrollbar-thumb { background: #3c0091; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d0bcff; }
+    </style>
+
+    <script id="tailwind-config">
         tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Space Grotesk"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#e0fbff',
-                            100: '#b3f5ff',
-                            200: '#80eeff',
-                            300: '#4de8ff',
-                            400: '#1ae1ff',
-                            500: '#00f0ff', // CYBER CYAN
-                            600: '#00c0cc',
-                            700: '#009099',
-                            800: '#006066',
-                            900: '#003033',
-                            950: '#00181a',
-                        },
-                        slate: {
-                            50: '#e2e8f0',
-                            100: '#cbd5e1',
-                            200: '#94a3b8',
-                            300: '#64748b',
-                            400: '#475569',
-                            500: '#334155',
-                            600: '#1e293b',
-                            700: '#0f172a',
-                            800: '#060b13', // Deep HUD background
-                            900: '#030509', // Deeper
-                            950: '#010204', // Pure void
-                        },
-                    }
-                }
-            }
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-high": "#2a2a2a",
+                      "surface-container-lowest": "#0e0e0e",
+                      "inverse-on-surface": "#313030",
+                      "on-primary-fixed": "#23005c",
+                      "tertiary-fixed-dim": "#4cd7f6",
+                      "on-tertiary-fixed-variant": "#004e5c",
+                      "on-tertiary": "#003640",
+                      "primary-container": "#a078ff",
+                      "surface": "#131313",
+                      "on-tertiary-container": "#002f38",
+                      "tertiary-container": "#009eb9",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "secondary-fixed": "#e3dfff",
+                      "on-error": "#690005",
+                      "primary-fixed": "#e9ddff",
+                      "on-surface-variant": "#cbc3d7",
+                      "on-tertiary-fixed": "#001f26",
+                      "on-primary-container": "#340080",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#131313",
+                      "secondary-container": "#3a2dc2",
+                      "surface-variant": "#353534",
+                      "outline": "#958ea0",
+                      "inverse-surface": "#e5e2e1",
+                      "background": "#131313",
+                      "inverse-primary": "#6d3bd7",
+                      "secondary": "#c3c0ff",
+                      "primary": "#d0bcff",
+                      "surface-tint": "#d0bcff",
+                      "outline-variant": "#494454",
+                      "error-container": "#93000a",
+                      "on-secondary-container": "#b4b0ff",
+                      "on-background": "#e5e2e1",
+                      "surface-container-low": "#1c1b1b",
+                      "on-primary-fixed-variant": "#5516be",
+                      "primary-fixed-dim": "#d0bcff",
+                      "error": "#ffb4ab",
+                      "on-secondary": "#1f00a4",
+                      "on-secondary-fixed": "#100069",
+                      "on-primary": "#3c0091",
+                      "surface-container": "#201f1f",
+                      "on-secondary-fixed-variant": "#372abf",
+                      "surface-bright": "#3a3939",
+                      "on-surface": "#e5e2e1",
+                      "surface-container-highest": "#353534",
+                      "tertiary": "#4cd7f6",
+                      "tertiary-fixed": "#acedff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "sans": ["Inter", "sans-serif"],
+                      "mono": ["JetBrains Mono", "monospace"],
+                      "headline": ["Space Grotesk", "sans-serif"]
+              }
+            },
+          },
         }
     </script>
     
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-    
-    <style type="text/tailwindcss">
-        @layer base {
-            body {
-                @apply antialiased text-slate-300 bg-[#030509] font-sans selection:bg-brand-500 selection:text-[#030509];
-            }
-            /* Override backgrounds globally to enforce the void */
-            .bg-white, .bg-gray-50, .bg-slate-50, .dark\:bg-gray-800, .dark\:bg-gray-900, .dark\:bg-slate-800, .dark\:bg-slate-900 {
-                @apply bg-slate-900/80 !important;
-            }
-            .bg-slate-100, .dark\:bg-slate-700 {
-                @apply bg-slate-800 !important;
-            }
-            /* Force borders to be sharp and visible */
-            .border-slate-200, .dark\:border-slate-700, .dark\:border-slate-800, .border {
-                @apply border-slate-700/50 !important;
-            }
-            .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-lg, .rounded {
-                @apply rounded-sm !important;
-            }
-        }
-        
-        /* HUD GRID BACKGROUND */
-        .hud-grid {
-            background-size: 40px 40px;
-            background-image: 
-                linear-gradient(to right, rgba(15, 23, 42, 0.5) 1px, transparent 1px), 
-                linear-gradient(to bottom, rgba(15, 23, 42, 0.5) 1px, transparent 1px);
-            background-position: top center;
-        }
-
-        /* HUD BOX STYLING */
-        .hud-box {
-            @apply relative border border-slate-700/50 bg-slate-900/60 backdrop-blur-md;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-        }
-        .hud-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 20px; height: 20px;
-            border-top: 2px solid theme('colors.brand.500');
-            border-left: 2px solid theme('colors.brand.500');
-            pointer-events: none;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-        .hud-box:hover::before {
-            opacity: 1;
-            box-shadow: -2px -2px 10px theme('colors.brand.500/20');
-        }
-
-        /* Scanline effect */
-        .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 9999;
-            position: fixed;
-            pointer-events: none;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,240,255,0.05) 50%, rgba(0,0,0,0) 100%);
-            opacity: 0.3;
-            animation: scan 8s linear infinite;
-        }
-        @keyframes scan {
-            0% { top: -100px; }
-            100% { top: 100%; }
-        }
-
-        /* Custom Cyber Scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { @apply bg-[#030509]; }
-        ::-webkit-scrollbar-thumb { @apply bg-brand-500 rounded-none hover:bg-white; }
-        
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
-<body class="min-h-screen relative hud-grid">
-    <!-- Visual Effects -->
-    <div class="scanline"></div>
-    <div class="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,#010204_100%)] z-[-1]"></div>
+<body class="flex min-h-screen bg-background text-on-background font-mono">
+    <div class="scanline-overlay fixed inset-0 z-[100] opacity-10 pointer-events-none"></div>
 
-    <!-- Top HUD Navigation -->
-    <nav class="sticky top-0 z-50 w-full border-b border-brand-500/30 bg-[#030509]/90 backdrop-blur-md" x-data="{ open: false }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-14">
-                <div class="flex items-center">
-                    <a href="/dashboard" class="flex items-center space-x-3 group">
-                        <div class="w-2 h-2 bg-brand-500 rounded-none shadow-[0_0_10px_rgba(0,240,255,0.8)] animate-pulse"></div>
-                        <span class="text-sm font-mono font-bold tracking-widest text-white group-hover:text-brand-500 transition-colors uppercase">SYS.OP // MISSION_TRACKER</span>
-                    </a>
+    {% if user %}
+    <!-- Sidebar -->
+    <aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface/90 backdrop-blur-2xl border-r border-outline-variant shadow-xl z-50 py-6">
+        <div class="px-6 mb-8">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary text-xl">precision_manufacturing</span>
                 </div>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-1 font-mono text-xs uppercase tracking-widest">
-                    {% if user %}
-                        <a href="/dashboard" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">DBRD</a>
-                        <a href="/my-tasks" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">INBX</a>
-                        <a href="/search" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">SRCH</a>
-                        <a href="/progress" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">STAT</a>
-                        {% if user.role == 'admin' %}
-                            <a href="/admin/users" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">USR</a>
-                            <a href="/admin/audit-log" class="px-3 py-2 text-slate-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-transparent hover:border-brand-500/30">LOG</a>
-                        {% endif %}
-                        
-                        <div class="ml-4 pl-4 border-l border-slate-700 flex items-center space-x-4">
-                            <span class="text-[10px] font-bold text-brand-500 bg-brand-500/10 px-2 py-0.5 border border-brand-500/30">{{ user.role }}</span>
-                            <a href="/logout" class="text-rose-500 hover:text-rose-400 transition-colors">TERM</a>
-                        </div>
-                    {% else %}
-                        <a href="/login" class="px-4 py-1.5 border border-brand-500 text-brand-500 hover:bg-brand-500 hover:text-[#030509] transition-all shadow-[0_0_15px_rgba(0,240,255,0.2)]">INIT_LOGIN</a>
-                    {% endif %}
-                </div>
-
-                <!-- Mobile Button -->
-                <div class="md:hidden flex items-center">
-                    <button @click="open = !open" class="p-2 text-brand-500 border border-brand-500/30 hover:bg-brand-500/10 transition-colors focus:outline-none">
-                        <svg class="w-5 h-5" x-show="!open" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        <svg class="w-5 h-5" x-show="open" x-cloak fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                <div>
+                    <h1 class="font-headline text-primary font-bold text-xl tracking-tighter uppercase">Mission</h1>
+                    <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em]">Operational OS v2.1</p>
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Menu -->
-        <div x-show="open" 
-             x-cloak
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 -translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="md:hidden border-t border-brand-500/30 bg-[#030509] px-4 pt-2 pb-6 space-y-1 font-mono uppercase tracking-widest text-xs">
-            {% if user %}
-                <a href="/dashboard" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">DBRD // Dashboard</a>
-                <a href="/my-tasks" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">INBX // Inbox</a>
-                <a href="/search" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">SRCH // Search</a>
-                <a href="/progress" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">STAT // Stats</a>
-                {% if user.role == 'admin' %}
-                    <a href="/admin/users" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">USR // Users</a>
-                    <a href="/admin/audit-log" class="block px-3 py-3 text-slate-300 hover:text-brand-500 border-b border-slate-800">LOG // Audit</a>
-                {% endif %}
-                <div class="pt-4 mt-2">
-                    <a href="/logout" class="block px-3 py-2 text-rose-500">TERM // Logout</a>
-                </div>
-            {% else %}
-                <a href="/login" class="block px-3 py-3 text-brand-500 border border-brand-500/30 bg-brand-500/10 text-center mt-2">INIT_LOGIN</a>
+        
+        <nav class="flex-1 flex flex-col gap-1 px-2">
+            <a href="/dashboard" class="flex items-center gap-3 {% if request.url.path == '/dashboard' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">dashboard</span>
+                Dashboard
+            </a>
+            <a href="/my-tasks" class="flex items-center gap-3 {% if request.url.path == '/my-tasks' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">inbox</span>
+                Inbox
+            </a>
+            <a href="/search" class="flex items-center gap-3 {% if request.url.path == '/search' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">search</span>
+                Search
+            </a>
+            <a href="/progress" class="flex items-center gap-3 {% if request.url.path == '/progress' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">monitoring</span>
+                Analytics
+            </a>
+            
+            {% if user.role == 'admin' %}
+            <div class="mt-6 mb-2 px-4">
+                <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Administration</p>
+            </div>
+            <a href="/admin/users" class="flex items-center gap-3 {% if '/admin/users' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">group</span>
+                Users
+            </a>
+            <a href="/admin/audit-log" class="flex items-center gap-3 {% if '/admin/audit-log' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-xs uppercase tracking-widest transition-all">
+                <span class="material-symbols-outlined text-lg">history_edu</span>
+                Audit Log
+            </a>
             {% endif %}
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
-        {% block content %}{% endblock %}
+        <div class="mt-auto px-4 pt-4 border-t border-outline-variant">
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-3 px-2 py-3 mb-2 bg-surface-container rounded-lg border border-outline-variant/30">
+                    <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center font-bold text-xs">
+                        {{ user.email[:1].upper() }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-[10px] font-bold text-on-surface truncate">{{ user.email }}</p>
+                        <p class="text-[9px] text-primary uppercase font-bold tracking-widest">{{ user.role }}</p>
+                    </div>
+                </div>
+                <a href="/logout" class="flex items-center gap-3 text-error hover:bg-error/10 px-3 py-2 text-[11px] uppercase tracking-widest transition-colors rounded-lg">
+                    <span class="material-symbols-outlined text-sm">power_settings_new</span> Terminate Session
+                </a>
+            </div>
+        </div>
+    </aside>
+    {% endif %}
+
+    <main class="flex-1 {% if user %}md:ml-64{% endif %} bg-background min-h-screen flex flex-col relative overflow-hidden">
+        {% if user %}
+        <header class="flex justify-between items-center w-full px-8 h-16 sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-outline-variant shadow-[0_0_8px_rgba(139,92,246,0.1)]">
+            <div class="flex items-center gap-4">
+                <h2 class="font-headline text-primary tracking-tighter uppercase text-lg">{% block header_title %}Command Center{% endblock %}</h2>
+                <div class="flex items-center gap-2 px-3 py-1 bg-surface-container border border-primary/20 rounded">
+                    <div class="w-1.5 h-1.5 rounded-full bg-primary glow-indicator animate-pulse"></div>
+                    <span class="text-[9px] font-bold text-primary uppercase tracking-widest">Active Link</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="relative hidden lg:block">
+                    <form action="/search" method="get">
+                        <input name="q" class="bg-surface-container-low border border-outline-variant text-[11px] text-on-surface px-8 py-1.5 focus:border-primary focus:ring-0 transition-all w-64 rounded" placeholder="QUERY DATABASE..." type="text"/>
+                        <span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant text-sm">search</span>
+                    </form>
+                </div>
+                <button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-all text-xl">notifications</button>
+                <div class="w-8 h-8 border border-primary/40 p-0.5 overflow-hidden rounded-full">
+                    <div class="w-full h-full bg-surface-container-high flex items-center justify-center text-primary text-xs font-bold uppercase">
+                        {{ user.email[:2] }}
+                    </div>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <section class="p-8 flex-1">
+            {% block content %}{% endblock %}
+        </section>
+
+        <footer class="mt-auto p-6 border-t border-outline-variant flex justify-between items-center text-[9px] text-on-surface-variant font-bold uppercase tracking-[0.2em]">
+            <div class="flex gap-6">
+                <span>ENCRYPTED_STREAM: AES-256</span>
+                <span class="hidden sm:inline">LATENCY: 12ms</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span>© 2026 MISSION_TRACKER_OS</span>
+            </div>
+        </footer>
     </main>
 
-    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 font-mono"></div>
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[110] flex flex-col gap-2"></div>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -3,69 +3,69 @@
 {% block title %}Mission Tracker // Deploy Excellence{% endblock %}
 
 {% block content %}
-<div class="relative min-h-[80vh] flex flex-col items-center justify-center overflow-hidden">
+<div class="relative min-h-[80vh] flex flex-col items-center justify-center overflow-hidden font-mono">
     <!-- Hero Background Animation Elements -->
     <div class="absolute inset-0 z-0 pointer-events-none">
-        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s"></div>
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-tertiary/5 rounded-full blur-[150px] animate-pulse" style="animation-delay: 2s"></div>
     </div>
 
     <!-- Main Content -->
-    <div class="relative z-10 text-center max-w-4xl px-4">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 border border-brand-500/30 bg-brand-500/10 text-brand-500 font-mono text-[10px] uppercase tracking-[0.2em] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div class="relative z-10 text-center max-w-4xl px-4 py-20">
+        <div class="inline-flex items-center space-x-3 px-4 py-1.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-[0.3em] mb-12 rounded animate-in fade-in slide-in-from-bottom-4 duration-700">
             <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-primary shadow-[0_0_8px_#8B5CF6]"></span>
             </span>
-            <span>System Status: Operational // v2.0.4</span>
+            <span>Link Established // Operational v4.0.2</span>
         </div>
 
-        <h1 class="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6 leading-none uppercase italic animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            Precision <span class="text-brand-500">Mission</span><br/>
+        <h1 class="text-6xl md:text-8xl font-black text-on-surface tracking-tighter mb-8 leading-[0.9] uppercase italic animate-in fade-in slide-in-from-bottom-6 duration-1000 font-headline">
+            Precision <span class="text-primary glow-indicator-text">Mission</span><br/>
             Management.
         </h1>
 
-        <p class="text-slate-400 text-lg md:text-xl font-mono uppercase tracking-widest mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-            The mission-critical OS for elite drone clubs. Track projects, manage pilots, and deploy excellence in every flight.
+        <p class="text-on-surface-variant text-lg md:text-xl uppercase tracking-[0.2em] mb-16 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 opacity-70">
+            The mission-critical platform for elite flight units. Deploy directives, track telemetry, and optimize club performance.
         </p>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
-            <a href="/signup" class="w-full sm:w-auto px-10 py-5 bg-brand-500 text-[#030509] font-black text-sm uppercase tracking-[0.2em] hover:bg-white hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] transition-all transform active:scale-95">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-8 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
+            <a href="/signup" class="w-full sm:w-auto px-12 py-5 bg-primary text-on-primary font-black text-xs uppercase tracking-[0.3em] hover:brightness-110 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] transition-all transform active:scale-95 rounded-sm">
                 Initialize_Pilot_ID
             </a>
-            <a href="/login" class="w-full sm:w-auto px-10 py-5 border border-brand-500 text-brand-500 font-black text-sm uppercase tracking-[0.2em] hover:bg-brand-500/10 transition-all transform active:scale-95">
-                Existing_Access
+            <a href="/login" class="w-full sm:w-auto px-12 py-5 border border-outline-variant text-on-surface-variant font-black text-xs uppercase tracking-[0.3em] hover:bg-surface-variant hover:text-on-surface transition-all transform active:scale-95 rounded-sm">
+                Access_Archive
             </a>
         </div>
     </div>
 
     <!-- Feature HUD Elements -->
-    <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-700">
-        <div class="hud-box p-8 bg-slate-900/40 border border-slate-800 relative group hover:border-brand-500/50 transition-colors">
-            <div class="text-brand-500 mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-700 px-6">
+        <div class="hud-border p-10 bg-surface-container-lowest/40 relative group hover:hud-border-active transition-all rounded-xl overflow-hidden">
+            <div class="text-primary mb-6">
+                <span class="material-symbols-outlined text-4xl">dashboard</span>
             </div>
-            <h3 class="text-white font-bold uppercase tracking-widest mb-2 group-hover:text-brand-500 transition-colors">Kanban_Intel</h3>
-            <p class="text-slate-500 text-xs font-mono leading-relaxed">Visual mission tracking with real-time status updates and priority markers.</p>
-            <div class="absolute bottom-2 right-2 text-[8px] font-mono text-slate-800">MOD_01</div>
+            <h3 class="text-on-surface font-bold uppercase tracking-widest mb-4 group-hover:text-primary transition-colors text-sm">Visual_Intel</h3>
+            <p class="text-on-surface-variant text-[10px] leading-relaxed uppercase tracking-widest opacity-60">High-density mission tracking with real-time telemetry and priority markers.</p>
+            <div class="absolute bottom-3 right-3 text-[8px] font-bold text-outline-variant">MOD_01</div>
         </div>
 
-        <div class="hud-box p-8 bg-slate-900/40 border border-slate-800 relative group hover:border-brand-500/50 transition-colors">
-            <div class="text-brand-500 mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <div class="hud-border p-10 bg-surface-container-lowest/40 relative group hover:hud-border-active transition-all rounded-xl overflow-hidden">
+            <div class="text-tertiary mb-6">
+                <span class="material-symbols-outlined text-4xl">precision_manufacturing</span>
             </div>
-            <h3 class="text-white font-bold uppercase tracking-widest mb-2 group-hover:text-brand-500 transition-colors">Pilot_Assign</h3>
-            <p class="text-slate-500 text-xs font-mono leading-relaxed">Multi-pilot task allocation with secure audit logs for every command mutation.</p>
-            <div class="absolute bottom-2 right-2 text-[8px] font-mono text-slate-800">MOD_02</div>
+            <h3 class="text-on-surface font-bold uppercase tracking-widest mb-4 group-hover:text-tertiary transition-colors text-sm">Pilot_Sync</h3>
+            <p class="text-on-surface-variant text-[10px] leading-relaxed uppercase tracking-widest opacity-60">Tactical task allocation with encrypted audit logs for every command mutation.</p>
+            <div class="absolute bottom-3 right-3 text-[8px] font-bold text-outline-variant">MOD_02</div>
         </div>
 
-        <div class="hud-box p-8 bg-slate-900/40 border border-slate-800 relative group hover:border-brand-500/50 transition-colors">
-            <div class="text-brand-500 mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <div class="hud-border p-10 bg-surface-container-lowest/40 relative group hover:hud-border-active transition-all rounded-xl overflow-hidden">
+            <div class="text-primary mb-6">
+                <span class="material-symbols-outlined text-4xl">database</span>
             </div>
-            <h3 class="text-white font-bold uppercase tracking-widest mb-2 group-hover:text-brand-500 transition-colors">Data_Vault</h3>
-            <p class="text-slate-500 text-xs font-mono leading-relaxed">Secure task attachments and encrypted comment threads for mission critical files.</p>
-            <div class="absolute bottom-2 right-2 text-[8px] font-mono text-slate-800">MOD_03</div>
+            <h3 class="text-on-surface font-bold uppercase tracking-widest mb-4 group-hover:text-primary transition-colors text-sm">Secure_Uplink</h3>
+            <p class="text-on-surface-variant text-[10px] leading-relaxed uppercase tracking-widest opacity-60">Integrated task attachments and synchronized comms for mission critical files.</p>
+            <div class="absolute bottom-3 right-3 text-[8px] font-bold text-outline-variant">MOD_03</div>
         </div>
     </div>
 </div>

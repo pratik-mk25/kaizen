@@ -1,123 +1,125 @@
 {% extends "base.html" %}
 {% from "macros.html" import avatar, badge with context %}
 
-{% block title %}User Management - Mission Tracker{% endblock %}
+{% block title %}Personnel Management - Mission Tracker{% endblock %}
+{% block header_title %}Personnel Database{% endblock %}
 
 {% block content %}
-<div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-    <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">User Management</h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">Manage club members, access levels, and roles.</p>
+<div class="space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">Registered Personnel</h1>
+            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">Manage pilot clearance levels and authority protocols.</p>
+        </div>
+        
+        <a href="/admin/users/add" class="inline-flex items-center px-6 py-2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-lg hover:brightness-110 active:scale-95 transition-all gap-2">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            Initialize_New_Pilot
+        </a>
     </div>
-    
-    <a href="/admin/users/add" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/25 active:scale-95">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        Add New User
-    </a>
-</div>
 
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Member Name</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Member ID</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Role Status</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {% for p in profiles %}
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-4">
-                            {{ avatar(p, size=10) }}
-                            <div>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ p.display_name or 'No name set' }}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5">
-                        <span class="text-sm font-bold text-brand-600 dark:text-brand-400 font-mono">{{ p.username or 'PENDING' }}</span>
-                    </td>
-                    <td class="px-6 py-5">
-                        {% if p.role == 'admin' %}
-                            {{ badge('Admin', 'red') }}
-                        {% elif p.role == 'lead' %}
-                            {{ badge('Lead', 'blue') }}
-                        {% else %}
-                            {{ badge('Member', 'gray') }}
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-5 text-right">
-                        <div x-data="{ modalOpen: false }">
-                            <button @click="modalOpen = true" class="px-3 py-1.5 hud-box border border-brand-500/30 text-[10px] font-black uppercase tracking-widest text-brand-500 hover:bg-brand-500/10 transition-all focus:outline-none shadow-[0_0_10px_rgba(0,240,255,0.1)]">
-                                PROT_CHG_ROLE
-                            </button>
-                            
-                            <template x-teleport="body">
-                                <div x-show="modalOpen" 
-                                     x-cloak
-                                     class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                                    <!-- Backdrop -->
-                                    <div x-show="modalOpen" 
-                                         x-transition:enter="transition ease-out duration-300"
-                                         x-transition:enter-start="opacity-0"
-                                         x-transition:enter-end="opacity-100"
-                                         @click="modalOpen = false" 
-                                         class="absolute inset-0 bg-[#010204]/90 backdrop-blur-md"></div>
-                                    
-                                    <!-- Modal Content -->
-                                    <div x-show="modalOpen"
-                                         x-transition:enter="transition ease-out duration-300"
-                                         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-                                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                         class="relative hud-box p-8 max-w-sm w-full font-mono border-brand-500/50 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
-                                        
-                                        <div class="flex items-center gap-3 mb-6">
-                                            <div class="w-2 h-2 bg-brand-500 animate-pulse"></div>
-                                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Protocol: Authority_Update</h3>
-                                        </div>
-
-                                        <div class="mb-8">
-                                            <p class="text-[10px] text-slate-400 uppercase tracking-widest leading-relaxed">
-                                                Modifying access clearance for:
-                                                <span class="text-brand-500 block mt-1 font-bold">{{ p.display_name or p.username }}</span>
-                                            </p>
-                                        </div>
-
-                                        <form action="/admin/users/{{ p.id }}/role" method="post" class="space-y-3">
-                                            {% for role in ['member', 'lead', 'admin'] %}
-                                            <button type="submit" name="new_role" value="{{ role }}" 
-                                                    class="w-full text-left px-4 py-3 border transition-all uppercase text-[10px] tracking-widest flex items-center justify-between group
-                                                    {% if p.role == role %}
-                                                        border-brand-500 bg-brand-500/20 text-brand-500
-                                                    {% else %}
-                                                        border-slate-800 text-slate-500 hover:border-brand-500/50 hover:text-brand-400 hover:bg-brand-500/5
-                                                    {% endif %}">
-                                                <span>{{ role }}</span>
-                                                {% if p.role == role %}
-                                                    <span class="w-1.5 h-1.5 bg-brand-500"></span>
-                                                {% else %}
-                                                    <span class="w-1.5 h-1.5 bg-slate-800 group-hover:bg-brand-500/50"></span>
-                                                {% endif %}
-                                            </button>
-                                            {% endfor %}
-                                        </form>
-
-                                        <button @click="modalOpen = false" class="mt-8 w-full py-2 border border-slate-800 text-slate-600 hover:text-white hover:border-slate-400 text-[10px] uppercase tracking-widest transition-colors">
-                                            Abort_Operation
-                                        </button>
-                                    </div>
+    <div class="hud-border bg-surface-container-lowest/40 rounded-xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low border-b border-outline-variant/30">
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Pilot Identity</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Access_ID</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Authority_Level</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Directives</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                    {% for p in profiles %}
+                    <tr class="hover:bg-surface-variant/20 transition-colors">
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-4">
+                                {{ avatar(p, size=10) }}
+                                <div>
+                                    <p class="text-sm font-bold text-on-surface leading-none mb-1 uppercase tracking-wide">{{ p.display_name or 'UNIDENTIFIED' }}</p>
+                                    <p class="text-[9px] text-on-surface-variant font-mono uppercase tracking-tighter">{{ p.email }}</p>
                                 </div>
-                            </template>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-xs font-bold text-primary font-mono tracking-widest uppercase bg-primary/10 px-2 py-1 border border-primary/20 rounded-sm">{{ p.username or 'PENDING_SYNC' }}</span>
+                        </td>
+                        <td class="px-6 py-5">
+                            {% if p.role == 'admin' %}
+                                {{ badge('SYS_ADMIN', 'red') }}
+                            {% elif p.role == 'lead' %}
+                                {{ badge('UNIT_LEAD', 'blue') }}
+                            {% else %}
+                                {{ badge('PILOT_MEM', 'gray') }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-5 text-right">
+                            <div x-data="{ modalOpen: false }">
+                                <button @click="modalOpen = true" class="px-3 py-1.5 border border-outline-variant text-[9px] font-bold uppercase tracking-widest text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all focus:outline-none rounded">
+                                    MOD_CLEARANCE
+                                </button>
+                                
+                                <template x-teleport="body">
+                                    <div x-show="modalOpen" 
+                                         x-cloak
+                                         class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                        <!-- Backdrop -->
+                                        <div x-show="modalOpen" 
+                                             x-transition:enter="transition ease-out duration-300"
+                                             x-transition:enter-start="opacity-0"
+                                             x-transition:enter-end="opacity-100"
+                                             @click="modalOpen = false" 
+                                             class="absolute inset-0 bg-surface-container-lowest/90 backdrop-blur-md"></div>
+                                        
+                                        <!-- Modal Content -->
+                                        <div x-show="modalOpen"
+                                             x-transition:enter="transition ease-out duration-300"
+                                             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                             class="relative bg-surface-container-high border border-primary shadow-[0_0_50px_rgba(139,92,246,0.2)] p-8 max-w-sm w-full font-mono rounded-xl">
+                                            
+                                            <div class="mb-6 flex items-center gap-3">
+                                                <div class="w-2 h-2 bg-primary animate-pulse"></div>
+                                                <h3 class="text-xs font-bold text-on-surface uppercase tracking-widest">Protocol: Authority_Update</h3>
+                                            </div>
+
+                                            <div class="mb-8">
+                                                <p class="text-[10px] text-on-surface-variant uppercase tracking-widest leading-relaxed">
+                                                    Modifying clearance for:
+                                                    <span class="text-primary block mt-1 font-black text-xs">{{ p.display_name or p.username }}</span>
+                                                </p>
+                                            </div>
+
+                                            <form action="/admin/users/{{ p.id }}/role" method="post" class="space-y-3">
+                                                {% for role in ['member', 'lead', 'admin'] %}
+                                                <button type="submit" name="new_role" value="{{ role }}" 
+                                                        class="w-full text-left px-4 py-3 border transition-all uppercase text-[10px] font-bold tracking-widest flex items-center justify-between group rounded-lg
+                                                        {% if p.role == role %}
+                                                            border-primary bg-primary/20 text-primary shadow-[0_0_15px_rgba(139,92,246,0.1)]
+                                                        {% else %}
+                                                            border-outline-variant text-on-surface-variant hover:border-primary/50 hover:text-on-surface hover:bg-surface-variant/30
+                                                        {% endif %}">
+                                                    <span>{{ role }}</span>
+                                                    {% if p.role == role %}
+                                                        <span class="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_#8B5CF6]"></span>
+                                                    {% endif %}
+                                                </button>
+                                                {% endfor %}
+                                            </form>
+
+                                            <button @click="modalOpen = false" class="mt-8 w-full py-2.5 text-[10px] font-bold text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-widest border border-outline-variant/30 rounded">
+                                                Abort_Operation
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

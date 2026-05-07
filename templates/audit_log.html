@@ -1,95 +1,99 @@
 {% extends "base.html" %}
 {% from "macros.html" import badge with context %}
 
-{% block title %}Audit Log - Mission Tracker{% endblock %}
+{% block title %}Audit Log - Live Telemetry{% endblock %}
+{% block header_title %}System Audit Log{% endblock %}
 
 {% block content %}
-<div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-    <div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Audit Log</h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">Full transparency of all mission-critical mutations and operations.</p>
+<div class="space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">System Mutations</h1>
+            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">Full transparency of all mission-critical data modifications.</p>
+        </div>
+        
+        <div class="flex items-center gap-4 px-4 py-2 bg-surface-container border border-outline-variant/30 rounded-full">
+            <div class="w-1.5 h-1.5 bg-primary glow-indicator rounded-full animate-pulse"></div>
+            <span class="text-[10px] font-bold text-primary uppercase tracking-widest">{{ logs|length }} Total Events Captured</span>
+        </div>
     </div>
-    
-    <div class="flex items-center gap-2">
-        <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold rounded-full border border-slate-200 dark:border-slate-700">{{ logs|length }} Total Events</span>
-    </div>
-</div>
 
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-sm">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Timestamp</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Actor</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Action Type</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Entity Details</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Mutation Data</th>
-                    <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Action</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {% for log in logs %}
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td class="px-6 py-5 whitespace-nowrap">
-                        <div class="text-xs font-bold text-slate-900 dark:text-white">{{ log.created_at[:10] }}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{{ log.created_at[11:19] }}</div>
-                    </td>
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-[10px] font-black text-slate-500 border border-slate-200 dark:border-slate-700">
-                                {{ (username_map.get(log.user_id, 'Unknown Member'))[:1].upper() }}
+    <div class="hud-border bg-surface-container-lowest/40 rounded-xl overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low border-b border-outline-variant/30 text-[10px]">
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant">Timestamp</th>
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant">Actor_ID</th>
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant">Mutation_Type</th>
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant">Entity_Details</th>
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant">Payload</th>
+                        <th class="px-6 py-4 font-black uppercase tracking-[0.2em] text-on-surface-variant text-right">Protocol</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 font-mono text-[11px]">
+                    {% for log in logs %}
+                    <tr class="hover:bg-surface-variant/20 transition-colors group">
+                        <td class="px-6 py-5 whitespace-nowrap">
+                            <div class="text-[10px] font-bold text-on-surface uppercase">{{ log.created_at[:10] }}</div>
+                            <div class="text-[9px] font-bold text-primary mt-1 opacity-70">{{ log.created_at[11:19] }}</div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 rounded-full bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-[10px] font-black text-on-surface-variant group-hover:text-primary transition-colors">
+                                    {{ (username_map.get(log.user_id, '??'))[:1].upper() }}
+                                </div>
+                                <span class="text-[10px] font-bold text-on-surface-variant group-hover:text-on-surface truncate max-w-[120px] uppercase tracking-tighter">{{ username_map.get(log.user_id, 'UNKNOWN_OP') }}</span>
                             </div>
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{{ username_map.get(log.user_id, 'Unknown Member') }}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5">
-                        {% if 'created' in log.action %}
-                            {{ badge(log.action.replace('_', ' '), 'green') }}
-                        {% elif 'deleted' in log.action %}
-                            {{ badge(log.action.replace('_', ' '), 'red') }}
-                        {% elif 'updated' in log.action or 'changed' in log.action %}
-                            {{ badge(log.action.replace('_', ' '), 'blue') }}
-                        {% else %}
-                            {{ badge(log.action.replace('_', ' '), 'gray') }}
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-5 whitespace-nowrap">
-                        <div class="text-xs font-bold text-slate-600 dark:text-slate-400 capitalize">{{ log.entity_type }}</div>
-                        <div class="text-[10px] font-medium text-slate-400 mt-1 font-mono">ID: {{ log.entity_id[:8] }}...</div>
-                    </td>
-                    <td class="px-6 py-5 min-w-[300px]">
-                        <div class="space-y-2">
-                            {% if log.new_values and log.new_values != 'null' %}
-                            <div class="p-2 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-xl border border-emerald-100/50 dark:border-emerald-900/20">
-                                <span class="text-[8px] font-black uppercase text-emerald-600 mb-1 block">New State</span>
-                                <p class="text-[10px] font-mono text-emerald-800 dark:text-emerald-400 line-clamp-2">{{ log.new_values }}</p>
-                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            {% if 'created' in log.action %}
+                                {{ badge(log.action.replace('_', ' '), 'green') }}
+                            {% elif 'deleted' in log.action %}
+                                {{ badge(log.action.replace('_', ' '), 'red') }}
+                            {% elif 'updated' in log.action or 'changed' in log.action %}
+                                {{ badge(log.action.replace('_', ' '), 'blue') }}
+                            {% else %}
+                                {{ badge(log.action.replace('_', ' '), 'gray') }}
                             {% endif %}
-                            
-                            {% if log.old_values and log.old_values != 'null' %}
-                            <div class="p-2 bg-rose-50/50 dark:bg-rose-950/10 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
-                                <span class="text-[8px] font-black uppercase text-rose-600 mb-1 block">Previous State</span>
-                                <p class="text-[10px] font-mono text-rose-800 dark:text-rose-400 line-clamp-2">{{ log.old_values }}</p>
+                        </td>
+                        <td class="px-6 py-5 whitespace-nowrap">
+                            <div class="text-[10px] font-bold text-on-surface uppercase tracking-wide">{{ log.entity_type }}</div>
+                            <div class="text-[9px] font-medium text-outline mt-1 font-mono tracking-tighter opacity-50">#{{ log.entity_id[:8] }}</div>
+                        </td>
+                        <td class="px-6 py-5 min-w-[300px]">
+                            <div class="space-y-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                {% if log.new_values and log.new_values != 'null' %}
+                                <div class="p-2 bg-primary/5 rounded border border-primary/10">
+                                    <span class="text-[8px] font-black uppercase text-primary mb-1 block">New_State</span>
+                                    <p class="text-[9px] font-mono text-on-surface-variant line-clamp-1 truncate">{{ log.new_values }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if log.old_values and log.old_values != 'null' %}
+                                <div class="p-2 bg-error/5 rounded border border-error/10">
+                                    <span class="text-[8px] font-black uppercase text-error mb-1 block">Prev_State</span>
+                                    <p class="text-[9px] font-mono text-on-surface-variant line-clamp-1 truncate">{{ log.old_values }}</p>
+                                </div>
+                                {% endif %}
                             </div>
+                        </td>
+                        <td class="px-6 py-5 text-right whitespace-nowrap">
+                            {% if not log.action.startswith('reverted_') %}
+                            <form action="/admin/undo/{{ log.id }}" method="post">
+                                <button type="submit" class="text-[9px] font-bold uppercase tracking-widest text-primary border border-primary/30 bg-primary/5 px-3 py-1.5 rounded hover:bg-primary hover:text-on-primary transition-all">
+                                    REVERT
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-[9px] font-bold text-outline uppercase tracking-widest italic opacity-50">SYNC_REVERTED</span>
                             {% endif %}
-                        </div>
-                    </td>
-                    <td class="px-6 py-5 text-right">
-                        {% if not log.action.startswith('reverted_') %}
-                        <form action="/admin/undo/{{ log.id }}" method="post">
-                            <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:text-brand-700 bg-brand-50 dark:bg-brand-900/20 px-3 py-1.5 rounded-lg border border-brand-100 dark:border-brand-800 transition-all active:scale-90">
-                                Undo
-                            </button>
-                        </form>
-                        {% else %}
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reverted</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

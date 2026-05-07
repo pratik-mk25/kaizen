@@ -1,70 +1,67 @@
 {% macro badge(text, color='gray') %}
 {% set styles = {
-    'gray': 'border-slate-600 text-slate-400 bg-slate-800/50',
-    'green': 'border-emerald-500 text-emerald-400 bg-emerald-950/30 shadow-[0_0_5px_rgba(16,185,129,0.2)]',
-    'yellow': 'border-amber-500 text-amber-400 bg-amber-950/30 shadow-[0_0_5px_rgba(245,158,11,0.2)]',
-    'red': 'border-rose-500 text-rose-400 bg-rose-950/30 shadow-[0_0_5px_rgba(225,29,72,0.2)]',
-    'blue': 'border-brand-500 text-brand-400 bg-brand-950/30 shadow-[0_0_5px_rgba(0,240,255,0.2)]',
-    'brand': 'border-brand-500 text-brand-400 bg-brand-950/30 shadow-[0_0_5px_rgba(0,240,255,0.2)]'
+    'gray': 'border-outline-variant text-on-surface-variant bg-surface-container-low',
+    'green': 'border-tertiary/30 text-tertiary bg-tertiary/10',
+    'yellow': 'border-secondary/30 text-secondary bg-secondary/10',
+    'red': 'border-error/30 text-error bg-error/10',
+    'blue': 'border-primary/30 text-primary bg-primary/10',
+    'brand': 'border-primary/50 text-primary bg-primary/15 shadow-[0_0_10px_rgba(139,92,246,0.1)]'
 } %}
-<span class="inline-flex items-center px-2 py-0.5 border text-[10px] font-mono uppercase tracking-widest {{ styles[color] if color in styles else styles['gray'] }}">
+<span class="inline-flex items-center px-2 py-0.5 border text-[9px] font-bold uppercase tracking-widest rounded-sm {{ styles[color] if color in styles else styles['gray'] }}">
     {{ text }}
 </span>
 {% endmacro %}
 
 {% macro priority_badge(priority) %}
-    {% if priority=='high' %}{{ badge('LVL_3', 'red') }}
-    {% elif priority=='medium' %}{{ badge('LVL_2', 'yellow') }}
-    {% else %}{{ badge('LVL_1', 'gray') }}
+    {% if priority=='high' %}{{ badge('CRIT_LVL', 'red') }}
+    {% elif priority=='medium' %}{{ badge('WARN_LVL', 'yellow') }}
+    {% else %}{{ badge('NORM_LVL', 'gray') }}
     {% endif %}
 {% endmacro %}
 
 {% macro status_badge(status) %}
-    {% if status=='todo' %}{{ badge('AWAIT', 'gray') }}
-    {% elif status=='in_progress' %}{{ badge('EXEC', 'blue') }}
-    {% else %}{{ badge('DONE', 'green') }}
+    {% if status=='todo' %}{{ badge('AWAITING', 'gray') }}
+    {% elif status=='in_progress' %}{{ badge('ACTIVE_OP', 'blue') }}
+    {% else %}{{ badge('COMPLETE', 'green') }}
     {% endif %}
 {% endmacro %}
 
 {% macro due_pill(due_date_str) %}
     {% if due_date_str %}
         {% set due_date = due_date_str[:10] %}
-        {# Convert today to YYYY-MM-DD string for comparison if it's a date object #}
         {% set today_str = today.strftime('%Y-%m-%d') if today.strftime else today %}
         {% set is_overdue = due_date < today_str %}
         
-        <span class="inline-flex items-center px-2 py-0.5 border text-[10px] font-mono uppercase tracking-widest {{ 'border-rose-500 text-rose-500 bg-rose-500/10 animate-pulse' if is_overdue else 'border-slate-600 text-slate-400 bg-slate-800/50' }}">
-            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="inline-flex items-center px-2 py-0.5 border text-[9px] font-bold uppercase tracking-widest rounded-sm {{ 'border-error text-error bg-error/10 animate-pulse' if is_overdue else 'border-outline-variant text-on-surface-variant bg-surface-container-lowest' }}">
+            <span class="material-symbols-outlined text-[10px] mr-1">schedule</span>
             {{ 'OVERDUE: ' if is_overdue }}{{ due_date }}
         </span>
     {% endif %}
 {% endmacro %}
 
 {% macro avatar(profile, size=8) %}
-    {% if profile.avatar_url %}
-        <div class="relative inline-block hud-border">
-            <img src="{{ profile.avatar_url }}" class="w-{{ size }} h-{{ size }} object-cover grayscale opacity-80 hover:grayscale-0 transition-all" alt="">
-        </div>
-    {% else %}
-        <div class="w-{{ size }} h-{{ size }} bg-slate-900 border border-brand-500 text-brand-500 flex items-center justify-center font-mono text-xs font-bold shadow-[0_0_5px_rgba(0,240,255,0.3)]">
-            {{ (profile.display_name or profile.username or 'M')[:1].upper() }}
-        </div>
-    {% endif %}
+    <div class="w-{{ size }} h-{{ size }} rounded-full border border-primary/30 p-0.5 bg-surface-container-high overflow-hidden flex items-center justify-center">
+        {% if profile.avatar_url %}
+            <img src="{{ profile.avatar_url }}" class="w-full h-full object-cover grayscale brightness-125" alt="">
+        {% else %}
+            <span class="text-primary font-bold text-[10px] uppercase">{{ (profile.display_name or profile.username or 'M')[:1] }}</span>
+        {% endif %}
+    </div>
 {% endmacro %}
 
-{% macro empty_state(message, icon='[!]') %}
-<div class="flex flex-col items-center justify-center py-20 px-4 text-center font-mono">
-    <div class="text-4xl text-brand-500 mb-6 opacity-70 animate-pulse">
+{% macro empty_state(message, icon='monitoring') %}
+<div class="flex flex-col items-center justify-center py-20 px-4 text-center font-mono border border-dashed border-outline-variant rounded-xl bg-surface-container-lowest/20">
+    <div class="material-symbols-outlined text-4xl text-primary/40 mb-4 animate-pulse">
         {{ icon }}
     </div>
-    <h3 class="text-lg font-bold text-white mb-2 uppercase tracking-widest">DATA_NOT_FOUND</h3>
-    <p class="text-slate-500 text-xs uppercase tracking-widest max-w-xs">{{ message }}</p>
+    <h3 class="text-xs font-bold text-on-surface uppercase tracking-widest mb-1">Data_Link_Empty</h3>
+    <p class="text-[10px] text-on-surface-variant uppercase tracking-widest max-w-xs">{{ message }}</p>
 </div>
 {% endmacro %}
 
 {% macro confirm_modal(id, title, message, action_url, method='post') %}
 <div x-data="{ open: false }">
-    <button @click="open = true" class="text-rose-500 hover:text-white hover:bg-rose-500 border border-transparent hover:border-rose-500 font-mono text-[10px] uppercase tracking-widest px-2 py-1 transition-colors">DROP</button>
+    <button @click="open = true" class="text-error hover:text-on-error hover:bg-error border border-error/30 font-bold text-[9px] uppercase tracking-widest px-3 py-1.5 rounded transition-all">TERMINATE</button>
     
     <template x-teleport="body">
         <div x-show="open" 
@@ -75,22 +72,23 @@
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
                  @click="open = false" 
-                 class="absolute inset-0 bg-[#030509]/80 backdrop-blur-sm"></div>
+                 class="absolute inset-0 bg-surface-container-lowest/90 backdrop-blur-md"></div>
             
             <div x-show="open"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 scale-95 translate-y-4"
                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                 class="relative bg-slate-900 border border-rose-500 shadow-[0_0_20px_rgba(225,29,72,0.3)] p-6 max-w-sm w-full font-mono">
-                <div class="text-rose-500 mb-4 animate-pulse">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                 class="relative bg-surface-container-high border border-error shadow-[0_0_40px_rgba(147,0,10,0.3)] p-8 max-w-sm w-full font-mono rounded-xl">
+                <div class="text-error mb-6 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-3xl">warning</span>
+                    <h3 class="text-xs font-bold text-on-surface uppercase tracking-widest">Priority_Warning</h3>
                 </div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-widest">WARN: {{ title }}</h3>
-                <p class="mt-2 text-slate-400 text-xs leading-relaxed uppercase">{{ message }}</p>
-                <div class="mt-6 flex gap-3">
-                    <button type="button" @click="open = false" class="flex-1 px-4 py-2 border border-slate-600 hover:border-slate-400 text-slate-400 hover:text-white text-[10px] uppercase tracking-widest transition-colors">ABORT</button>
+                <h3 class="text-sm font-black text-on-surface uppercase tracking-tighter">{{ title }}</h3>
+                <p class="mt-4 text-on-surface-variant text-[10px] leading-relaxed uppercase tracking-wide">{{ message }}</p>
+                <div class="mt-8 flex gap-3">
+                    <button type="button" @click="open = false" class="flex-1 px-4 py-2 border border-outline-variant text-on-surface-variant hover:text-on-surface text-[10px] uppercase tracking-widest transition-colors rounded">Abort</button>
                     <form action="{{ action_url }}" method="{{ method }}" class="flex-1">
-                        <button type="submit" class="w-full px-4 py-2 bg-rose-500/20 border border-rose-500 hover:bg-rose-500 text-rose-500 hover:text-white text-[10px] uppercase tracking-widest shadow-[0_0_10px_rgba(225,29,72,0.2)] transition-all">EXECUTE</button>
+                        <button type="submit" class="w-full px-4 py-2 bg-error text-on-error hover:brightness-110 text-[10px] font-bold uppercase tracking-widest shadow-lg transition-all rounded">Execute</button>
                     </form>
                 </div>
             </div>

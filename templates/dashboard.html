@@ -1,136 +1,157 @@
 {% extends "base.html" %}
-{% from "macros.html" import badge, status_badge, empty_state with context %}
+{% from "macros.html" import badge, status_badge with context %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Command Center - Dashboard{% endblock %}
+{% block header_title %}Command Center{% endblock %}
 
 {% block content %}
-<div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-    <div>
-        <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">Overview of all active drone missions and operations.</p>
-    </div>
-    {% if user.role == 'admin' %}
-    <a href="/admin/missions/create" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/25 active:scale-95">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        New Mission
-    </a>
-    {% endif %}
-</div>
-
-<!-- Stat Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-    <!-- Stat Card: Missions -->
-    <div class="hud-box p-6 transition-all hover:border-brand-500/50">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center text-brand-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            </div>
-            <span class="text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">Active</span>
-        </div>
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Missions</div>
-        <div class="text-3xl font-bold mt-1 text-slate-900 dark:text-white">{{ missions|length }}</div>
-    </div>
-
-    <!-- Stat Card: Tasks -->
-    <div class="hud-box p-6 transition-all hover:border-brand-500/50">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-10 h-10 bg-sky-50 dark:bg-sky-900/20 rounded-xl flex items-center justify-center text-sky-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            </div>
-        </div>
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Tasks</div>
-        <div class="text-3xl font-bold mt-1 text-slate-900 dark:text-white">{{ missions|sum(attribute='task_count') if missions else 0 }}</div>
-    </div>
-
-    <!-- Stat Card: Overdue -->
-    <div class="hud-box p-6 transition-all hover:border-brand-500/50">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center justify-center text-rose-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-        </div>
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Overdue</div>
-        <div class="text-3xl font-bold mt-1 text-rose-500">0</div>
-    </div>
-
-    <!-- Stat Card: Completed -->
-    <div class="hud-box p-6 transition-all hover:border-brand-500/50">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            </div>
-        </div>
-        <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Done (MTD)</div>
-        <div class="text-3xl font-bold mt-1 text-emerald-500">0</div>
-    </div>
-</div>
-
-<h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Missions</h2>
-
-{% if missions %}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for item in missions %}
-        <div onclick="window.location='/missions/{{ item.mission.id }}'" 
-             class="group relative hud-box p-6 transition-all hover:border-brand-500/50 hover:shadow-[0_0_15px_rgba(0,240,255,0.15)] flex flex-col h-full cursor-pointer font-mono">
-            <div class="flex justify-between items-start mb-4">
-                <div class="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg text-slate-400 group-hover:text-brand-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+<section class="grid grid-cols-12 gap-6 auto-rows-min">
+    <!-- Telemetry Main View -->
+    <div class="col-span-12 lg:col-span-8 space-y-6">
+        <div class="hud-border bg-surface-container-lowest/40 p-6 relative overflow-hidden rounded-xl">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <span class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest">Global Telemetry</span>
+                    <h3 class="text-primary text-2xl font-headline font-bold uppercase tracking-tight">Mission Activity Flow</h3>
                 </div>
-                
-                {% if user.role == 'admin' %}
-                <div x-data="{ open: false }" class="relative" @click.stop>
-                    <button @click="open = !open" class="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/></svg>
-                    </button>
-                    <div x-show="open" 
-                         x-cloak
-                         @click.away="open = false" 
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         class="absolute right-0 mt-2 w-36 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-10 p-1">
-                        <a href="/admin/missions/{{ item.mission.id }}/edit" class="flex items-center px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            Edit
-                        </a>
-                        <form action="/admin/missions/{{ item.mission.id }}/delete" method="post" class="block">
-                            <button type="submit" class="w-full flex items-center px-3 py-2 text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                Delete
-                            </button>
-                        </form>
+                <div class="text-right">
+                    <span class="text-tertiary text-xl font-bold font-mono">{{ missions|length }} ACTIVE</span>
+                    <p class="text-[9px] text-on-tertiary-fixed font-bold tracking-widest uppercase">Node Efficiency 98.4%</p>
+                </div>
+            </div>
+            
+            <!-- Re-purposing the bar chart for mission task counts -->
+            <div class="h-48 w-full flex items-end gap-2 px-1">
+                {% for item in missions %}
+                    {% set height = (item.task_count / 10 * 100)|int if item.task_count < 10 else 100 %}
+                    <div class="flex-1 bg-primary/20 h-[{{ height }}%] hover:bg-primary/40 transition-all cursor-crosshair border-t border-primary relative group rounded-t-sm" 
+                         onclick="window.location='/missions/{{ item.mission.id }}'">
+                        <span class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] px-2 py-1 font-bold whitespace-nowrap rounded shadow-lg z-10">
+                            {{ item.mission.name }}: {{ item.task_count }}
+                        </span>
                     </div>
+                {% else %}
+                    <div class="flex-1 bg-surface-container h-1 animate-pulse"></div>
+                {% endfor %}
+            </div>
+            <div class="flex justify-between mt-4 border-t border-outline-variant/30 pt-4 text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">
+                <span>Database Alpha</span>
+                <span>Signal Stable</span>
+                <span>{{ today }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Mission Status -->
+            <div class="hud-border bg-surface-container-lowest/40 p-5 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] text-primary uppercase font-bold tracking-[0.2em]">Operational Status</span>
+                    <a href="/admin/missions/create" class="material-symbols-outlined text-sm text-on-surface-variant hover:text-primary transition-colors">add_circle</a>
+                </div>
+                <div class="space-y-3">
+                    {% for item in missions[:3] %}
+                    <div class="hud-border bg-surface-container p-3 flex items-center justify-between border-l-4 border-l-primary rounded-lg transition-all hover:bg-surface-container-high cursor-pointer"
+                         onclick="window.location='/missions/{{ item.mission.id }}'">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wide">{{ item.mission.name }}</h4>
+                            <p class="text-[9px] text-on-surface-variant uppercase mt-1">{{ item.project_count }} Projects Detected</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-primary font-bold">{{ item.task_count }} UNT</span>
+                            <div class="w-16 h-1 bg-surface-variant mt-1 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-[10px] text-on-surface-variant italic">NO MISSIONS DEPLOYED</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Fleet Stats (Quick Access) -->
+            <div class="hud-border bg-surface-container-lowest/40 p-5 rounded-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] text-primary uppercase font-bold tracking-[0.2em]">Resource Allocation</span>
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">rocket_launch</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 border border-outline-variant bg-surface-container-low flex flex-col gap-1 rounded-lg">
+                        <span class="text-[9px] text-on-surface-variant font-bold uppercase tracking-tighter">Total_Tasks</span>
+                        <span class="text-2xl font-bold font-mono">{{ missions|sum(attribute='task_count') if missions else 0 }}</span>
+                        <div class="flex gap-1 mt-1">
+                            <div class="w-1.5 h-1.5 bg-primary glow-indicator rounded-full"></div>
+                            <div class="w-1.5 h-1.5 bg-primary/20 rounded-full"></div>
+                            <div class="w-1.5 h-1.5 bg-primary/20 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="p-3 border border-outline-variant bg-surface-container-low flex flex-col gap-1 rounded-lg">
+                        <span class="text-[9px] text-on-surface-variant font-bold uppercase tracking-tighter">Active_Users</span>
+                        <span class="text-2xl font-bold font-mono text-tertiary">--</span>
+                        <div class="flex gap-1 mt-1">
+                            <div class="w-1.5 h-1.5 bg-tertiary glow-indicator rounded-full shadow-[0_0_8px_#4cd7f6]"></div>
+                            <div class="w-1.5 h-1.5 bg-tertiary/20 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar Content -->
+    <div class="col-span-12 lg:col-span-4 space-y-6">
+        <div class="hud-border bg-surface-container-lowest/40 flex flex-col h-full rounded-xl overflow-hidden min-h-[400px]">
+            <div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+                <span class="text-[10px] text-primary uppercase font-bold tracking-[0.2em]">Recent Activity Log</span>
+                <div class="flex gap-2 items-center">
+                    <div class="w-1.5 h-1.5 bg-primary glow-indicator rounded-full animate-pulse"></div>
+                    <span class="text-[8px] text-on-surface font-bold tracking-widest uppercase">Streaming</span>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-[10px]">
+                <!-- We will populate this with actual audit logs in a future pass -->
+                <div class="flex gap-3 text-on-surface-variant border-l border-primary/30 pl-3">
+                    <span class="text-primary opacity-60">[{{ today }}]</span>
+                    <p><span class="text-primary font-bold uppercase">AUTH:</span> Session initialized successfully.</p>
+                </div>
+                <div class="flex gap-3 text-on-surface-variant border-l border-tertiary/30 pl-3">
+                    <span class="text-tertiary opacity-60">[00:00:15]</span>
+                    <p><span class="text-tertiary font-bold uppercase">INFO:</span> Command center interface synchronized.</p>
+                </div>
+                {% if not missions %}
+                <div class="flex gap-3 text-error border-l border-error/30 pl-3">
+                    <span class="opacity-60">[WARN]</span>
+                    <p><span class="font-bold uppercase">DATA:</span> No mission data detected in local sector.</p>
                 </div>
                 {% endif %}
             </div>
-
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 leading-tight">
-                <a href="/missions/{{ item.mission.id }}" class="hover:text-brand-600 transition-colors">{{ item.mission.name }}</a>
-            </h3>
             
-            {% if item.mission.description %}
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 flex-grow">{{ item.mission.description }}</p>
-            {% else %}
-                <p class="text-sm italic text-slate-400 dark:text-slate-500 mb-6 flex-grow">No description provided.</p>
-            {% endif %}
-
-            <div class="mt-auto border-t border-slate-100 dark:border-slate-700/50 pt-4 flex items-center gap-3">
-                <div class="flex flex-col">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">Projects</span>
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ item.project_count }}</span>
-                </div>
-                <div class="w-px h-8 bg-slate-100 dark:bg-slate-700"></div>
-                <div class="flex flex-col">
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">Total Tasks</span>
-                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ item.task_count }}</span>
+            <div class="p-4 bg-surface-container border-t border-outline-variant">
+                <div class="flex gap-2 items-center">
+                    <span class="text-primary text-[11px] font-bold">&gt;</span>
+                    <input class="bg-transparent border-none p-0 text-[10px] font-mono focus:ring-0 w-full placeholder:text-on-surface-variant/30 text-primary" 
+                           placeholder="INITIATE COMMAND..." type="text"/>
                 </div>
             </div>
         </div>
-    {% endfor %}
-</div>
-{% else %}
-    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
-        {{ empty_state('No missions yet. Create one to get started!', '🚀') }}
+
+        <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl">
+            <span class="text-[10px] text-primary uppercase font-bold tracking-[0.2em] mb-4 block">Operation Parameters</span>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-on-surface-variant uppercase tracking-widest">Encryption</span>
+                    <span class="font-bold text-tertiary">AES-256-X</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-on-surface-variant uppercase tracking-widest">Network_Link</span>
+                    <span class="font-bold text-primary">STABLE</span>
+                </div>
+                <div class="w-full bg-surface-variant h-1 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-primary to-tertiary w-3/4"></div>
+                </div>
+            </div>
+        </div>
     </div>
-{% endif %}
+</section>
 {% endblock %}
