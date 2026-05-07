@@ -189,3 +189,33 @@ async def delete_task(task_id: str, user: dict = Depends(lead_or_admin_required)
     project_id = task["project_id"]
     crud.delete_task(task_id, user["id"], org_id)
     return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
+
+@router.get("/admin/tasks/create")
+async def create_task_form(request: Request, project_id: str, user: dict = Depends(lead_or_admin_required)):
+    org_id = user.get("organization_id")
+    project = crud.get_project(project_id, org_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return render_template("task_form.html", request, user=user, project=project, task=None)
+
+@router.get("/tasks/{task_id}/edit")
+async def edit_task_form(request: Request, task_id: str, user: dict = Depends(lead_or_admin_required)):
+    org_id = user.get("organization_id")
+    task = crud.get_task(task_id, org_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    project = crud.get_project(task["project_id"], org_id)
+    return render_template("task_form.html", request, user=user, project=project, task=task)
+
+@router.post("/tasks/{task_id}/edit")
+async def edit_task_action(task_id: str, 
+                           title: str = Form(...), description: str = Form(""),
+                           priority: str = Form("medium"), due_date: str = Form(None),
+                           user: dict = Depends(lead_or_admin_required)):
+    org_id = user.get("organization_id")
+    task = crud.get_task(task_id, org_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    crud.update_task(task_id, title, description, priority, due_date if due_date else None, user["id"], org_id)
+    return RedirectResponse(url=f"/tasks/{task_id}", status_code=303)

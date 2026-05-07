@@ -67,6 +67,11 @@
                             {% if ui_mode == 'tactical' %}Purge_Directive{% else %}Delete Task{% endif %}
                         </button>
                     </form>
+
+                    <a href="/tasks/{{ task.id }}/edit" class="px-4 py-2.5 border border-outline-variant text-on-surface-variant rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-surface-variant transition-all active:scale-95 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                        {% if ui_mode == 'tactical' %}Modify_Params{% else %}Edit Task{% endif %}
+                    </a>
                     
                     <form action="/tasks/{{ task.id }}/update-status" method="post" class="inline">
                         {% if task.status == 'todo' %}
