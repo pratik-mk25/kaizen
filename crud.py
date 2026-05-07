@@ -393,15 +393,3 @@ def revert_action(log_id: str, admin_id: str):
                old_values=json.loads(log["new_values"]) if log["new_values"] else None,
                new_values=old_values, org_id=org_id)
     return True
-s the table name is different
-        if entity_type == "task_attachment":
-             table = "task_attachments"
-        supabase.table(table).insert(old_values).execute()
-    
-    else:
-        raise Exception(f"Action '{action}' cannot be automatically reverted yet.")
-
-    log_action(admin_id, f"reverted_{action}", entity_type, entity_id, 
-               old_values=json.loads(log["new_values"]) if log["new_values"] else None,
-               new_values=old_values, org_id=org_id)
-    return True
