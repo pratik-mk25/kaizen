@@ -151,32 +151,46 @@ CREATE POLICY "Users can update their own profiles" ON public.profiles FOR UPDAT
 DROP POLICY IF EXISTS "Missions are visible by organization members" ON public.missions;
 CREATE POLICY "Missions are visible by organization members" ON public.missions FOR SELECT USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can create missions" ON public.missions;
 CREATE POLICY "Admins can create missions" ON public.missions FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+DROP POLICY IF EXISTS "Admins can update missions" ON public.missions;
 CREATE POLICY "Admins can update missions" ON public.missions FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+DROP POLICY IF EXISTS "Admins can delete missions" ON public.missions;
 CREATE POLICY "Admins can delete missions" ON public.missions FOR DELETE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
 
 -- PROJECTS
 DROP POLICY IF EXISTS "Projects are visible by organization members" ON public.projects;
 CREATE POLICY "Projects are visible by organization members" ON public.projects FOR SELECT USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Leads/Admins can manage projects" ON public.projects;
 CREATE POLICY "Leads/Admins can manage projects" ON public.projects FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'lead')));
 
 -- TASKS
 DROP POLICY IF EXISTS "Tasks are visible by organization members" ON public.tasks;
 CREATE POLICY "Tasks are visible by organization members" ON public.tasks FOR SELECT USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Everyone in org can manage tasks" ON public.tasks;
 CREATE POLICY "Everyone in org can manage tasks" ON public.tasks FOR ALL USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
 -- AUDIT LOGS
+DROP POLICY IF EXISTS "Users can insert audit logs" ON public.audit_logs;
 CREATE POLICY "Users can insert audit logs" ON public.audit_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view org audit logs" ON public.audit_logs;
 CREATE POLICY "Users can view org audit logs" ON public.audit_logs FOR SELECT USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
 -- COMMENTS & ATTACHMENTS
+DROP POLICY IF EXISTS "Org members can manage comments" ON public.comments;
 CREATE POLICY "Org members can manage comments" ON public.comments FOR ALL USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Org members can manage attachments" ON public.task_attachments;
 CREATE POLICY "Org members can manage attachments" ON public.task_attachments FOR ALL USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
 
 -- ASSIGNEES
 ALTER TABLE public.task_assignees ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Org members can manage assignees" ON public.task_assignees;
 CREATE POLICY "Org members can manage assignees" ON public.task_assignees FOR ALL USING (EXISTS (
     SELECT 1 FROM tasks t JOIN profiles p ON t.organization_id = p.organization_id 
     WHERE t.id = task_id AND p.id = auth.uid()
