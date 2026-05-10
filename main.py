@@ -8,7 +8,10 @@ import auth
 from templates_utils import render_template
 from routers import auth as auth_router, missions, projects, tasks, admin, dashboard, settings
 
-load_dotenv()
+# Force absolute path for .env loading
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 app = FastAPI(title="Mission Tracker")
 
 # 401 Exception Handler
