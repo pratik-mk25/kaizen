@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 import crud
 from auth import get_current_user, admin_required
 from templates_utils import render_template, get_username_map
+from notifications import notify_project_created
 
 router = APIRouter(tags=["projects"])
 
@@ -29,7 +30,12 @@ async def create_project_form(request: Request, mission_id: str, user: dict = De
 
 @router.post("/admin/projects/create")
 async def create_project_action(request: Request, mission_id: str = Form(...), name: str = Form(...), description: str = Form(""), lead_id: str = Form(None), user: dict = Depends(admin_required)):
-    crud.create_project(name, description, mission_id, lead_id if lead_id else None, user["id"], user.get("organization_id"))
+    org_id = user.get("organization_id")
+    new_project = crud.create_project(name, description, mission_id, lead_id if lead_id else None, user["id"], org_id)
+    try:
+        notify_project_created(new_project, user.get("email", "Unknown"), org_id=org_id)
+    except:
+        pass
     return RedirectResponse(url=f"/missions/{mission_id}", status_code=303)
 
 @router.get("/admin/projects/{project_id}/edit")

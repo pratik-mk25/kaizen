@@ -13,7 +13,7 @@ async def signup_page(request: Request):
     return render_template("signup.html", request)
 
 @router.post("/signup")
-async def signup_post(request: Request, club_name: str = Form(...), email: str = Form(...), password: str = Form(...)):
+async def signup_post(request: Request, club_name: str = Form(...), email: str = Form(...), password: str = Form(...), discord_webhook_url: Optional[str] = Form(None)):
     try:
         # 1. Check if organization exists, if not create it
         org_res = supabase.table("organizations").select("*").ilike("name", club_name).execute()
@@ -21,7 +21,10 @@ async def signup_post(request: Request, club_name: str = Form(...), email: str =
             org_id = org_res.data[0]["id"]
         else:
             # Create new organization
-            new_org = supabase.table("organizations").insert({"name": club_name}).execute()
+            org_payload = {"name": club_name}
+            if discord_webhook_url:
+                org_payload["discord_webhook_url"] = discord_webhook_url
+            new_org = supabase.table("organizations").insert(org_payload).execute()
             if not new_org.data:
                 raise Exception("Failed to create organization")
             org_id = new_org.data[0]["id"]

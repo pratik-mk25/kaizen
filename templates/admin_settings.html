@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Organization Settings — Mission Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col gap-2">
+        <h2 class="text-4xl font-headline font-bold tracking-tight uppercase">Organization Settings</h2>
+        <p class="text-on-surface-variant uppercase tracking-widest text-xs">Configure your club's operational parameters</p>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+        <div class="p-6 border-b border-outline-variant bg-surface-container/50">
+            <h3 class="font-headline text-xl font-bold uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">corporate_fare</span>
+                General Configuration
+            </h3>
+        </div>
+        
+        <form action="/admin/settings" method="POST" class="p-8 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Org Name -->
+                <div class="space-y-2">
+                    <label for="name" class="block text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Organization Name</label>
+                    <input type="text" id="name" name="name" value="{{ organization.name }}" required
+                           class="w-full bg-surface-container-high border border-outline-variant rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"/>
+                    <p class="text-[9px] text-on-surface-variant uppercase tracking-wider">The name of your club as it appears throughout the system.</p>
+                </div>
+
+                <!-- Org ID (Read Only) -->
+                <div class="space-y-2 opacity-60">
+                    <label class="block text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Organization ID (System)</label>
+                    <div class="w-full bg-surface-container border border-outline-variant rounded-lg px-4 py-3 text-sm font-mono select-all">
+                        {{ organization.id }}
+                    </div>
+                    <p class="text-[9px] text-on-surface-variant uppercase tracking-wider">Unique system identifier (cannot be changed).</p>
+                </div>
+            </div>
+
+            <div class="border-t border-outline-variant pt-8">
+                <h3 class="font-headline text-xl font-bold uppercase flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-[#5865F2]">hub</span>
+                    Discord Integration
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="discord_webhook_url" class="block text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Discord Webhook URL</label>
+                        <input type="url" id="discord_webhook_url" name="discord_webhook_url" 
+                               value="{{ organization.discord_webhook_url or '' }}"
+                               placeholder="https://discord.com/api/webhooks/..."
+                               class="w-full bg-surface-container-high border border-outline-variant rounded-lg px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"/>
+                        <p class="text-[9px] text-on-surface-variant uppercase tracking-wider">Paste your Discord channel webhook URL here to enable real-time notifications for missions and tasks.</p>
+                    </div>
+
+                    <div class="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-4">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-primary uppercase tracking-widest">How to get this?</p>
+                            <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                                Go to Discord Channel Settings > Integrations > Webhooks > New Webhook. 
+                                Copy the URL and paste it above.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4">
+                <button type="submit" class="bg-primary text-on-primary font-headline px-8 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <span class="material-symbols-outlined">save</span>
+                    Save Configuration
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Audit Logs Link -->
+    <div class="flex justify-center">
+        <a href="/admin/audit-log" class="text-[10px] font-bold text-outline hover:text-primary transition-all uppercase tracking-[0.3em] flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">history</span>
+            View Organization Audit History
+        </a>
+    </div>
+</div>
+{% endblock %}

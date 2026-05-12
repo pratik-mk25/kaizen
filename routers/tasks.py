@@ -23,7 +23,7 @@ async def add_task(request: Request, project_id: str,
     
     # Notify Discord
     try:
-        notify_task_created(new_task, user.get("email", "Unknown"))
+        notify_task_created(new_task, user.get("email", "Unknown"), org_id=org_id)
     except:
         pass
 
@@ -53,7 +53,7 @@ async def update_task_status(request: Request, task_id: str, new_status: str = F
         crud.update_task_status(task_id, new_status, user["id"], org_id)
         # Notify Discord
         try:
-            notify_task_status_changed(task, old_status, new_status, user.get("email", "Unknown"))
+            notify_task_status_changed(task, old_status, new_status, user.get("email", "Unknown"), org_id=org_id)
         except:
             pass
     except Exception as e:

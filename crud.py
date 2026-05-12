@@ -418,3 +418,13 @@ def revert_action(log_id: str, admin_id: str):
                old_values=json.loads(log["new_values"]) if log["new_values"] else None,
                new_values=old_values, org_id=org_id)
     return True
+
+# ---------- Organizations ----------
+def get_organization(org_id: str):
+    return _get_client().table("organizations").select("*").eq("id", org_id).single().execute().data
+
+def update_organization_settings(org_id: str, name: str, discord_webhook_url: str | None, admin_id: str):
+    old = get_organization(org_id)
+    new_data = {"name": name, "discord_webhook_url": discord_webhook_url}
+    _get_client().table("organizations").update(new_data).eq("id", org_id).execute()
+    log_action(admin_id, "organization_updated", "organization", org_id, old_values=old, new_values=new_data, org_id=org_id)

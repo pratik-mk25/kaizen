@@ -27,7 +27,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         </div>
-                        <input type="text" name="club_name" placeholder="e.g. Vihang-Alpha" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-brand-500 transition-all dark:text-white outline-none">
+                        <input type="text" name="club_name" placeholder="e.g. Vihang-Alpha" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-primary transition-all dark:text-white outline-none">
                     </div>
                 </div>
 
@@ -37,7 +37,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206"/></svg>
                         </div>
-                        <input type="email" name="email" placeholder="name@company.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-brand-500 transition-all dark:text-white outline-none">
+                        <input type="email" name="email" placeholder="name@company.com" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-primary transition-all dark:text-white outline-none">
                     </div>
                 </div>
 
@@ -47,12 +47,25 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         </div>
-                        <input type="password" name="password" placeholder="••••••••" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-brand-500 transition-all dark:text-white outline-none">
+                        <input type="password" name="password" placeholder="••••••••" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-primary transition-all dark:text-white outline-none">
                     </div>
-                    <p class="mt-2 text-[10px] text-slate-400">Must be at least 8 characters with numbers and symbols.</p>
                 </div>
 
-                <button type="submit" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-[0.98] mt-4">
+                <div x-data="{ showDiscord: false }">
+                    <button type="button" @click="showDiscord = !showDiscord" class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] flex items-center gap-2 mb-4 hover:opacity-80 transition-all">
+                        <span class="material-symbols-outlined text-sm" x-text="showDiscord ? 'remove_circle' : 'add_circle'">add_circle</span>
+                        Optional: Add Discord Webhook
+                    </button>
+                    
+                    <div x-show="showDiscord" x-transition class="space-y-2 mb-6 p-4 bg-slate-50 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Discord Webhook URL</label>
+                        <input type="url" name="discord_webhook_url" placeholder="https://discord.com/api/webhooks/..." 
+                               class="w-full bg-white dark:bg-slate-900 border-none rounded-xl px-4 py-3 text-xs font-mono focus:ring-2 focus:ring-primary transition-all dark:text-white outline-none">
+                        <p class="text-[9px] text-slate-400 leading-tight">Paste your Discord channel webhook URL here to enable real-time notifications for missions and tasks.</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-primary text-on-primary rounded-2xl font-bold hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-[0.98] mt-4 uppercase tracking-[0.2em]">
                     Create Account
                 </button>
             </form>

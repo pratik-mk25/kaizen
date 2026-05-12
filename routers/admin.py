@@ -62,3 +62,16 @@ async def undo_action(log_id: str, user: dict = Depends(admin_required)):
     except Exception:
         pass
     return RedirectResponse(url="/admin/audit-log", status_code=303)
+
+@router.get("/settings")
+async def org_settings_form(request: Request, user: dict = Depends(admin_required)):
+    org_id = user.get("organization_id")
+    organization = crud.get_organization(org_id)
+    return render_template("admin_settings.html", request, user=user, organization=organization)
+
+@router.post("/settings")
+async def org_settings_action(request: Request, name: str = Form(...), discord_webhook_url: str = Form(None),
+                              user: dict = Depends(admin_required)):
+    org_id = user.get("organization_id")
+    crud.update_organization_settings(org_id, name, discord_webhook_url or None, user["id"])
+    return RedirectResponse(url="/admin/settings", status_code=303)

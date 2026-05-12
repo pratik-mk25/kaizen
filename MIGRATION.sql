@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
+    discord_webhook_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -128,6 +129,9 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='audit_logs' AND column_name='organization_id') THEN
         ALTER TABLE public.audit_logs ADD COLUMN organization_id UUID REFERENCES organizations(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='organizations' AND column_name='discord_webhook_url') THEN
+        ALTER TABLE public.organizations ADD COLUMN discord_webhook_url TEXT;
     END IF;
 END $$;
 
