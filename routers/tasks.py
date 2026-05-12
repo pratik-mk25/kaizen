@@ -4,7 +4,7 @@ import crud
 from auth import get_current_user, lead_or_admin_required
 from templates_utils import render_template, get_username_map, env as jinja_env
 from database import supabase_admin
-from notifications import notify_task_created, notify_task_status_changed
+from notifications import notify_task_created, notify_task_status_changed, notify_task_updated
 
 router = APIRouter(tags=["tasks"])
 
@@ -217,9 +217,28 @@ async def edit_task_action(task_id: str,
                            priority: str = Form("medium"), due_date: str = Form(None),
                            user: dict = Depends(lead_or_admin_required)):
     org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
-    if not task:
+    old_task = crud.get_task(task_id, org_id)
+    if not old_task:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    # Track changes for Discord Timeline Alert
+    changes = []
+    if old_task["title"] != title:
+        changes.append(f"🔹 **Title:** {old_task['title']} ➔ {title}")
+    if old_task["priority"] != priority:
+        changes.append(f"🔸 **Priority:** {old_task['priority'].upper()} ➔ {priority.upper()}")
+    if (old_task.get("due_date") or "") != (due_date or ""):
+        old_due = old_task.get("due_date") or "None"
+        new_due = due_date or "None"
+        changes.append(f"📅 **Timeline:** {old_due} ➔ {new_due}")
+
     crud.update_task(task_id, title, description, priority, due_date if due_date else None, user["id"], org_id)
+    
+    if changes:
+        try:
+            updated_task = crud.get_task(task_id, org_id)
+            notify_task_updated(updated_task, user.get("email", "Unknown"), changes, org_id=org_id)
+        except:
+            pass
+
     return RedirectResponse(url=f"/tasks/{task_id}", status_code=303)

@@ -47,3 +47,14 @@ def notify_task_status_changed(task: dict, old_status: str, new_status: str, use
 def notify_project_created(project: dict, user_name: str, org_id: str | None = None):
     content = f"**New Project Created**\n**Name:** {project['name']}\n**Mission ID:** {project['mission_id']}\n**Created By:** {user_name}"
     send_discord_notification(content, org_id=org_id, title="🏗️ NEW PROJECT", color=0xf59e0b)
+
+def notify_task_updated(task: dict, user_name: str, changes: list, org_id: str | None = None):
+    change_text = "\n".join(changes)
+    priority = task.get("priority", "medium").upper()
+    due_date = task.get("due_date", "No Deadline")
+    
+    content = f"**Task Updated**\n**Task:** {task['title']}\n**Priority:** {priority}\n**Deadline:** {due_date}\n\n**Changes:**\n{change_text}\n\n**Updated By:** {user_name}"
+    
+    # Color logic: High priority updates get red, others blue
+    color = 0xef4444 if priority == "HIGH" else 0x3b82f6
+    send_discord_notification(content, org_id=org_id, title="📝 TASK UPDATED", color=color)
