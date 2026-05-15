@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const missionIDs = [];
 
     {% for item in missions %}
-        missionLabels.push("{% if ui_mode == 'tactical' %}{{ item.mission.name.upper() }}{% else %}{{ item.mission.name }}{% endif %}");
+        missionLabels.push("{{ item.mission.name.upper() if ui_mode == 'tactical' else item.mission.name }}");
         missionProgress.push({{ item.progress }});
         missionTotal.push({{ item.task_count }});
         missionIDs.push("{{ item.mission.id }}");
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 theme: isDark ? 'dark' : 'light',
                 y: {
                     formatter: function(val, { series, seriesIndex, dataPointIndex, w }) {
-                        return val + "% (" + missionTotal[dataPointIndex] + " {% if ui_mode == 'tactical' %}Directives{% else %}tasks{% endif %})";
+                        return val + "% (" + missionTotal[dataPointIndex] + " {{ 'Directives' if ui_mode == 'tactical' else 'tasks' }})";
                     }
                 }
             }
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector("#activity-bar-chart").innerHTML = `
             <div class="h-64 flex flex-col items-center justify-center border border-dashed border-outline-variant/30 rounded-lg">
                 <span class="material-symbols-outlined text-4xl text-on-surface-variant opacity-20 mb-4">query_stats</span>
-                <p class="text-[10px] text-on-surface-variant italic uppercase tracking-widest">{% if ui_mode == 'tactical' %}No telemetry data matching current filters.{% else %}No data matching current filters.{% endif %}</p>
+                <p class="text-[10px] text-on-surface-variant italic uppercase tracking-widest">{{ 'No telemetry data matching current filters.' if ui_mode == 'tactical' else 'No data matching current filters.' }}</p>
             </div>
         `;
     }
