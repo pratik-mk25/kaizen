@@ -11,7 +11,7 @@
     
     <style>
         :root {
-            --font-main: 'Inter', sans-serif;
+            --font-main: {% if ui_mode == 'tactical' %}'JetBrains Mono', monospace{% else %}'Inter', sans-serif{% endif %};
         }
         body {
             background-color: {% if theme == 'dark' %}#0a0a0f{% else %}#f8fafc{% endif %};
@@ -110,7 +110,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
-<body class="flex min-h-screen bg-background text-on-background font-sans" x-data="{ mobileNav: false }">
+<body class="flex min-h-screen bg-background text-on-background {% if ui_mode == 'tactical' %}font-mono uppercase{% else %}font-sans{% endif %}" x-data="{ mobileNav: false }">
 
     {% if user %}
     <!-- Mobile Header Bar -->
@@ -139,7 +139,7 @@
                 <h1 class="font-headline font-bold text-5xl tracking-tighter uppercase leading-none">
                     <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">Mission</span><span class="text-[#8B5CF6]">Tracker</span>
                 </h1>
-                <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">Project Management</p>
+                <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">{% if ui_mode == 'tactical' %}Operational OS v2.1{% else %}Project Management{% endif %}</p>
             </div>
 
             <nav class="flex-1 flex flex-col gap-1 px-2">
@@ -183,7 +183,7 @@
                     </div>
                 </div>
                 <a href="/logout" class="flex items-center gap-3 text-error hover:bg-error/10 px-3 py-2 text-[11px] uppercase tracking-widest transition-colors rounded-lg">
-                    <span class="material-symbols-outlined text-sm">power_settings_new</span> Logout
+                    <span class="material-symbols-outlined text-sm">power_settings_new</span> {% if ui_mode == 'tactical' %}Terminate{% else %}Logout{% endif %}
                 </a>
             </div>
         </div>
@@ -198,7 +198,7 @@
                 <h1 class="font-headline font-bold text-5xl tracking-tighter uppercase leading-none">
                     <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">Mission</span><span class="text-[#8B5CF6]">Tracker</span>
                 </h1>
-                <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">Project Management</p>
+                <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">{% if ui_mode == 'tactical' %}Operational OS v2.1{% else %}Project Management{% endif %}</p>
             </div>
         </div>
         
@@ -241,16 +241,23 @@
 
         <!-- Settings Toggles -->
         <div class="px-4 py-4 border-t border-outline-variant bg-surface-container-low/50">
-            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Theme</p>
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Preferences</p>
             <form action="/settings/preferences" method="POST" class="space-y-3">
                 <input type="hidden" name="theme" value="{{ theme }}">
-                <input type="hidden" name="ui_mode" value="standard">
+                <input type="hidden" name="ui_mode" value="{{ ui_mode }}">
 
                 <div class="flex items-center justify-between">
-                    <span class="text-[9px] font-bold text-on-surface-variant uppercase">Appearance</span>
+                    <span class="text-[9px] font-bold text-on-surface-variant uppercase">Theme</span>
                     <div class="flex bg-surface-container p-0.5 rounded border border-outline-variant/30">
-                        <button type="submit" name="theme" value="dark" class="px-3 py-1 text-[8px] font-bold rounded {% if theme == 'dark' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">DARK</button>
-                        <button type="submit" name="theme" value="light" class="px-3 py-1 text-[8px] font-bold rounded {% if theme == 'light' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">LIGHT</button>
+                        <button type="submit" name="theme" value="dark" class="px-2 py-1 text-[8px] font-bold rounded {% if theme == 'dark' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">DARK</button>
+                        <button type="submit" name="theme" value="light" class="px-2 py-1 text-[8px] font-bold rounded {% if theme == 'light' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">LIGHT</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-bold text-on-surface-variant uppercase">Mode</span>
+                    <div class="flex bg-surface-container p-0.5 rounded border border-outline-variant/30">
+                        <button type="submit" name="ui_mode" value="tactical" class="px-2 py-1 text-[8px] font-bold rounded {% if ui_mode == 'tactical' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">TAC</button>
+                        <button type="submit" name="ui_mode" value="standard" class="px-2 py-1 text-[8px] font-bold rounded {% if ui_mode == 'standard' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">STD</button>
                     </div>
                 </div>
             </form>
@@ -268,7 +275,7 @@
                     </div>
                 </div>
                 <a href="/logout" class="flex items-center gap-3 text-error hover:bg-error/10 px-3 py-2 text-[11px] uppercase tracking-widest transition-colors rounded-lg">
-                    <span class="material-symbols-outlined text-sm">power_settings_new</span> Logout
+                    <span class="material-symbols-outlined text-sm">power_settings_new</span> {% if ui_mode == 'tactical' %}Terminate Session{% else %}Logout{% endif %}
                 </a>
             </div>
         </div>
@@ -285,7 +292,7 @@
             <div class="flex items-center gap-4">
                 <div class="relative hidden lg:block">
                     <form action="/search" method="get">
-                        <input name="q" class="bg-surface-container-low border border-outline-variant text-[11px] text-on-surface px-8 py-1.5 focus:border-primary focus:ring-0 transition-all w-64 rounded" placeholder="Search tasks..." type="text"/>
+                        <input name="q" class="bg-surface-container-low border border-outline-variant text-[11px] text-on-surface px-8 py-1.5 focus:border-primary focus:ring-0 transition-all w-64 rounded" placeholder="{% if ui_mode == 'tactical' %}QUERY DATABASE...{% else %}Search tasks...{% endif %}" type="text"/>
                         <span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant text-sm">search</span>
                     </form>
                 </div>

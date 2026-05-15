@@ -8,7 +8,32 @@ from services.users import get_all_users_detailed
 BASE_DIR = Path(__file__).resolve().parent
 env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")), autoescape=True)
 
-TERMINOLOGY = {
+TACTICAL_DICT = {
+    "dashboard": "Overview",
+    "tasks": "Actions",
+    "todo": "Queued",
+    "in_progress": "Active",
+    "done": "Complete",
+    "users": "Team",
+    "audit_log": "Activity Log",
+    "search": "Search",
+    "analytics": "Insights",
+    "mission": "Campaign",
+    "project": "Stream",
+    "task": "Item",
+    "overdue": "Past Due",
+    "due_today": "Due Today",
+    "due_this_week": "This Week",
+    "upcoming": "Scheduled",
+    "no_due": "Flexible",
+    "priority": "Priority",
+    "status": "Status",
+    "lead": "Lead",
+    "member": "Member",
+    "admin": "Admin",
+}
+
+STANDARD_DICT = {
     "dashboard": "Dashboard",
     "tasks": "Tasks",
     "todo": "To Do",
@@ -47,7 +72,9 @@ def render_template(template_name: str, request: Request, **kwargs) -> HTMLRespo
     template = env.get_template(template_name)
 
     theme = request.cookies.get("theme", "dark")
-    ui_mode = "standard"
+    ui_mode = request.cookies.get("ui_mode", "standard")
+
+    t_dict = TACTICAL_DICT if ui_mode == "tactical" else STANDARD_DICT
 
     if "username_map" not in kwargs:
         user = kwargs.get("user")
@@ -59,7 +86,7 @@ def render_template(template_name: str, request: Request, **kwargs) -> HTMLRespo
         today=date.today(),
         theme=theme,
         ui_mode=ui_mode,
-        t=TERMINOLOGY,
+        t=t_dict,
         **kwargs,
     )
     return HTMLResponse(html_content)

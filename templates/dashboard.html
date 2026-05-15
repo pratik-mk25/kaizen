@@ -18,17 +18,17 @@
             
             <form method="get" class="flex items-center gap-3">
                 <select name="mission_id" onchange="this.form.submit()" class="bg-surface-container-low border border-outline-variant/30 rounded px-2 py-1 text-[9px] font-bold text-on-surface focus:ring-1 focus:ring-primary outline-none uppercase">
-                    <option value="">All Missions</option>
+                    <option value="">{% if ui_mode == 'tactical' %}ALL SECTORS{% else %}All Missions{% endif %}</option>
                     {% for m in all_missions %}
-                    <option value="{{ m.id }}" {% if selected_mission == m.id %}selected{% endif %}>{{ m.name }}</option>
+                    <option value="{{ m.id }}" {% if selected_mission == m.id %}selected{% endif %}>{% if ui_mode == 'tactical' %}{{ m.name.upper() }}{% else %}{{ m.name }}{% endif %}</option>
                     {% endfor %}
                 </select>
 
                 {% if all_projects %}
                 <select name="project_id" onchange="this.form.submit()" class="bg-surface-container-low border border-outline-variant/30 rounded px-2 py-1 text-[9px] font-bold text-on-surface focus:ring-1 focus:ring-primary outline-none uppercase">
-                    <option value="">All Projects</option>
+                    <option value="">{% if ui_mode == 'tactical' %}ALL NODE_CLUSTERS{% else %}All Projects{% endif %}</option>
                     {% for p in all_projects %}
-                    <option value="{{ p.id }}" {% if selected_project == p.id %}selected{% endif %}>{{ p.name }}</option>
+                    <option value="{{ p.id }}" {% if selected_project == p.id %}selected{% endif %}>{% if ui_mode == 'tactical' %}{{ p.name.upper() }}{% else %}{{ p.name }}{% endif %}</option>
                     {% endfor %}
                 </select>
                 {% endif %}
@@ -44,7 +44,7 @@
         <div class="hud-border bg-error/10 border-error/30 p-2 px-4 rounded-lg flex items-center gap-3 animate-pulse shrink-0">
             <span class="material-symbols-outlined text-error text-sm">warning</span>
             <p class="text-[9px] font-bold text-error uppercase tracking-widest flex-1">
-                {{ alerts|length }} tasks require immediate attention.
+                {{ alerts|length }} {% if ui_mode == 'tactical' %}directives{% else %}tasks{% endif %} require immediate attention.
             </p>
             <a href="/my-tasks" class="text-[8px] font-bold text-error underline uppercase tracking-widest hover:text-white">Resolve</a>
         </div>
@@ -54,7 +54,7 @@
         <div class="hud-border bg-surface-container-lowest/40 p-4 relative overflow-hidden rounded-xl shadow-2xl flex-1 min-h-0 flex flex-col">
             <div class="flex justify-between items-start mb-2 shrink-0">
                 <div>
-                    <h3 class="text-primary text-xl font-headline font-bold uppercase tracking-tight">Progress Overview</h3>
+                    <h3 class="text-primary text-xl font-headline font-bold uppercase tracking-tight">{% if ui_mode == 'tactical' %}{{ t.mission }} Data Flow{% else %}Progress Overview{% endif %}</h3>
                 </div>
                 <div class="text-right">
                     <span class="text-tertiary text-sm font-bold font-mono">{{ missions|length }}</span>
@@ -70,7 +70,7 @@
             <!-- Mission Status -->
             <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl flex flex-col">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-[9px] text-primary uppercase font-bold tracking-widest">Mission Status</span>
+                    <span class="text-[9px] text-primary uppercase font-bold tracking-widest">{% if ui_mode == 'tactical' %}Operation_Status{% else %}Mission Status{% endif %}</span>
                     {% if user.role == 'admin' %}
                     <a href="/admin/missions/create" class="material-symbols-outlined text-xs text-on-surface-variant hover:text-primary transition-colors">add_circle</a>
                     {% endif %}
@@ -98,22 +98,22 @@
 
             <!-- Quick Stats -->
             <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl">
-                <span class="text-[9px] text-primary uppercase font-bold tracking-widest mb-3 block">Overview</span>
+                <span class="text-[9px] text-primary uppercase font-bold tracking-widest mb-3 block">{% if ui_mode == 'tactical' %}Resource_Allocation{% else %}Overview{% endif %}</span>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="p-2 border border-outline-variant bg-surface-container-low flex flex-col gap-0.5 rounded-lg">
-                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">Total Tasks</span>
+                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">{% if ui_mode == 'tactical' %}Total_{{ t.tasks }}{% else %}Total Tasks{% endif %}</span>
                         <span class="text-lg font-bold font-mono">{{ stats.total_tasks or 0 }}</span>
                     </div>
                     <div class="p-2 border border-outline-variant bg-surface-container-low flex flex-col gap-0.5 rounded-lg">
-                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">Active Users</span>
+                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">{% if ui_mode == 'tactical' %}Active_Users{% else %}Active Users{% endif %}</span>
                         <span class="text-lg font-bold font-mono text-tertiary">{{ stats.active_users or 0 }}</span>
                     </div>
                     <div class="p-2 border border-outline-variant bg-surface-container-low flex flex-col gap-0.5 rounded-lg">
-                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">Completed</span>
+                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">{% if ui_mode == 'tactical' %}Done_Month{% else %}Completed{% endif %}</span>
                         <span class="text-lg font-bold font-mono text-green-400">{{ stats.completed_this_month or 0 }}</span>
                     </div>
                     <div class="p-2 border border-outline-variant bg-surface-container-low flex flex-col gap-0.5 rounded-lg">
-                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">Overdue</span>
+                        <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-tighter">{% if ui_mode == 'tactical' %}Alerts{% else %}Overdue{% endif %}</span>
                         <span class="text-lg font-bold font-mono text-error">{{ stats.overdue_count or 0 }}</span>
                     </div>
                 </div>
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const missionIDs = [];
 
     {% for item in missions %}
-        missionLabels.push("{{ item.mission.name }}");
+        missionLabels.push("{% if ui_mode == 'tactical' %}{{ item.mission.name.upper() }}{% else %}{{ item.mission.name }}{% endif %}");
         missionProgress.push({{ item.progress }});
         missionTotal.push({{ item.task_count }});
         missionIDs.push("{{ item.mission.id }}");
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 theme: isDark ? 'dark' : 'light',
                 y: {
                     formatter: function(val, { series, seriesIndex, dataPointIndex, w }) {
-                        return val + "% (" + missionTotal[dataPointIndex] + " tasks)";
+                        return val + "% (" + missionTotal[dataPointIndex] + " {% if ui_mode == 'tactical' %}Directives{% else %}tasks{% endif %})";
                     }
                 }
             }
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector("#activity-bar-chart").innerHTML = `
             <div class="h-64 flex flex-col items-center justify-center border border-dashed border-outline-variant/30 rounded-lg">
                 <span class="material-symbols-outlined text-4xl text-on-surface-variant opacity-20 mb-4">query_stats</span>
-                <p class="text-[10px] text-on-surface-variant italic uppercase tracking-widest">No data matching current filters.</p>
+                <p class="text-[10px] text-on-surface-variant italic uppercase tracking-widest">{% if ui_mode == 'tactical' %}No telemetry data matching current filters.{% else %}No data matching current filters.{% endif %}</p>
             </div>
         `;
     }
