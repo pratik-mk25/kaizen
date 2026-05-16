@@ -35,7 +35,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <!-- The Pulse: Real-time Activity Stream -->
         <div class="lg:col-span-2 space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <span class="relative flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
@@ -43,10 +43,25 @@
                     </span>
                     <h2 class="text-lg font-bold text-on-surface uppercase tracking-[0.3em]">The Pulse</h2>
                 </div>
-                <span class="text-[10px] text-on-surface-variant uppercase tracking-widest">Global Mutation Log</span>
+                <div x-data="{ selectedClub: '{{ selected_org or 'all' }}' }" class="flex items-center gap-2">
+                    <span class="text-[9px] text-on-surface-variant uppercase tracking-widest">Filter:</span>
+                    <select x-model="selectedClub" @change="window.location.href = '/dashboard?org_id=' + selectedClub" 
+                            class="bg-surface-container-low border border-outline-variant/30 text-[10px] font-bold uppercase tracking-widest text-primary px-3 py-1.5 rounded focus:ring-1 focus:ring-primary outline-none appearance-none cursor-pointer">
+                        <option value="all">ALL DIVISIONS</option>
+                        {% for org in organizations %}
+                        <option value="{{ org.id }}" {% if selected_org == org.id %}selected{% endif %}>{{ org.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-            <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-4 scrollbar-custom">
+            <div class="space-y-6 max-h-[80vh] overflow-y-auto pr-4 scrollbar-custom">
+                {% if not recent_activities %}
+                <div class="text-center py-20 border border-dashed border-outline-variant/30 rounded-xl">
+                    <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.3em]">No activity detected in this sector.</p>
+                </div>
+                {% endif %}
+
                 {% for log in recent_activities %}
                 <div class="hud-border p-5 bg-surface-container-lowest/40 hover:bg-surface-container-low/60 transition-all group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full {% if 'deleted' in log.action or 'reverted' in log.action %}bg-rose-500{% elif 'created' in log.action %}bg-emerald-500{% else %}bg-primary{% endif %}"></div>

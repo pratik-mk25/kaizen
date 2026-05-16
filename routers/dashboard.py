@@ -15,10 +15,11 @@ async def dashboard(
     request: Request, 
     mission_id: str = None,
     project_id: str = None,
+    org_id: str = None,
     user: dict = Depends(get_current_user)
 ):
     if user.get("role") == "editor":
-        return await editor_hub(request, user)
+        return await editor_hub(request, user, org_id)
         
     org_id = user.get("organization_id")
     is_editor = user.get("role") == "editor"
@@ -148,23 +149,29 @@ async def dashboard(
         # Fallback for migration/initial setup issues
         return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=str(e))
 
-async def editor_hub(request: Request, user: dict):
+async def editor_hub(request: Request, user: dict, filter_org_id: str = None):
     try:
         # Use admin client to bypass all RLS
         admin_client = supabase_admin if supabase_admin else supabase
         
-        # 1. Fetch Global Stats
+        if filter_org_id == "all": filter_org_id = None
+
+        # 1. Fetch Global Stats (Scoped if filter applied)
         orgs_res = admin_client.table("organizations").select("id, name").execute()
         orgs = orgs_res.data or []
         
-        users_res = admin_client.table("profiles").select("id", count="exact").execute()
+        users_query = admin_client.table("profiles").select("id", count="exact")
+        if filter_org_id: users_query = users_query.eq("organization_id", filter_org_id)
+        users_res = users_query.execute()
         user_count = users_res.count if hasattr(users_res, 'count') else len(users_res.data)
         
-        tasks_res = admin_client.table("tasks").select("id", count="exact").execute()
+        tasks_query = admin_client.table("tasks").select("id", count="exact")
+        if filter_org_id: tasks_query = tasks_query.eq("organization_id", filter_org_id)
+        tasks_res = tasks_query.execute()
         task_count = tasks_res.count if hasattr(tasks_res, 'count') else len(tasks_res.data)
         
-        # 2. Fetch Recent Activities (Global)
-        recent_logs = crud.get_audit_logs(limit=30)
+        # 2. Fetch Recent Activities (Scoped if filter applied)
+        recent_logs = crud.get_audit_logs(limit=30, org_id=filter_org_id)
         
         # 3. Organization Health (Member counts)
         profiles_all = admin_client.table("profiles").select("organization_id").execute().data or []
@@ -183,14 +190,15 @@ async def editor_hub(request: Request, user: dict):
         
         return render_template("editor_hub.html", request, user=user,
                                stats={
-                                   "org_count": len(orgs),
+                                   "org_count": len(orgs) if not filter_org_id else 1,
                                    "user_count": user_count,
                                    "task_count": task_count
                                },
                                recent_activities=recent_logs,
                                organizations=orgs,
                                username_map=username_map,
-                               org_map=org_map)
+                               org_map=org_map,
+                               selected_org=filter_org_id)
     except Exception as e:
         return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=f"Hub Error: {str(e)}")
 
