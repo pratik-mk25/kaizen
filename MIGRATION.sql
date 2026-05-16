@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.organizations (
 -- Profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users PRIMARY KEY,
-    role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin')),
+    role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'lead', 'admin', 'editor')),
     username TEXT UNIQUE,
     display_name TEXT,
     avatar_url TEXT,
