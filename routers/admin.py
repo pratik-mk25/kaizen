@@ -79,9 +79,8 @@ async def org_settings_action(request: Request, name: str = Form(...), discord_w
 # ---------- System Administration (Super Admin) ----------
 
 async def super_admin_required(user: dict = Depends(admin_required)):
-    if user["email"] != "test@vihang.com":
-        raise HTTPException(status_code=403, detail="Super Admin access required")
-    return user
+    # Feature disabled for now pending Editor role implementation
+    raise HTTPException(status_code=403, detail="System administration feature is currently disabled")
 
 @router.get("/system/requests")
 async def list_system_requests(request: Request, user: dict = Depends(super_admin_required)):
