@@ -43,24 +43,20 @@ async def signup_post(request: Request, club_name: str = Form(...), email: str =
             supabase.table("activation_keys").update({"is_used": True, "used_at": datetime.now(timezone.utc).isoformat()}).eq("key", activation_key).execute()
 
         # 2. Sign up the user
-        auth_res = supabase.auth.sign_up({"email": email, "password": password})
+        # We pass organization and role data in the metadata so the DB trigger can handle it automatically
+        auth_res = supabase.auth.sign_up({
+            "email": email, 
+            "password": password,
+            "options": {
+                "data": {
+                    "organization_id": str(org_id),
+                    "role": "admin" if not org_res.data else "member"
+                }
+            }
+        })
         if not auth_res.user:
             raise Exception("Signup failed. Check if the email is already registered.")
         
-        # 3. Update profile with organization_id
-        # We use supabase_admin to bypass RLS if it exists
-        client = auth.supabase_admin if auth.supabase_admin else supabase
-        
-        # We use upsert to ensure the profile exists with the correct org and role
-        # First check if profile already exists (to preserve existing data if any)
-        profile_data = {
-            "id": auth_res.user.id,
-            "organization_id": org_id,
-            "role": "admin" if not org_res.data else "member", # First user in club is admin
-            "email": email
-        }
-        client.table("profiles").upsert(profile_data).execute()
-
     except Exception as e:
         return render_template("signup.html", request, error=str(e))
     return RedirectResponse(url="/login?message=Account created for '" + club_name + "'. Please log in.", status_code=303)

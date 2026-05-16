@@ -154,6 +154,9 @@ CREATE POLICY "Users can view their own profiles" ON public.profiles FOR SELECT 
 DROP POLICY IF EXISTS "Users can update their own profiles" ON public.profiles;
 CREATE POLICY "Users can update their own profiles" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profiles" ON public.profiles;
+CREATE POLICY "Users can insert their own profiles" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
 -- MISSIONS
 DROP POLICY IF EXISTS "Missions are visible by organization members" ON public.missions;
 CREATE POLICY "Missions are visible by organization members" ON public.missions FOR SELECT USING (organization_id = (SELECT organization_id FROM profiles WHERE id = auth.uid()));
@@ -207,8 +210,14 @@ CREATE POLICY "Org members can manage assignees" ON public.task_assignees FOR AL
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, username)
-  VALUES (new.id, new.email, 'vhng_' || substr(new.id::text, 1, 8));
+  INSERT INTO public.profiles (id, email, username, organization_id, role)
+  VALUES (
+    new.id, 
+    new.email, 
+    'vhng_' || substr(new.id::text, 1, 8),
+    (new.raw_user_meta_data->>'organization_id')::UUID,
+    COALESCE(new.raw_user_meta_data->>'role', 'member')
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
