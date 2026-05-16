@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# KAIZEN Setup Script
+# MISSION AVINYA Setup Script
 
-echo "Initializing KAIZEN development environment..."
+echo "Initializing AVINYA development environment..."
 
 # Create virtual environment
 if [ ! -d "venv" ]; then

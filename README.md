@@ -1,10 +1,10 @@
-# KAIZEN: The Operating System for Team Excellence
+# MISSION AVINYA: The Operating System for Team Excellence
 
-KAIZEN is a precision-engineered SaaS platform designed for high-stakes coordination, project management, and operational transparency. Built for organizations that demand excellence, it moves your operations from disparate spreadsheets to a unified, auditable, and visual command center.
+AVINYA is a precision-engineered SaaS platform designed for high-stakes coordination, project management, and operational transparency. Built for organizations that demand excellence, it moves your operations from disparate spreadsheets to a unified, auditable, and visual command center.
 
 ## Project Vision
 
-KAIZEN focuses on three core pillars:
+AVINYA focuses on three core pillars:
 - **Zero Friction Coordination**: Kanban-style intelligence for tracking work.
 - **Full Accountability**: Secure audit logs with 1-click Undo for every change.
 - **Multi-Tenancy**: Built-in support for multiple organizations to run on a single deployment with strict data isolation.
@@ -57,7 +57,7 @@ KAIZEN focuses on three core pillars:
 
 ## Contributing
 
-We welcome contributions to KAIZEN. Please see `CONTRIBUTING.md` for guidelines on how to get started.
+We welcome contributions to AVINYA. Please see `CONTRIBUTING.md` for guidelines on how to get started.
 
 ---
-Maintained by the KAIZEN Division.
+Maintained by the MISSION AVINYA.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>{% block title %}KAIZEN DIVISION{% endblock %}</title>
+    <title>{% block title %}MISSION AVINYA{% endblock %}</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet"/>
@@ -118,7 +118,7 @@
         <button @click="mobileNav = true" class="p-2 text-on-surface-variant hover:text-primary">
             <span class="material-symbols-outlined text-2xl">menu</span>
         </button>
-        <h1 class="font-headline text-xl tracking-tighter uppercase text-primary">KAIZEN DIVISION</h1>
+        <h1 class="font-headline text-xl tracking-tighter uppercase text-primary">MISSION AVINYA</h1>
         <div class="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center font-bold text-xs">
             {{ (user.display_name or user.username or user.email)[:1].upper() }}
         </div>
@@ -137,7 +137,7 @@
              x-transition:leave-end="-translate-x-full">
             <div class="px-6 mb-6">
                 <h1 class="font-headline font-bold text-5xl tracking-tighter uppercase leading-none">
-                    <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">KAI</span><span class="text-[#8B5CF6]">ZEN</span>
+                    <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">MISSION</span><span class="text-[#8B5CF6]"> AVINYA</span>
                 </h1>
                 <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">TRACK COLLABORATE BUILD</p>
             </div>
@@ -199,7 +199,7 @@
         <div class="px-6 mb-8">
             <div>
                 <h1 class="font-headline font-bold text-5xl tracking-tighter uppercase leading-none">
-                    <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">KAI</span><span class="text-[#8B5CF6]">ZEN</span>
+                    <span class="{% if theme == 'dark' %}text-white{% else %}text-black{% endif %}">MISSION</span><span class="text-[#8B5CF6]"> AVINYA</span>
                 </h1>
                 <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">TRACK COLLABORATE BUILD</p>
             </div>
@@ -303,7 +303,7 @@
             
             <div class="flex items-center gap-4">
                 <div class="flex flex-col items-end mr-4">
-                    <span class="font-headline text-primary text-xl leading-none">KAIZEN</span>
+                    <span class="font-headline text-primary text-xl leading-none">AVINYA</span>
                     <span class="text-[7px] text-on-surface-variant font-bold uppercase tracking-[0.4em]">TRACK COLLABORATE BUILD</span>
                 </div>
                 <div class="relative hidden lg:block">
@@ -322,10 +322,10 @@
 
         <footer class="mt-auto p-4 border-t border-outline-variant flex justify-between items-center text-[8px] text-on-surface-variant font-bold uppercase tracking-[0.3em] bg-surface-container-lowest/20">
             <div class="flex items-center gap-6">
-                <span class="text-primary/60">&copy; 2026 KAIZEN DIVISION</span>
+                <span class="text-primary/60">&copy; 2026 MISSION AVINYA</span>
             </div>
             <div class="flex items-center gap-4">
-                <span class="px-2 py-0.5 border border-primary/20 rounded text-primary">Powered by KAIZEN DIVISION</span>
+                <span class="px-2 py-0.5 border border-primary/20 rounded text-primary">Powered by MISSION AVINYA</span>
             </div>
         </footer>
     </main>

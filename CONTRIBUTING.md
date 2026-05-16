@@ -1,6 +1,6 @@
-# Contributing to KAIZEN
+# Contributing to MISSION AVINYA
 
-We are pleased that you are interested in contributing to KAIZEN. Whether you are fixing a bug, improving the UI, or adding a major new feature, your help is valued.
+We are pleased that you are interested in contributing to AVINYA. Whether you are fixing a bug, improving the UI, or adding a major new feature, your help is valued.
 
 ## Getting Started
 
@@ -59,4 +59,4 @@ We are pleased that you are interested in contributing to KAIZEN. Whether you ar
 - Integration with additional communication platforms.
 
 ---
-Maintained by the KAIZEN community.
+Maintained by the AVINYA community.

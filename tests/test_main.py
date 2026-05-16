@@ -11,4 +11,4 @@ def test_ping():
 def test_landing_page():
     response = client.get("/")
     assert response.status_code == 200
-    assert "KAIZEN DIVISION" in response.text
+    assert "MISSION AVINYA" in response.text

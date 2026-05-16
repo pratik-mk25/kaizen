@@ -25,7 +25,7 @@ def send_discord_notification(content: str, org_id: str | None = None, title: st
                 "title": title,
                 "description": content,
                 "color": color,
-                "footer": {"text": "KAIZEN DIVISION // Deploy Excellence"}
+                "footer": {"text": "MISSION AVINYA // Deploy Excellence"}
             }
         ]
     }
