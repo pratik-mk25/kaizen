@@ -17,6 +17,9 @@ async def dashboard(
     project_id: str = None,
     user: dict = Depends(get_current_user)
 ):
+    if user.get("role") == "editor":
+        return await editor_hub(request, user)
+        
     org_id = user.get("organization_id")
     is_editor = user.get("role") == "editor"
     today = date.today()
@@ -144,6 +147,52 @@ async def dashboard(
     except Exception as e:
         # Fallback for migration/initial setup issues
         return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=str(e))
+
+async def editor_hub(request: Request, user: dict):
+    try:
+        # Use admin client to bypass all RLS
+        admin_client = supabase_admin if supabase_admin else supabase
+        
+        # 1. Fetch Global Stats
+        orgs_res = admin_client.table("organizations").select("id, name").execute()
+        orgs = orgs_res.data or []
+        
+        users_res = admin_client.table("profiles").select("id", count="exact").execute()
+        user_count = users_res.count if hasattr(users_res, 'count') else len(users_res.data)
+        
+        tasks_res = admin_client.table("tasks").select("id", count="exact").execute()
+        task_count = tasks_res.count if hasattr(tasks_res, 'count') else len(tasks_res.data)
+        
+        # 2. Fetch Recent Activities (Global)
+        recent_logs = crud.get_audit_logs(limit=30)
+        
+        # 3. Organization Health (Member counts)
+        profiles_all = admin_client.table("profiles").select("organization_id").execute().data or []
+        org_counts = {}
+        for p in profiles_all:
+            oid = p.get("organization_id")
+            if oid:
+                org_counts[oid] = org_counts.get(oid, 0) + 1
+            
+        for o in orgs:
+            o["member_count"] = org_counts.get(o["id"], 0)
+            
+        # 4. Maps for templates
+        username_map = get_username_map() # Global map
+        org_map = {o["id"]: o["name"] for o in orgs}
+        
+        return render_template("editor_hub.html", request, user=user,
+                               stats={
+                                   "org_count": len(orgs),
+                                   "user_count": user_count,
+                                   "task_count": task_count
+                               },
+                               recent_activities=recent_logs,
+                               organizations=orgs,
+                               username_map=username_map,
+                               org_map=org_map)
+    except Exception as e:
+        return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=f"Hub Error: {str(e)}")
 
 @router.get("/my-tasks")
 async def my_tasks(request: Request, user: dict = Depends(get_current_user)):
