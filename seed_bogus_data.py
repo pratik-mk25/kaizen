@@ -35,7 +35,7 @@ def seed():
     else:
         print("Creating fake projects")
         p1 = crud.create_project("Propeller Stress Test", "Testing", mission_id, None, users[0]['id'], org_id)
-        p2 = crud.create_project("Flight Controller Sync", "Testing", mission_id, None, users[0]['id'], org_id)
+        p2 = crud.create_project("Club Project Sync", "Testing", mission_id, None, users[0]['id'], org_id)
         p1_id = p1['id']
         p2_id = p2['id']
 

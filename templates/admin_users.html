@@ -9,12 +9,12 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">{% if ui_mode == 'tactical' %}Registered Personnel{% else %}User Management{% endif %}</h1>
-            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Manage pilot clearance levels and authority protocols.{% else %}Manage users, their roles and permissions.{% endif %}</p>
+            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Manage member clearance levels and authority protocols.{% else %}Manage users, their roles and permissions.{% endif %}</p>
         </div>
         
         <a href="/admin/users/add" class="inline-flex items-center px-6 py-2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-lg hover:brightness-110 active:scale-95 transition-all gap-2">
             <span class="material-symbols-outlined text-sm">person_add</span>
-            {% if ui_mode == 'tactical' %}Initialize_New_Pilot{% else %}Add New User{% endif %}
+            {% if ui_mode == 'tactical' %}Initialize_New_Member{% else %}Add New User{% endif %}
         </a>
     </div>
 
@@ -23,7 +23,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-surface-container-low border-b border-outline-variant/30">
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Pilot Identity{% else %}Name{% endif %}</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Member Identity{% else %}Name{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Access_ID{% else %}Username{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Authority_Level{% else %}Role{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">{% if ui_mode == 'tactical' %}Directives{% else %}Actions{% endif %}</th>

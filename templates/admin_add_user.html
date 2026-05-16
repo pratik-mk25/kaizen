@@ -13,7 +13,7 @@
 
 <div class="max-w-2xl mx-auto">
     <div class="mb-10">
-        <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">{% if ui_mode == 'tactical' %}Initialize_New_Pilot{% else %}Add New User{% endif %}</h1>
+        <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">{% if ui_mode == 'tactical' %}Initialize_New_Member{% else %}Add New User{% endif %}</h1>
         <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Provision a new account for a club member or administrator.{% else %}Create a new user account with assigned permissions.{% endif %}</p>
     </div>
 
@@ -29,7 +29,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Communication_Link (Email){% else %}Email Address{% endif %}</label>
-                    <input type="email" name="email" placeholder="pilot@vihang.com" required
+                    <input type="email" name="email" placeholder="member@example.com" required
                            class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-5 py-4 focus:ring-1 focus:ring-primary transition-all text-on-surface outline-none text-sm">
                 </div>
                 <div>
@@ -40,7 +40,7 @@
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Pilot_Callsign (Display Name){% else %}Full Display Name{% endif %}</label>
+                <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Member_Callsign (Display Name){% else %}Full Display Name{% endif %}</label>
                 <input type="text" name="display_name" placeholder="John Doe" required
                        class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-5 py-4 focus:ring-1 focus:ring-primary transition-all text-on-surface outline-none text-sm">
             </div>

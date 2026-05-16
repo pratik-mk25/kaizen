@@ -112,7 +112,7 @@
                         {{ avatar({'username': username_map.get(aid, '?')}, size=10) }}
                         <div>
                             <p class="text-sm font-bold text-on-surface uppercase tracking-wide leading-none mb-1">{{ username_map.get(aid, 'Unknown') }}</p>
-                            <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{% if ui_mode == 'tactical' %}Pilot{% else %}Member{% endif %}</span>
+                            <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{% if ui_mode == 'tactical' %}Member{% else %}Member{% endif %}</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">

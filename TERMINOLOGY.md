@@ -14,7 +14,7 @@ This file contains all the terminology used throughout the application. You can 
 | `search` | Database Query | Search Engine | The global search interface. | Search | Search |
 | `analytics` | Telemetry Data | Analytics | The progress reporting / stats page. | Insights | Analytics |
 | `mission` | Mission Operation | Mission | The top-level hierarchy (e.g., "Field Research"). | Campaign | Mission |
-| `project` | Node Cluster | Project | The second-level hierarchy (e.g., "Drone Calibration"). | Stream | Project |
+| `project` | Node Cluster | Project | The second-level hierarchy (e.g., "Club Calibration"). | Stream | Project |
 | `task` | Directive Unit | Task | The third-level hierarchy (individual items). | Item | Task |
 | `overdue` | STALE_TASK | Overdue | Tasks past their deadline. | Past Due | Overdue |
 | `due_today` | URGENT_SYNC | Due Today | Tasks with a deadline of today. | Due Today | Due Today |
@@ -24,7 +24,7 @@ This file contains all the terminology used throughout the application. You can 
 | `priority` | THREAT_LEVEL | Priority | The importance level (Low, Medium, High). | Priority | Priority |
 | `status` | OPERATIONAL_STATUS | Status | The current state of a task or mission. | Status | Status |
 | `lead` | Commanding_Officer | Project Lead | The user in charge of a project. | Lead | Project Lead |
-| `member` | Pilot_Operative | Member | A standard user/pilot. | Member | Member |
+| `member` | Member_Operative | Member | A standard user/member. | Member | Member |
 | `admin` | System_Admin | Administrator | A user with full system control. | Admin | Administrator |
 
 ## 🛠️ How to Update

@@ -97,6 +97,30 @@ async def logout():
     remove_auth_cookie(response)
     return response
 
+@router.get("/change-password")
+async def change_password_page(request: Request, user: dict = Depends(get_current_user)):
+    return render_template("change_password.html", request, user=user)
+
+@router.post("/change-password")
+async def change_password_post(request: Request, password: str = Form(...), confirm_password: str = Form(...), user: dict = Depends(get_current_user)):
+    if password != confirm_password:
+        return render_template("change_password.html", request, user=user, error="Passwords do not match")
+    
+    if len(password) < 6:
+        return render_template("change_password.html", request, user=user, error="Password must be at least 6 characters")
+    
+    try:
+        # Get the access token from cookies
+        token = request.cookies.get(auth.COOKIE_NAME)
+        # We need to set the session for the client to update the user
+        supabase.postgrest.headers["Authorization"] = f"Bearer {token}"
+        supabase.auth.set_session(token, "") # Refresh token not needed for just updating password usually
+        
+        supabase.auth.update_user({"password": password})
+        return render_template("change_password.html", request, user=user, message="Password updated successfully")
+    except Exception as e:
+        return render_template("change_password.html", request, user=user, error=str(e))
+
 @router.get("/forgot-password")
 async def forgot_password_page(request: Request):
-    return render_template("login.html", request, message="Please contact your Drone Club administrator to reset your password. Native password reset is coming in v2.1.")
+    return render_template("login.html", request, message="Please contact your Club administrator to reset your password. Native password reset is coming in v2.1.")
