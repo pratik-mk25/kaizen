@@ -1,3 +1,4 @@
+import os
 from fastapi import Request, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 from database import supabase
@@ -5,12 +6,14 @@ from typing import Optional
 
 COOKIE_NAME = "access_token"
 
+_IS_HTTPS = os.environ.get("VERCEL_ENV") is not None or os.environ.get("VERCEL") == "1"
+
 def set_auth_cookie(response: RedirectResponse, access_token: str):
     response.set_cookie(
         key=COOKIE_NAME,
         value=access_token,
         httponly=True,
-        secure=False,
+        secure=_IS_HTTPS,
         samesite="lax",
         max_age=60 * 60 * 24 * 7,
     )
@@ -57,8 +60,3 @@ async def lead_or_admin_required(user: dict = Depends(get_current_user)):
     if user["role"] not in ("lead", "admin"):
         raise HTTPException(status_code=403, detail="Leads or admins only")
     return user
-
-async def club_pc_only(request: Request):
-    host = request.client.host if request.client else ""
-    if host not in ("127.0.0.1", "::1", "localhost"):
-        raise HTTPException(status_code=403, detail="Attendance can only be marked from the club PC")

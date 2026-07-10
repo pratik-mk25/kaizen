@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 import crud
-from auth import get_current_user, admin_required, club_pc_only
+from auth import get_current_user, admin_required
 from templates_utils import render_template, get_username_map
 
 router = APIRouter(prefix="/members", tags=["members"])
@@ -65,12 +65,12 @@ async def delete_member_cert(member_id: str, cert_id: str, user: dict = Depends(
 @router.post("/attendance/add")
 async def add_attendance(request: Request, user_id: str = Form(...), event_name: str = Form(...),
                          event_date: str = Form(...), status: str = Form("present"), notes: str = Form(None),
-                         _=Depends(club_pc_only), user: dict = Depends(get_current_user)):
+                         user: dict = Depends(get_current_user)):
     crud.add_attendance(user_id, event_name, event_date, status, notes, user["id"])
     return RedirectResponse(url=f"/members/{user_id}", status_code=303)
 
 @router.post("/attendance/{att_id}/delete")
-async def delete_attendance(att_id: str, request: Request, _=Depends(club_pc_only),
+async def delete_attendance(att_id: str, request: Request,
                             user: dict = Depends(admin_required)):
     crud.delete_attendance(att_id, user["id"])
     return RedirectResponse(url=request.headers.get("referer", "/members"), status_code=303)

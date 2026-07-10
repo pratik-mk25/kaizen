@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Kiosk Login - KAIZEN{% endblock %}
+{% block header_title %}Kiosk Login{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-16">
+    <div class="bg-surface border border-outline-variant rounded-xl p-8 shadow-xl">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 mx-auto bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-3xl text-primary">fingerprint</span>
+            </div>
+            <h2 class="text-2xl font-headline font-bold uppercase tracking-tight">Kiosk Access</h2>
+            <p class="text-sm text-on-surface-variant mt-1">Enter the kiosk secret to access the attendance terminal</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-error/10 border border-error/30 text-error rounded-lg px-4 py-3 text-sm font-bold mb-4">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/attendance/kiosk/login" class="space-y-4">
+            <div>
+                <input type="password" name="secret" placeholder="Kiosk Secret" required autofocus
+                       class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-sm font-mono text-center tracking-widest focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"/>
+            </div>
+            <button type="submit" class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg hover:brightness-110 transition-all uppercase tracking-widest text-sm">
+                Unlock Kiosk
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-outline-variant/30 text-center">
+            <a href="/attendance" class="text-xs font-bold text-primary hover:text-primary/80 uppercase tracking-wider">
+                Back to Attendance View
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -77,9 +77,12 @@ async def org_settings_form(request: Request, user: dict = Depends(admin_require
 
 @router.post("/settings")
 async def org_settings_action(request: Request, name: str = Form(...), discord_webhook_url: str = Form(None),
+                              kiosk_secret: str = Form(None),
                               user: dict = Depends(admin_required)):
     val = discord_webhook_url or None
     crud.update_organization_settings(name, val, user["id"])
+    if kiosk_secret is not None:
+        crud.set_kiosk_secret(kiosk_secret, user["id"])
     org = crud.get_organization()
     saved_url = org.get("discord_webhook_url")
     return RedirectResponse(url=f"/admin/settings?saved={'yes' if saved_url else 'fail'}&url={'set' if saved_url else 'empty'}", status_code=303)

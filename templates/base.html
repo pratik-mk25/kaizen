@@ -179,7 +179,7 @@
                 <a href="/members" class="flex items-center gap-3 {% if request.url.path == '/members' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
                     <span class="material-symbols-outlined text-xl">badge</span> Members
                 </a>
-                <a href="/attendance/kiosk" class="flex items-center gap-3 {% if request.url.path == '/attendance/kiosk' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                <a href="/attendance" class="flex items-center gap-3 {% if '/attendance' in request.url.path %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
                     <span class="material-symbols-outlined text-xl">qr_code_scanner</span> Attendance
                 </a>
                 <a href="/budget" class="flex items-center gap-3 {% if request.url.path == '/budget' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
@@ -270,7 +270,7 @@
             <a href="/members" class="flex items-center gap-3 {% if request.url.path == '/members' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
                 <span class="material-symbols-outlined text-xl">badge</span> Members
             </a>
-            <a href="/attendance/kiosk" class="flex items-center gap-3 {% if request.url.path == '/attendance/kiosk' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+            <a href="/attendance" class="flex items-center gap-3 {% if '/attendance' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
                 <span class="material-symbols-outlined text-xl">qr_code_scanner</span> Attendance
             </a>
             <a href="/budget" class="flex items-center gap-3 {% if request.url.path == '/budget' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">

@@ -684,6 +684,15 @@ def update_organization_settings(name: str, discord_webhook_url: str, user_id: s
     supabase.table("organizations").update({"name": name, "discord_webhook_url": discord_webhook_url}).eq("id", org["id"]).execute()
     log_action(user_id, "organization_updated", "organization", org["id"], old_values=org, new_values={"name": name, "discord_webhook_url": discord_webhook_url})
 
+def get_kiosk_secret():
+    org = get_organization()
+    return org.get("kiosk_secret", "")
+
+def set_kiosk_secret(secret: str, user_id: str):
+    org = get_organization()
+    supabase.table("organizations").update({"kiosk_secret": secret}).eq("id", org["id"]).execute()
+    log_action(user_id, "kiosk_secret_updated", "organization", org["id"], new_values={"kiosk_secret": "***"})
+
 def create_user_by_admin(email: str, password: str, display_name: str, role: str, admin_id: str):
     try:
         user_resp = supabase_admin.auth.admin.create_user({

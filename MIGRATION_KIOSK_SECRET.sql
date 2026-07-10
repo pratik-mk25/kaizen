@@ -1,0 +1,1 @@
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS kiosk_secret TEXT DEFAULT '';

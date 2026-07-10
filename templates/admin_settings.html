@@ -74,6 +74,24 @@
                 </div>
             </div>
 
+            <div class="border-t border-outline-variant pt-8">
+                <h3 class="font-headline text-xl font-bold uppercase flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-primary">fingerprint</span>
+                    Attendance Kiosk
+                </h3>
+
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="kiosk_secret" class="block text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Kiosk Secret</label>
+                        <input type="text" id="kiosk_secret" name="kiosk_secret"
+                               value="{{ organization.kiosk_secret or '' }}"
+                               placeholder="Set a secret for kiosk terminal access"
+                               class="w-full bg-surface-container-high border border-outline-variant rounded-lg px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"/>
+                        <p class="text-[9px] text-on-surface-variant uppercase tracking-wider">The club PC enters this secret to access the attendance kiosk. Keep it private.</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end pt-4">
                 <button type="submit" class="bg-primary text-on-primary font-headline px-8 py-3 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2 uppercase tracking-widest">
                     <span class="material-symbols-outlined">save</span>
