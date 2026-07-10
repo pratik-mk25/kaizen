@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}Edit{% else %}New{% endif %} Equipment - KAIZEN{% endblock %}
+{% block header_title %}{% if item %}Edit{% else %}Add{% endif %} Equipment{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-4">
+        <a href="/equipment" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+        </a>
+    </div>
+    <div class="bg-surface border border-outline-variant rounded-lg p-6">
+        <form method="POST" action="{% if item %}/equipment/{{ item.id }}/edit{% else %}/equipment/new{% endif %}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Name *</label>
+                    <input type="text" name="name" value="{{ item.name if item else '' }}" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Type *</label>
+                    <select name="equipment_type" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="drone" {% if item and item.equipment_type == 'drone' %}selected{% endif %}>Drone</option>
+                        <option value="battery" {% if item and item.equipment_type == 'battery' %}selected{% endif %}>Battery</option>
+                        <option value="part" {% if item and item.equipment_type == 'part' %}selected{% endif %}>Part</option>
+                        <option value="charger" {% if item and item.equipment_type == 'charger' %}selected{% endif %}>Charger</option>
+                        <option value="controller" {% if item and item.equipment_type == 'controller' %}selected{% endif %}>Controller</option>
+                        <option value="other" {% if item and item.equipment_type == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Brand</label>
+                    <input type="text" name="brand" value="{{ item.brand if item else '' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Model</label>
+                    <input type="text" name="model" value="{{ item.model if item else '' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Serial Number</label>
+                    <input type="text" name="serial_number" value="{{ item.serial_number if item else '' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Status</label>
+                    <select name="status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="available" {% if item and item.status == 'available' %}selected{% endif %}>Available</option>
+                        <option value="in_use" {% if item and item.status == 'in_use' %}selected{% endif %}>In Use</option>
+                        <option value="maintenance" {% if item and item.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                        <option value="retired" {% if item and item.status == 'retired' %}selected{% endif %}>Retired</option>
+                        <option value="lost" {% if item and item.status == 'lost' %}selected{% endif %}>Lost</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Condition</label>
+                    <select name="condition" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="excellent" {% if item and item.condition == 'excellent' %}selected{% endif %}>Excellent</option>
+                        <option value="good" {% if item and item.condition == 'good' %}selected{% endif %}>Good</option>
+                        <option value="fair" {% if item and item.condition == 'fair' %}selected{% endif %}>Fair</option>
+                        <option value="poor" {% if item and item.condition == 'poor' %}selected{% endif %}>Poor</option>
+                        <option value="damaged" {% if item and item.condition == 'damaged' %}selected{% endif %}>Damaged</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Purchase Date</label>
+                    <input type="date" name="purchase_date" value="{{ item.purchase_date if item else '' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Purchase Price (₹)</label>
+                    <input type="number" name="purchase_price" step="0.01" value="{{ item.purchase_price if item else '' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Assigned To</label>
+                    <select name="assigned_to" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="">Unassigned</option>
+                        {% for m in members %}
+                        <option value="{{ m.id }}" {% if item and item.assigned_to == m.id %}selected{% endif %}>{{ m.display_name or m.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Notes</label>
+                <textarea name="notes" rows="3" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">{{ item.notes if item else '' }}</textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <a href="/equipment" class="px-4 py-2 text-sm border border-outline-variant rounded-lg hover:bg-surface-variant/50">Cancel</a>
+                <button type="submit" class="bg-primary text-on-primary px-6 py-2 text-sm font-bold uppercase tracking-wider rounded-lg">
+                    {% if item %}Update{% else %}Create{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

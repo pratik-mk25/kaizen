@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}{{ member.display_name or member.username }} - Member{% endblock %}
+{% block header_title %}{{ member.display_name or member.username }}{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="mb-4">
+        <a href="/members" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> All Members
+        </a>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-14 h-14 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xl">{{ (member.display_name or member.username or '?')[:1].upper() }}</div>
+            <div>
+                <h2 class="text-xl font-bold uppercase">{{ member.display_name or 'Unknown' }}</h2>
+                <p class="text-sm text-on-surface-variant">{{ member.email }}</p>
+                <p class="text-xs text-primary uppercase font-bold tracking-wider mt-1">{{ member.role }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Skills -->
+        <div class="bg-surface border border-outline-variant rounded-lg p-6">
+            <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">psychology</span> Skills
+            </h3>
+            {% if member_skills %}
+            <div class="space-y-2 mb-4">
+                {% for ms in member_skills %}
+                <div class="flex items-center justify-between bg-surface-container-low rounded-lg px-3 py-2">
+                    <div>
+                        <p class="text-sm font-bold">{{ ms.skills.name }}</p>
+                        <p class="text-[10px] text-on-surface-variant capitalize">{{ ms.skills.category }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded {% if ms.proficiency_level == 'expert' %}bg-purple-900/30 text-purple-400{% elif ms.proficiency_level == 'advanced' %}bg-blue-900/30 text-blue-400{% elif ms.proficiency_level == 'intermediate' %}bg-yellow-900/30 text-yellow-400{% else %}bg-gray-800 text-gray-400{% endif %}">{{ ms.proficiency_level }}</span>
+                        {% if user.role in ('admin', 'editor') %}
+                        <form method="POST" action="/members/{{ member.id }}/skills/{{ ms.skill_id }}/remove" class="inline">
+                            <button class="text-xs text-error"><span class="material-symbols-outlined text-sm">remove_circle</span></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-on-surface-variant mb-4">No skills recorded.</p>
+            {% endif %}
+            {% if user.role in ('admin', 'editor') %}
+            <form method="POST" action="/members/{{ member.id }}/skills/add" class="border-t border-outline-variant pt-4 flex gap-2">
+                <select name="skill_id" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    {% for s in all_skills %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="proficiency_level" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="expert">Expert</option>
+                </select>
+                <button type="submit" class="bg-primary text-on-primary px-3 py-2 text-xs font-bold rounded-lg">Add</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Certifications -->
+        <div class="bg-surface border border-outline-variant rounded-lg p-6">
+            <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">verified</span> Certifications
+            </h3>
+            {% if member_certs %}
+            <div class="space-y-2 mb-4">
+                {% for mc in member_certs %}
+                <div class="flex items-center justify-between bg-surface-container-low rounded-lg px-3 py-2">
+                    <div>
+                        <p class="text-sm font-bold">{{ mc.certifications.name }}</p>
+                        <p class="text-[10px] text-on-surface-variant">{{ mc.certifications.issuing_body or '—' }} · {{ mc.date_obtained }}{% if mc.expiry_date %} → {{ mc.expiry_date }}{% endif %}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded {% if mc.verification_status == 'verified' %}bg-green-900/30 text-green-400{% elif mc.verification_status == 'expired' %}bg-red-900/30 text-red-400{% else %}bg-yellow-900/30 text-yellow-400{% endif %}">{{ mc.verification_status }}</span>
+                        {% if user.role in ('admin', 'editor') %}
+                        <form method="POST" action="/members/{{ member.id }}/certifications/{{ mc.id }}/delete" class="inline">
+                            <button class="text-xs text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-on-surface-variant mb-4">No certifications recorded.</p>
+            {% endif %}
+            {% if user.role in ('admin', 'editor') %}
+        <form method="POST" action="/members/{{ member.id }}/certifications/add" class="border-t border-outline-variant pt-4 space-y-2">
+            <div class="flex gap-2">
+                <select name="certification_id" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    {% for c in all_certs %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <input type="date" name="date_obtained" required class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <input type="date" name="expiry_date" placeholder="Expiry" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <button type="submit" class="bg-primary text-on-primary px-3 py-2 text-xs font-bold rounded-lg">Add</button>
+            </div>
+        </form>
+        {% endif %}
+        </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mt-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined">calendar_month</span> Attendance
+        </h3>
+
+        {% if attendance %}
+        <div class="overflow-x-auto mb-4">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                        <th class="text-left py-2 px-3">Event</th>
+                        <th class="text-left py-2 px-3">Date</th>
+                        <th class="text-left py-2 px-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attendance %}
+                    <tr class="border-b border-outline-variant/30">
+                        <td class="py-2 px-3 font-bold">{{ a.event_name }}</td>
+                        <td class="py-2 px-3 text-on-surface-variant">{{ a.event_date }}</td>
+                        <td class="py-2 px-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded {% if a.status == 'present' %}bg-green-900/30 text-green-400{% elif a.status == 'late' %}bg-yellow-900/30 text-yellow-400{% elif a.status == 'excused' %}bg-blue-900/30 text-blue-400{% else %}bg-red-900/30 text-red-400{% endif %}">{{ a.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant mb-4">No attendance records.</p>
+        {% endif %}
+
+        <form method="POST" action="/members/attendance/add" class="border-t border-outline-variant pt-4">
+            <input type="hidden" name="user_id" value="{{ member.id }}">
+            <div class="flex flex-wrap gap-2">
+                <input type="text" name="event_name" placeholder="Event Name" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <input type="date" name="event_date" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <select name="status" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="excused">Excused</option>
+                    <option value="late">Late</option>
+                </select>
+                <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold rounded-lg">Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

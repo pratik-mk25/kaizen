@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Manage Skills - KAIZEN{% endblock %}
+{% block header_title %}Manage Skills{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-4">
+        <a href="/members" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Members
+        </a>
+    </div>
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Create Skill</h3>
+        <form method="POST" action="/members/skills/create" class="flex gap-2">
+            <input type="text" name="name" placeholder="Skill name" required class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+            <select name="category" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                <option value="general">General</option>
+                <option value="flight">Flight</option>
+                <option value="build">Build</option>
+                <option value="repair">Repair</option>
+                <option value="software">Software</option>
+                <option value="safety">Safety</option>
+            </select>
+            <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-sm font-bold rounded-lg">Create</button>
+        </form>
+    </div>
+
+    <div class="bg-surface border border-outline-variant rounded-lg p-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">All Skills</h3>
+        {% if skills %}
+        <div class="space-y-2">
+            {% for s in skills %}
+            <div class="flex items-center justify-between bg-surface-container-low rounded-lg px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-bold">{{ s.name }}</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary capitalize">{{ s.category }}</span>
+                </div>
+                <form method="POST" action="/members/skills/{{ s.id }}/delete" onsubmit="return confirm('Delete this skill?')">
+                    <button class="text-xs text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant">No skills defined yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

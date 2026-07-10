@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Attendance Kiosk - KAIZEN{% endblock %}
+{% block header_title %}Attendance Kiosk{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <p class="text-sm text-on-surface-variant">{{ today_str }} &middot; {{ profiles|length }} members</p>
+    </div>
+
+    <!-- Member Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
+        {% for p in profiles %}
+        {% set is_active = p.id in active_ids %}
+        <form method="POST" action="/attendance/kiosk/toggle" class="m-0">
+            <input type="hidden" name="user_id" value="{{ p.id }}">
+            <button type="submit"
+                    class="w-full rounded-xl p-4 text-center transition-all cursor-pointer border-2
+                    {% if is_active %}
+                        bg-green-900/20 border-green-500 shadow-lg shadow-green-500/20 hover:bg-green-900/30
+                    {% else %}
+                        bg-surface border-outline-variant hover:border-primary hover:shadow-lg hover:shadow-primary/10
+                    {% endif %}">
+                <div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center font-bold text-xl mb-2 transition-transform
+                    {% if is_active %}bg-green-500 text-white scale-110{% else %}bg-primary/20 text-primary{% endif %}">
+                    {{ (p.display_name or p.username or '?')[:1].upper() }}
+                </div>
+                <p class="text-sm font-bold truncate">{{ p.display_name or p.username or 'Unknown' }}</p>
+                <p class="text-[10px] uppercase font-bold tracking-wider mt-1
+                    {% if is_active %}text-green-400{% else %}text-primary{% endif %}">
+                    {{ p.role }}
+                </p>
+                <p class="text-[9px] font-bold mt-1
+                    {% if is_active %}text-green-300{% else %}text-on-surface-variant{% endif %}">
+                    {% if is_active %}CHECKED IN{% else %}NOT IN CLUB{% endif %}
+                </p>
+            </button>
+        </form>
+        {% endfor %}
+    </div>
+
+    <!-- Today's Records -->
+    <div class="bg-surface border border-outline-variant rounded-xl p-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Today's Records</h3>
+        {% set today_records = today_attendance %}
+        {% if today_records %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                        <th class="text-left py-2 px-3">Member</th>
+                        <th class="text-left py-2 px-3">In</th>
+                        <th class="text-left py-2 px-3">Out</th>
+                        <th class="text-left py-2 px-3">Status</th>
+                        <th class="text-right py-2 px-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in today_records %}
+                    {% set times = a.notes|from_json if a.notes else {} %}
+                    <tr class="border-b border-outline-variant/30">
+                        <td class="py-2 px-3 font-bold">{{ username_map.get(a.user_id, 'Member') }}</td>
+                        <td class="py-2 px-3 font-mono text-xs">{{ times.get('in', '-') }}</td>
+                        <td class="py-2 px-3 font-mono text-xs">{{ times.get('out', '-') }}</td>
+                        <td class="py-2 px-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded
+                                {% if a.status == 'present' and times.get('in') and not times.get('out') %}bg-green-900/30 text-green-400
+                                {% elif a.status == 'present' and times.get('out') %}bg-blue-900/30 text-blue-400
+                                {% elif a.status == 'absent' %}bg-red-900/30 text-red-400
+                                {% elif a.status == 'late' %}bg-yellow-900/30 text-yellow-400
+                                {% elif a.status == 'excused' %}bg-purple-900/30 text-purple-400
+                                {% else %}bg-gray-900/30 text-gray-400{% endif %}">
+                                {% if a.status == 'present' and times.get('in') and not times.get('out') %}IN CLUB
+                                {% elif a.status == 'present' and times.get('out') %}LEFT
+                                {% else %}{{ a.status }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="py-2 px-3 text-right">
+                            <button onclick="openEdit('{{ a.id }}', '{{ username_map.get(a.user_id, '?')|e }}', {{ times | tojson }})"
+                                    class="text-xs font-bold text-primary hover:text-primary/80 px-2 py-1">Edit</button>
+                            <button onclick="openDelete('{{ a.id }}')"
+                                    class="text-xs font-bold text-error hover:text-error/80 px-2 py-1">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant">No attendance records yet today.</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-4 p-4 bg-surface border border-outline-variant rounded-xl">
+        <p class="text-[10px] text-on-surface-variant">
+            <span class="font-bold">How it works:</span> Tap a name to check in. Tap again to check out.
+            Edit/delete requires a one-time code sent via Discord.
+        </p>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60">
+    <div class="bg-surface border border-outline-variant rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Edit Attendance</h3>
+        <p class="text-sm text-on-surface-variant mb-4" id="editMemberName"></p>
+        <form method="POST" action="/attendance/kiosk/edit-confirm" onsubmit="return combineTimes()">
+            <input type="hidden" name="attendance_id" id="editId">
+            <input type="hidden" name="action" value="edit">
+            <div class="space-y-3">
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant block mb-1">In Time</label>
+                        <input type="text" id="editIn" placeholder="HH:MM:SS" required
+                               class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm font-mono focus:border-primary focus:ring-0">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant block mb-1">Out Time</label>
+                        <input type="text" id="editOut" placeholder="HH:MM:SS"
+                               class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm font-mono focus:border-primary focus:ring-0">
+                    </div>
+                </div>
+                <input type="hidden" name="notes" id="editNotesJson">
+                <input type="date" name="event_date" id="editDate" required
+                       class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                <select name="status" id="editStatus"
+                        class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                    <option value="present">Present (In Club)</option>
+                    <option value="absent">Absent</option>
+                    <option value="late">Late</option>
+                    <option value="excused">Excused</option>
+                </select>
+            </div>
+            <div class="mt-4 p-3 bg-surface-container-low rounded-lg border border-outline-variant/30">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">Edit Code</p>
+                <div class="flex gap-2">
+                    <input type="text" id="editCode" placeholder="Enter 6-digit code"
+                           class="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm font-mono text-center tracking-widest focus:border-primary focus:ring-0">
+                    <input type="hidden" name="code" id="editCodeHidden">
+                    <button type="button" onclick="requestCode(document.getElementById('editId').value, 'edit')"
+                            class="bg-secondary text-on-secondary px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap">Get Code</button>
+                </div>
+                <p id="editGeneratedCode" class="hidden text-center text-lg font-bold text-primary mt-2 font-mono tracking-widest"></p>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="flex-1 bg-primary text-on-primary px-4 py-2 text-sm font-bold rounded-lg">Save</button>
+                <button type="button" onclick="closeEdit()" class="px-4 py-2 text-sm font-bold border border-outline-variant rounded-lg">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60">
+    <div class="bg-surface border border-outline-variant rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4 text-error">Delete Attendance</h3>
+        <p class="text-sm text-on-surface-variant mb-4">A one-time code is required to delete this record.</p>
+        <form method="POST" action="/attendance/kiosk/edit-confirm">
+            <input type="hidden" name="attendance_id" id="deleteId">
+            <input type="hidden" name="action" value="delete">
+            <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 mb-4">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">Delete Code</p>
+                <div class="flex gap-2">
+                    <input type="text" id="deleteCode" placeholder="Enter 6-digit code"
+                           class="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-sm font-mono text-center tracking-widest focus:border-primary focus:ring-0">
+                    <input type="hidden" name="code" id="deleteCodeHidden">
+                    <button type="button" onclick="requestCode(document.getElementById('deleteId').value, 'delete')"
+                            class="bg-error text-on-error px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap">Get Code</button>
+                </div>
+                <p id="deleteGeneratedCode" class="hidden text-center text-lg font-bold text-primary mt-2 font-mono tracking-widest"></p>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-error text-on-error px-4 py-2 text-sm font-bold rounded-lg">Delete</button>
+                <button type="button" onclick="closeDelete()" class="px-4 py-2 text-sm font-bold border border-outline-variant rounded-lg">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function combineTimes() {
+    const inVal = document.getElementById('editIn').value;
+    const outVal = document.getElementById('editOut').value;
+    const notes = {};
+    if (inVal) notes.in = inVal;
+    if (outVal) notes.out = outVal;
+    document.getElementById('editNotesJson').value = JSON.stringify(notes);
+    return true;
+}
+
+function openEdit(id, memberName, times) {
+    document.getElementById('editId').value = id;
+    document.getElementById('editMemberName').textContent = 'Member: ' + memberName;
+    document.getElementById('editIn').value = times.in || '';
+    document.getElementById('editOut').value = times.out || '';
+    document.getElementById('editCode').value = '';
+    document.getElementById('editCodeHidden').value = '';
+    document.getElementById('editGeneratedCode').classList.add('hidden');
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEdit() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+function openDelete(id) {
+    document.getElementById('deleteId').value = id;
+    document.getElementById('deleteCode').value = '';
+    document.getElementById('deleteCodeHidden').value = '';
+    document.getElementById('deleteGeneratedCode').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDelete() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+async function requestCode(attendanceId, action) {
+    const form = new FormData();
+    form.append('attendance_id', attendanceId);
+    form.append('action', action);
+    const resp = await fetch('/attendance/kiosk/edit-request', { method: 'POST', body: form });
+    const data = await resp.json();
+    const prefix = action === 'edit' ? 'edit' : 'delete';
+    const el = document.getElementById(prefix + 'GeneratedCode');
+    const inp = document.getElementById(prefix + 'Code');
+    const hidden = document.getElementById(prefix + 'CodeHidden');
+    el.textContent = 'Code: ' + data.code;
+    el.classList.remove('hidden');
+    inp.value = data.code;
+    hidden.value = data.code;
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeEdit(); closeDelete(); }
+});
+</script>
+{% endblock %}

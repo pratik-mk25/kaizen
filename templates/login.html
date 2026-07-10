@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
-{% block title %}Login - MISSION AVINYA{% endblock %}
-
+{% block title %}Login - DRONE CLUB{% endblock %}
 {% block content %}
 <div class="min-h-[70vh] flex flex-col items-center justify-center">
     <div class="w-full max-w-md">
@@ -10,32 +8,18 @@
                 <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
             <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Welcome back</h1>
-            <p class="text-slate-500 dark:text-slate-400 mt-2">Log in to manage your club missions.</p>
+            <p class="text-slate-500 dark:text-slate-400 mt-2">Log in to your drone club.</p>
         </div>
 
         <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
             {% if message %}
-                <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                    {{ message }}
-                </div>
+                <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium rounded-xl border border-emerald-100 dark:border-emerald-800/30">{{ message }}</div>
             {% endif %}
             {% if error %}
-                <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl border border-rose-100 dark:border-rose-800/30">
-                    {{ error }}
-                </div>
+                <div class="mb-6 p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-sm font-medium rounded-xl border border-rose-100 dark:border-rose-800/30">{{ error }}</div>
             {% endif %}
 
             <form method="POST" action="/login" class="space-y-6">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Club Identity</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        </div>
-                        <input type="text" name="club_name" placeholder="e.g. Vihang-Alpha" required class="w-full bg-slate-50 dark:bg-slate-900/50 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-brand-500 transition-all dark:text-white outline-none">
-                    </div>
-                </div>
-
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Email Address</label>
                     <div class="relative">
@@ -47,11 +31,8 @@
                 </div>
 
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Password</label>
-                        <a href="/forgot-password" class="text-[10px] font-bold uppercase tracking-widest text-brand-500 hover:text-white transition-colors">Forgot?</a>
-                    </div>
-                    <div class="relative">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Password</label>
+                    <div class="relative mt-2">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         </div>
@@ -59,15 +40,9 @@
                     </div>
                 </div>
 
-                <button type="submit" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-[0.98] mt-4">
-                    Sign In
-                </button>
+                <button type="submit" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-xl shadow-brand-600/20 transition-all active:scale-[0.98] mt-4">Sign In</button>
             </form>
         </div>
-
-        <p class="text-center mt-8 text-slate-500 dark:text-slate-400 text-sm">
-            New here? <a href="/request-access" class="font-bold text-brand-600 hover:text-brand-700 transition-colors">Request access</a>
-        </p>
     </div>
 </div>
 {% endblock %}

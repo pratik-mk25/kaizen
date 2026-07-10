@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Manage Certifications - KAIZEN{% endblock %}
+{% block header_title %}Manage Certifications{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-4">
+        <a href="/members" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Members
+        </a>
+    </div>
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Create Certification</h3>
+        <form method="POST" action="/members/certifications/create" class="flex gap-2">
+            <input type="text" name="name" placeholder="Certification name" required class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+            <input type="text" name="issuing_body" placeholder="Issuing body (e.g. FAA)" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+            <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-sm font-bold rounded-lg">Create</button>
+        </form>
+    </div>
+
+    <div class="bg-surface border border-outline-variant rounded-lg p-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">All Certifications</h3>
+        {% if certs %}
+        <div class="space-y-2">
+            {% for c in certs %}
+            <div class="flex items-center justify-between bg-surface-container-low rounded-lg px-4 py-3">
+                <div>
+                    <span class="text-sm font-bold">{{ c.name }}</span>
+                    {% if c.issuing_body %}<span class="text-xs text-on-surface-variant ml-2">{{ c.issuing_body }}</span>{% endif %}
+                </div>
+                <form method="POST" action="/members/certifications/{{ c.id }}/delete" onsubmit="return confirm('Delete this certification?')">
+                    <button class="text-xs text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant">No certifications defined yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

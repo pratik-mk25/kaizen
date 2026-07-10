@@ -26,9 +26,6 @@
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Member Identity{% else %}Name{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Access_ID{% else %}Username{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Authority_Level{% else %}Role{% endif %}</th>
-                        {% if user.role == 'editor' %}
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Club</th>
-                        {% endif %}
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">{% if ui_mode == 'tactical' %}Directives{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
@@ -48,9 +45,7 @@
                             <span class="text-xs font-bold text-primary {% if ui_mode == 'tactical' %}font-mono{% endif %} tracking-widest uppercase bg-primary/10 px-2 py-1 border border-primary/20 rounded-sm">{{ p.username or 'PENDING_SYNC' }}</span>
                         </td>
                         <td class="px-6 py-5">
-                            {% if p.role == 'editor' %}
-                                {{ badge('EDITOR' if ui_mode == 'tactical' else 'Editor', 'purple') }}
-                            {% elif p.role == 'admin' %}
+                            {% if p.role == 'admin' %}
                                 {{ badge(t.admin.upper() if ui_mode == 'tactical' else t.admin, 'red') }}
                             {% elif p.role == 'lead' %}
                                 {{ badge(t.lead.upper() if ui_mode == 'tactical' else t.lead, 'blue') }}
@@ -58,12 +53,13 @@
                                 {{ badge(t.member.upper() if ui_mode == 'tactical' else t.member, 'gray') }}
                             {% endif %}
                         </td>
-                        {% if user.role == 'editor' %}
-                        <td class="px-6 py-5 text-[10px] font-bold text-primary uppercase tracking-widest">
-                            {{ p.organization_id[:8] or 'SYSTEM' }}
-                        </td>
-                        {% endif %}
                         <td class="px-6 py-5 text-right">
+                            <div class="flex gap-2 justify-end">
+                            <form method="POST" action="/admin/users/{{ p.id }}/delete" onsubmit="return confirm('Delete {{ p.display_name or p.username }}? This cannot be undone.')">
+                                <button type="submit" class="px-3 py-1.5 border border-error/50 text-[9px] font-bold uppercase tracking-widest text-error hover:bg-error/10 transition-all rounded">
+                                    Delete
+                                </button>
+                            </form>
                             <div x-data="{ modalOpen: false }">
                                 <button @click="modalOpen = true" class="px-3 py-1.5 border border-outline-variant text-[9px] font-bold uppercase tracking-widest text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all focus:outline-none rounded">
                                     {% if ui_mode == 'tactical' %}MOD_CLEARANCE{% else %}Change Role{% endif %}
@@ -101,7 +97,7 @@
                                             </div>
 
                                             <form action="/admin/users/{{ p.id }}/role" method="post" class="space-y-3">
-                                                {% set available_roles = ['member', 'lead', 'admin', 'editor'] if user.role == 'editor' else ['member', 'lead', 'admin'] %}
+                                                {% set available_roles = ['member', 'lead', 'admin'] %}
                                                 {% for role_key in available_roles %}
                                                 <button type="submit" name="new_role" value="{{ role_key }}" 
                                                         class="w-full text-left px-4 py-3 border transition-all uppercase text-[10px] font-bold tracking-widest flex items-center justify-between group rounded-lg
@@ -124,6 +120,7 @@
                                         </div>
                                     </div>
                                 </template>
+                            </div>
                             </div>
                         </td>
                     </tr>

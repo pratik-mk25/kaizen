@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Budget - KAIZEN{% endblock %}
+{% block header_title %}Budget & Treasury{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-surface border border-outline-variant rounded-lg p-4">
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Balance</p>
+            <p class="text-2xl font-bold mt-1 {% if balance >= 0 %}text-green-400{% else %}text-red-400{% endif %}">₹{{ "%.2f"|format(balance) }}</p>
+        </div>
+        <div class="bg-surface border border-outline-variant rounded-lg p-4">
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Income</p>
+            <p class="text-2xl font-bold mt-1 text-green-400">₹{{ "%.2f"|format(total_income) }}</p>
+        </div>
+        <div class="bg-surface border border-outline-variant rounded-lg p-4">
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Expenses</p>
+            <p class="text-2xl font-bold mt-1 text-red-400">₹{{ "%.2f"|format(total_expenses) }}</p>
+        </div>
+        <div class="bg-surface border border-outline-variant rounded-lg p-4">
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Unpaid Dues</p>
+            <p class="text-2xl font-bold mt-1 text-yellow-400">₹{{ "%.2f"|format(unpaid_dues) }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Categories -->
+        <div class="bg-surface border border-outline-variant rounded-lg p-6">
+            <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">folder</span> Categories
+            </h3>
+            {% if categories %}
+            <div class="space-y-2 mb-4">
+                {% for c in categories %}
+                <div class="bg-surface-container-low rounded-lg px-3 py-2">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-bold">{{ c.name }}</p>
+                        <p class="text-xs font-mono">₹{{ "%.2f"|format(c.allocated_amount) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-on-surface-variant mb-4">No categories yet.</p>
+            {% endif %}
+            {% if user.role in ('admin', 'editor') %}
+            <form method="POST" action="/budget/categories/create" class="border-t border-outline-variant pt-4 space-y-2">
+                <input type="text" name="name" placeholder="Category name" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <div class="flex gap-2">
+                    <input type="number" name="allocated_amount" step="0.01" placeholder="Allocated ₹" class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold rounded-lg">Add</button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+
+        <!-- Transactions -->
+        <div class="bg-surface border border-outline-variant rounded-lg p-6 lg:col-span-2">
+            <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">receipt_long</span> Transactions
+            </h3>
+
+            {% if user.role in ('admin', 'editor') %}
+            <form method="POST" action="/budget/transactions/create" class="border border-outline-variant rounded-lg p-4 mb-4 space-y-2">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <input type="text" name="description" placeholder="Description" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    <input type="number" name="amount" step="0.01" placeholder="Amount" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                    <select name="type_" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <input type="date" name="transaction_date" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <select name="category_id" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                        <option value="">No category</option>
+                        {% for c in categories %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold rounded-lg">Record</button>
+                </div>
+            </form>
+            {% endif %}
+
+            {% if transactions %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                            <th class="text-left py-2 px-2">Date</th>
+                            <th class="text-left py-2 px-2">Description</th>
+                            <th class="text-left py-2 px-2">Category</th>
+                            <th class="text-right py-2 px-2">Amount</th>
+                            {% if user.role in ('admin', 'editor') %}<th class="text-right py-2 px-2"></th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr class="border-b border-outline-variant/30 hover:bg-surface-container-low/50">
+                            <td class="py-2 px-2 text-xs text-on-surface-variant">{{ t.transaction_date }}</td>
+                            <td class="py-2 px-2 font-bold">{{ t.description }}</td>
+                            <td class="py-2 px-2 text-xs text-on-surface-variant">{{ t.budget_categories.name if t.budget_categories else '-' }}</td>
+                            <td class="py-2 px-2 text-right font-mono font-bold {% if t.type == 'income' %}text-green-400{% else %}text-red-400{% endif %}">{% if t.type == 'expense' %}-{% endif %}₹{{ "%.2f"|format(t.amount) }}</td>
+                            {% if user.role in ('admin', 'editor') %}
+                            <td class="py-2 px-2 text-right">
+                                <a href="/budget/transactions/{{ t.id }}/edit" class="text-xs text-primary hover:underline">Edit</a>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-sm text-on-surface-variant">No transactions recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Dues -->
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mt-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined">payments</span> Membership Dues
+        </h3>
+
+        {% if user.role in ('admin', 'editor') %}
+        <form method="POST" action="/budget/dues/create" class="border border-outline-variant rounded-lg p-4 mb-4 flex flex-wrap gap-2">
+            <select name="member_id" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+                <option value="">Select member...</option>
+                {% for m in members %}
+                <option value="{{ m.id }}">{{ m.display_name or m.username }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="amount" step="0.01" placeholder="Amount" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+            <input type="text" name="period" placeholder="e.g. 2026-Q1" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+            <input type="date" name="due_date" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs focus:border-primary focus:ring-0">
+            <button type="submit" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold rounded-lg">Add Dues</button>
+        </form>
+        {% endif %}
+
+        {% if dues %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                        <th class="text-left py-2 px-3">Member</th>
+                        <th class="text-left py-2 px-3">Period</th>
+                        <th class="text-left py-2 px-3">Due Date</th>
+                        <th class="text-left py-2 px-3">Status</th>
+                        <th class="text-right py-2 px-3">Amount</th>
+                        {% if user.role in ('admin', 'editor') %}<th class="text-right py-2 px-3"></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dues %}
+                    <tr class="border-b border-outline-variant/30">
+                        <td class="py-2 px-3 font-bold">{{ d.profiles.display_name or d.profiles.username or 'Unknown' }}</td>
+                        <td class="py-2 px-3 text-on-surface-variant">{{ d.period }}</td>
+                        <td class="py-2 px-3 text-on-surface-variant">{{ d.due_date }}</td>
+                        <td class="py-2 px-3">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded {% if d.status == 'paid' %}bg-green-900/30 text-green-400{% elif d.status == 'overdue' %}bg-red-900/30 text-red-400{% elif d.status == 'waived' %}bg-gray-800 text-gray-400{% else %}bg-yellow-900/30 text-yellow-400{% endif %}">{{ d.status }}</span>
+                        </td>
+                        <td class="py-2 px-3 text-right font-mono font-bold">₹{{ "%.2f"|format(d.amount) }}</td>
+                        {% if user.role in ('admin', 'editor') %}
+                        <td class="py-2 px-3 text-right">
+                            {% if d.status == 'unpaid' or d.status == 'overdue' %}
+                            <form method="POST" action="/budget/dues/{{ d.id }}/mark-paid" class="inline">
+                                <input type="hidden" name="paid_date" value="{{ today }}">
+                                <button class="text-xs text-green-400 hover:underline">Mark Paid</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant">No dues records.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

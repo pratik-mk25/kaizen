@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}Edit{% else %}New{% endif %} Inventory Item - KAIZEN{% endblock %}
+{% block header_title %}{% if item %}Edit{% else %}Add{% endif %} Inventory Item{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-4">
+        <a href="/equipment/inventory" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Inventory
+        </a>
+    </div>
+    <div class="bg-surface border border-outline-variant rounded-lg p-6">
+        <form method="POST" action="{% if item %}/equipment/inventory/{{ item.id }}/edit{% else %}/equipment/inventory/new{% endif %}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Name *</label>
+                    <input type="text" name="name" value="{{ item.name if item else '' }}" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Category</label>
+                    <select name="category" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="propeller" {% if item and item.category == 'propeller' %}selected{% endif %}>Propeller</option>
+                        <option value="motor" {% if item and item.category == 'motor' %}selected{% endif %}>Motor</option>
+                        <option value="frame" {% if item and item.category == 'frame' %}selected{% endif %}>Frame</option>
+                        <option value="electronics" {% if item and item.category == 'electronics' %}selected{% endif %}>Electronics</option>
+                        <option value="battery" {% if item and item.category == 'battery' %}selected{% endif %}>Battery</option>
+                        <option value="hardware" {% if item and item.category == 'hardware' %}selected{% endif %}>Hardware</option>
+                        <option value="tool" {% if item and item.category == 'tool' %}selected{% endif %}>Tool</option>
+                        <option value="other" {% if item and item.category == 'other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Quantity</label>
+                    <input type="number" name="quantity" value="{{ item.quantity if item else 0 }}" min="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Min Threshold</label>
+                    <input type="number" name="min_threshold" value="{{ item.min_threshold if item else 5 }}" min="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Unit</label>
+                    <input type="text" name="unit" value="{{ item.unit if item else 'piece' }}" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Location</label>
+                    <input type="text" name="location" value="{{ item.location if item else '' }}" placeholder="e.g. Shelf B3" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Notes</label>
+                <textarea name="notes" rows="3" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">{{ item.notes if item else '' }}</textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <a href="/equipment/inventory" class="px-4 py-2 text-sm border border-outline-variant rounded-lg hover:bg-surface-variant/50">Cancel</a>
+                <button type="submit" class="bg-primary text-on-primary px-6 py-2 text-sm font-bold uppercase tracking-wider rounded-lg">{% if item %}Update{% else %}Create{% endif %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="{% if theme == 'dark' %}dark{% endif %}">
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -14,12 +14,12 @@
             --font-main: {% if ui_mode == 'tactical' %}'JetBrains Mono', monospace{% else %}'Inter', sans-serif{% endif %};
         }
         body {
-            background-color: {% if theme == 'dark' %}#0a0a0f{% else %}#f8fafc{% endif %};
-            color: {% if theme == 'dark' %}#e5e2e1{% else %}#0f172a{% endif %};
+            background-color: {% if theme == 'dark' %}#0a0a0f{% else %}#f1edea{% endif %};
+            color: {% if theme == 'dark' %}#e5e2e1{% else %}#2c2c2c{% endif %};
             font-family: var(--font-main);
         }
         .hud-border {
-            border: 1px solid {% if theme == 'dark' %}#1E1B4B{% else %}#e2e8f0{% endif %};
+            border: 1px solid {% if theme == 'dark' %}#1E1B4B{% else %}#d4d0cc{% endif %};
         }
         .hud-border-active {
             border: 1px solid #8B5CF6;
@@ -31,8 +31,8 @@
         [x-cloak] { display: none !important; }
         
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: {% if theme == 'dark' %}#131313{% else %}#f1f5f9{% endif %}; }
-        ::-webkit-scrollbar-thumb { background: #3c0091; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: {% if theme == 'dark' %}#131313{% else %}#e8e4e0{% endif %}; }
+        ::-webkit-scrollbar-thumb { background: #7c4dcc; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d0bcff; }
     </style>
 
@@ -42,51 +42,51 @@
           theme: {
             extend: {
               "colors": {
-                      "surface-container-high": "{% if theme == 'dark' %}#2a2a2a{% else %}#e2e8f0{% endif %}",
-                      "surface-container-lowest": "{% if theme == 'dark' %}#0e0e0e{% else %}#ffffff{% endif %}",
+                      "surface-container-high": "{% if theme == 'dark' %}#2a2a2a{% else %}#d4d0cc{% endif %}",
+                      "surface-container-lowest": "{% if theme == 'dark' %}#0e0e0e{% else %}#f5f2ef{% endif %}",
                       "inverse-on-surface": "#313030",
                       "on-primary-fixed": "#23005c",
                       "tertiary-fixed-dim": "#4cd7f6",
                       "on-tertiary-fixed-variant": "#004e5c",
                       "on-tertiary": "#003640",
                       "primary-container": "#a078ff",
-                      "surface": "{% if theme == 'dark' %}#131313{% else %}#ffffff{% endif %}",
+                      "surface": "{% if theme == 'dark' %}#131313{% else %}#f5f2ef{% endif %}",
                       "on-tertiary-container": "#002f38",
                       "tertiary-container": "#009eb9",
                       "secondary-fixed-dim": "#c3c0ff",
                       "secondary-fixed": "#e3dfff",
                       "on-error": "#690005",
                       "primary-fixed": "#e9ddff",
-                      "on-surface-variant": "{% if theme == 'dark' %}#cbc3d7{% else %}#64748b{% endif %}",
+                      "on-surface-variant": "{% if theme == 'dark' %}#cbc3d7{% else %}#6b655e{% endif %}",
                       "on-tertiary-fixed": "#001f26",
                       "on-primary-container": "#340080",
                       "on-error-container": "#ffdad6",
-                      "surface-dim": "{% if theme == 'dark' %}#131313{% else %}#f1f5f9{% endif %}",
+                      "surface-dim": "{% if theme == 'dark' %}#131313{% else %}#e6e2df{% endif %}",
                       "secondary-container": "{% if theme == 'dark' %}#3a2dc2{% else %}#e0e7ff{% endif %}",
-                      "surface-variant": "{% if theme == 'dark' %}#353534{% else %}#f1f5f9{% endif %}",
-                      "outline": "{% if theme == 'dark' %}#958ea0{% else %}#94a3b8{% endif %}",
+                      "surface-variant": "{% if theme == 'dark' %}#353534{% else %}#e8e4e0{% endif %}",
+                      "outline": "{% if theme == 'dark' %}#958ea0{% else %}#8a847d{% endif %}",
                       "inverse-surface": "#e5e2e1",
-                      "background": "{% if theme == 'dark' %}#0a0a0f{% else %}#f8fafc{% endif %}",
+                      "background": "{% if theme == 'dark' %}#0a0a0f{% else %}#f1edea{% endif %}",
                       "inverse-primary": "#6d3bd7",
                       "secondary": "{% if theme == 'dark' %}#c3c0ff{% else %}#5c53a5{% endif %}",
                       "primary": "{% if theme == 'dark' %}#d0bcff{% else %}#6d3bd7{% endif %}",
                       "surface-tint": "{% if theme == 'dark' %}#d0bcff{% else %}#6d3bd7{% endif %}",
-                      "outline-variant": "{% if theme == 'dark' %}#494454{% else %}#cbd5e1{% endif %}",
+                      "outline-variant": "{% if theme == 'dark' %}#494454{% else %}#bcb6af{% endif %}",
                       "error-container": "#93000a",
                       "on-secondary-container": "{% if theme == 'dark' %}#b4b0ff{% else %}#312e81{% endif %}",
-                      "on-background": "{% if theme == 'dark' %}#e5e2e1{% else %}#0f172a{% endif %}",
-                      "surface-container-low": "{% if theme == 'dark' %}#1c1b1b{% else %}#f1f5f9{% endif %}",
+                      "on-background": "{% if theme == 'dark' %}#e5e2e1{% else %}#2c2c2c{% endif %}",
+                      "surface-container-low": "{% if theme == 'dark' %}#1c1b1b{% else %}#ede9e5{% endif %}",
                       "on-primary-fixed-variant": "#5516be",
                       "primary-fixed-dim": "#d0bcff",
                       "error": "{% if theme == 'dark' %}#ffb4ab{% else %}#ba1a1a{% endif %}",
                       "on-secondary": "{% if theme == 'dark' %}#1f00a4{% else %}#ffffff{% endif %}",
                       "on-secondary-fixed": "#100069",
                       "on-primary": "{% if theme == 'dark' %}#3c0091{% else %}#ffffff{% endif %}",
-                      "surface-container": "{% if theme == 'dark' %}#201f1f{% else %}#f1f5f9{% endif %}",
+                      "surface-container": "{% if theme == 'dark' %}#201f1f{% else %}#f1edea{% endif %}",
                       "on-secondary-fixed-variant": "#372abf",
                       "surface-bright": "#3a3939",
-                      "on-surface": "{% if theme == 'dark' %}#e5e2e1{% else %}#0f172a{% endif %}",
-                      "surface-container-highest": "{% if theme == 'dark' %}#353534{% else %}#cbd5e1{% endif %}",
+                      "on-surface": "{% if theme == 'dark' %}#e5e2e1{% else %}#2c2c2c{% endif %}",
+                      "surface-container-highest": "{% if theme == 'dark' %}#353534{% else %}#d4d0cc{% endif %}",
                       "tertiary": "{% if theme == 'dark' %}#4cd7f6{% else %}#00687a{% endif %}",
                       "tertiary-fixed": "#acedff"
               },
@@ -109,6 +109,17 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        (function() {
+            var theme = '{{ theme }}';
+            if (theme === 'system') {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
 <body class="flex min-h-screen bg-background text-on-background {% if ui_mode == 'tactical' %}font-mono uppercase{% else %}font-sans{% endif %}" x-data="{ mobileNav: false }">
 
@@ -142,7 +153,7 @@
                 <p class="text-[10px] text-on-surface-variant uppercase tracking-[0.2em] mt-2">TRACK COLLABORATE BUILD</p>
             </div>
 
-            <nav class="flex-1 flex flex-col gap-1 px-2">
+<nav class="flex-1 flex flex-col gap-1 px-2 overflow-y-auto">
                 <a href="/dashboard" class="flex items-center gap-3 {% if request.url.path == '/dashboard' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
                     <span class="material-symbols-outlined text-xl">dashboard</span> {{ t.dashboard }}
                 </a>
@@ -154,6 +165,28 @@
                 </a>
                 <a href="/progress" class="flex items-center gap-3 {% if request.url.path == '/progress' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
                     <span class="material-symbols-outlined text-xl">monitoring</span> {{ t.analytics }}
+                </a>
+
+                <div class="mt-4 mb-2 px-4">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Club OS</p>
+                </div>
+                <a href="/equipment" class="flex items-center gap-3 {% if '/equipment' in request.url.path %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">precision_manufacturing</span> Equipment
+                </a>
+                <a href="/equipment/inventory" class="flex items-center gap-3 {% if '/equipment/inventory' in request.url.path %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">inventory_2</span> Inventory
+                </a>
+                <a href="/members" class="flex items-center gap-3 {% if request.url.path == '/members' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">badge</span> Members
+                </a>
+                <a href="/attendance/kiosk" class="flex items-center gap-3 {% if request.url.path == '/attendance/kiosk' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">qr_code_scanner</span> Attendance
+                </a>
+                <a href="/budget" class="flex items-center gap-3 {% if request.url.path == '/budget' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">account_balance</span> Budget
+                </a>
+                <a href="/docs" class="flex items-center gap-3 {% if request.url.path == '/docs' %}bg-secondary-container text-on-secondary-container{% else %}text-on-surface-variant{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] rounded-lg">
+                    <span class="material-symbols-outlined text-xl">menu_book</span> Knowledge Base
                 </a>
 
                 {% if user.role == 'admin' %}
@@ -205,34 +238,52 @@
             </div>
         </div>
         
-        <nav class="flex-1 flex flex-col gap-1 px-2">
+        <nav class="flex-1 flex flex-col gap-1 px-2 overflow-y-auto">
             <a href="/dashboard" class="flex items-center gap-3 {% if request.url.path == '/dashboard' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
-                <span class="material-symbols-outlined text-xl">{% if user.role == 'editor' %}visibility{% else %}dashboard{% endif %}</span>
-                {% if user.role == 'editor' %}Omniscient Hub{% else %}{{ t.dashboard }}{% endif %}
+                <span class="material-symbols-outlined text-xl">dashboard</span>
+                {{ t.dashboard }}
             </a>
             <a href="/my-tasks" class="flex items-center gap-3 {% if request.url.path == '/my-tasks' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
-                <span class="material-symbols-outlined text-xl">{% if user.role == 'editor' %}assignment_turned_in{% else %}inbox{% endif %}</span>
-                {% if user.role == 'editor' %}Global Directives{% else %}My Tasks{% endif %}
+                <span class="material-symbols-outlined text-xl">inbox</span>
+                My Tasks
             </a>
             <a href="/search" class="flex items-center gap-3 {% if request.url.path == '/search' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
-                <span class="material-symbols-outlined text-xl">{% if user.role == 'editor' %}search_insights{% else %}search{% endif %}</span>
-                {% if user.role == 'editor' %}Deep Search{% else %}{{ t.search }}{% endif %}
+                <span class="material-symbols-outlined text-xl">search</span>
+                {{ t.search }}
             </a>
             <a href="/progress" class="flex items-center gap-3 {% if request.url.path == '/progress' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
-                <span class="material-symbols-outlined text-xl">{% if user.role == 'editor' %}analytics{% else %}monitoring{% endif %}</span>
-                {% if user.role == 'editor' %}System Health{% else %}{{ t.analytics }}{% endif %}
+                <span class="material-symbols-outlined text-xl">monitoring</span>
+                {{ t.analytics }}
+            </a>
+
+            <!-- Club OS Modules -->
+            <div class="mt-6 mb-2 px-4">
+                <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Club OS</p>
+            </div>
+            <a href="/equipment" class="flex items-center gap-3 {% if '/equipment' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">precision_manufacturing</span>
+                Equipment
+            </a>
+            <a href="/equipment/inventory" class="flex items-center gap-3 {% if '/equipment/inventory' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">inventory_2</span> Inventory
+            </a>
+            <a href="/members" class="flex items-center gap-3 {% if request.url.path == '/members' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">badge</span> Members
+            </a>
+            <a href="/attendance/kiosk" class="flex items-center gap-3 {% if request.url.path == '/attendance/kiosk' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">qr_code_scanner</span> Attendance
+            </a>
+            <a href="/budget" class="flex items-center gap-3 {% if request.url.path == '/budget' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">account_balance</span> Budget
+            </a>
+            <a href="/docs" class="flex items-center gap-3 {% if request.url.path == '/docs' %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
+                <span class="material-symbols-outlined text-xl">menu_book</span> Knowledge Base
             </a>
             
-            {% if user.role == 'admin' or user.role == 'editor' %}
+            {% if user.role == 'admin' %}
             <div class="mt-6 mb-2 px-4">
-                <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">{% if user.role == 'editor' %}System Admin{% else %}Administration{% endif %}</p>
+                <p class="text-[10px] font-bold text-outline uppercase tracking-[0.2em]">Administration</p>
             </div>
-            {% if user.role == 'editor' %}
-            <a href="/admin/system/requests" class="flex items-center gap-3 {% if '/admin/system/requests' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
-                <span class="material-symbols-outlined text-xl">contact_support</span>
-                Requests
-            </a>
-            {% endif %}
             <a href="/admin/users" class="flex items-center gap-3 {% if '/admin/users' in request.url.path %}bg-secondary-container text-on-secondary-container border-r-4 border-primary shadow-[0_0_12px_rgba(139,92,246,0.4)]{% else %}text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50{% endif %} px-4 py-3 text-sm uppercase tracking-[0.2em] transition-all">
                 <span class="material-symbols-outlined text-xl">group</span>
                 Users
@@ -258,6 +309,7 @@
                 <div class="flex items-center justify-between">
                     <span class="text-[9px] font-bold text-on-surface-variant uppercase">Theme</span>
                     <div class="flex bg-surface-container p-0.5 rounded border border-outline-variant/30">
+                        <button type="submit" name="theme" value="system" class="px-2 py-1 text-[8px] font-bold rounded {% if theme == 'system' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">AUTO</button>
                         <button type="submit" name="theme" value="dark" class="px-2 py-1 text-[8px] font-bold rounded {% if theme == 'dark' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">DARK</button>
                         <button type="submit" name="theme" value="light" class="px-2 py-1 text-[8px] font-bold rounded {% if theme == 'light' %}bg-primary text-on-primary shadow-sm{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">LIGHT</button>
                     </div>

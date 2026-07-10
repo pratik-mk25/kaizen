@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{% if doc %}Edit{% else %}New{% endif %} Document - KAIZEN{% endblock %}
+{% block header_title %}{% if doc %}Edit{% else %}New{% endif %} Document{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-4">
+        <a href="/docs" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Knowledge Base
+        </a>
+    </div>
+    <div class="bg-surface border border-outline-variant rounded-lg p-6">
+        <form method="POST" action="{% if doc %}/docs/{{ doc.id }}/edit{% else %}/docs/new{% endif %}" class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Title *</label>
+                <input type="text" name="title" value="{{ doc.title if doc else '' }}" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Category</label>
+                    <select name="category" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                        <option value="general" {% if doc and doc.category == 'general' %}selected{% endif %}>General</option>
+                        <option value="build_guide" {% if doc and doc.category == 'build_guide' %}selected{% endif %}>Build Guide</option>
+                        <option value="safety_checklist" {% if doc and doc.category == 'safety_checklist' %}selected{% endif %}>Safety Checklist</option>
+                        <option value="tutorial" {% if doc and doc.category == 'tutorial' %}selected{% endif %}>Tutorial</option>
+                        <option value="policy" {% if doc and doc.category == 'policy' %}selected{% endif %}>Policy</option>
+                        <option value="reference" {% if doc and doc.category == 'reference' %}selected{% endif %}>Reference</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Tags (comma separated)</label>
+                    <input type="text" name="tags" value="{{ doc.tags|join(', ') if doc and doc.tags else '' }}" placeholder="e.g. drone, build, fpv" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">Content (Markdown) *</label>
+                <textarea name="content" rows="20" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm font-mono focus:border-primary focus:ring-0">{{ doc.content if doc else '' }}</textarea>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="published" id="published" value="true" {% if not doc or doc.published %}checked{% endif %} class="rounded border-outline-variant text-primary focus:ring-primary">
+                <label for="published" class="text-xs font-bold uppercase tracking-wider">Published</label>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <a href="/docs" class="px-4 py-2 text-sm border border-outline-variant rounded-lg hover:bg-surface-variant/50">Cancel</a>
+                <button type="submit" class="bg-primary text-on-primary px-6 py-2 text-sm font-bold uppercase tracking-wider rounded-lg">
+                    {% if doc %}Update{% else %}Publish{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

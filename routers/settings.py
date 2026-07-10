@@ -19,7 +19,7 @@ async def update_preferences(
     # Set cookies with a long expiration (e.g., 1 year)
     max_age = 365 * 24 * 60 * 60
     
-    if theme in ("dark", "light"):
+    if theme in ("dark", "light", "system"):
         response.set_cookie(key="theme", value=theme, max_age=max_age, path="/")
     
     if ui_mode in ("tactical", "standard"):

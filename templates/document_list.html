@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Knowledge Base - KAIZEN{% endblock %}
+{% block header_title %}Knowledge Base{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <p class="text-sm text-on-surface-variant">Build guides, safety checklists, tutorials, and club docs</p>
+        {% if user.role in ('admin', 'editor', 'lead') %}
+        <a href="/docs/new" class="bg-primary text-on-primary px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">add</span> New Document
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Category Filter -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="/docs" class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg {% if not selected_category %}bg-primary text-on-primary{% else %}border border-outline-variant hover:bg-surface-variant/50{% endif %}">All</a>
+        {% for cat in ['general', 'build_guide', 'safety_checklist', 'tutorial', 'policy', 'reference'] %}
+        <a href="/docs?category={{ cat }}" class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg {% if selected_category == cat %}bg-primary text-on-primary{% else %}border border-outline-variant hover:bg-surface-variant/50{% endif %}">{{ cat.replace('_', ' ') }}</a>
+        {% endfor %}
+    </div>
+
+    {% if docs %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for doc in docs %}
+        <a href="/docs/{{ doc.id }}" class="bg-surface border border-outline-variant rounded-lg p-5 hover:border-primary/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.15)] transition-all group">
+            <div class="flex items-start gap-3 mb-3">
+                <span class="material-symbols-outlined text-primary">{% if doc.category == 'build_guide' %}build{% elif doc.category == 'safety_checklist' %}warning{% elif doc.category == 'tutorial' %}school{% elif doc.category == 'policy' %}gavel{% elif doc.category == 'reference' %}book{% else %}article{% endif %}</span>
+                <div>
+                    <h3 class="font-bold text-sm uppercase tracking-wider">{{ doc.title }}</h3>
+                    {% if doc.tags %}
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        {% for tag in doc.tags %}
+                        <span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant">#{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant truncate">{{ doc.content|striptags|truncate(120) }}</p>
+            <div class="flex items-center justify-between mt-3 text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">
+                <span>{{ doc.category.replace('_', ' ') }}</span>
+                <span>{{ username_map.get(doc.created_by, 'Unknown') }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-surface border border-dashed border-outline-variant rounded-lg p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-on-surface-variant mb-4">menu_book</span>
+        <p class="text-lg font-bold text-on-surface-variant uppercase tracking-wider mb-2">No Documents Yet</p>
+        <p class="text-sm text-on-surface-variant mb-6">Create build guides, safety checklists, and reference docs for your club.</p>
+        <a href="/docs/new" class="bg-primary text-on-primary px-6 py-3 text-sm font-bold uppercase tracking-wider rounded-lg inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">add</span> Create Document
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

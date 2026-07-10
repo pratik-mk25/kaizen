@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Equipment - KAIZEN{% endblock %}
+{% block header_title %}Equipment{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <p class="text-sm text-on-surface-variant">Manage drones, batteries, parts, and club gear</p>
+        <a href="/equipment/new" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg hover:opacity-90 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">add</span> Add Equipment
+        </a>
+    </div>
+
+    {% if items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for item in items %}
+        <a href="/equipment/{{ item.id }}" class="block bg-surface border border-outline-variant rounded-lg p-5 hover:border-primary/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.15)] transition-all group">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-2xl text-primary">{% if item.equipment_type == 'drone' %}flight{% elif item.equipment_type == 'battery' %}battery_charging_full{% elif item.equipment_type == 'part' %}handyman{% elif item.equipment_type == 'controller' %}gamepad{% else %}settings{% endif %}</span>
+                    <div>
+                        <h3 class="font-bold text-sm uppercase tracking-wider">{{ item.name }}</h3>
+                        <p class="text-xs text-on-surface-variant">{{ item.brand }}{% if item.model %} / {{ item.model }}{% endif %}</p>
+                    </div>
+                </div>
+                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded {% if item.status == 'available' %}bg-green-900/30 text-green-400{% elif item.status == 'in_use' %}bg-blue-900/30 text-blue-400{% elif item.status == 'maintenance' %}bg-yellow-900/30 text-yellow-400{% elif item.status == 'retired' %}bg-gray-800 text-gray-400{% else %}bg-red-900/30 text-red-400{% endif %}">{{ item.status }}</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-on-surface-variant">
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">sell</span> {{ item.equipment_type }}</span>
+                {% if item.serial_number %}
+                <span class="flex items-center gap-1">SN: {{ item.serial_number }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-surface border border-dashed border-outline-variant rounded-lg p-12 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline mb-4">precision_manufacturing</span>
+        <p class="text-lg font-bold text-on-surface-variant uppercase tracking-wider mb-2">No Equipment Registered</p>
+        <p class="text-sm text-on-surface-variant mb-6">Add your first drone, battery, or part to start tracking your club's gear.</p>
+        <a href="/equipment/new" class="bg-primary text-on-primary px-6 py-3 text-sm font-bold uppercase tracking-widest rounded-lg inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">add</span> Add Equipment
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

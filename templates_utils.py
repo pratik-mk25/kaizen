@@ -3,10 +3,21 @@ from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from datetime import date
+import json
 from crud import get_all_users_detailed
 
 BASE_DIR = Path(__file__).resolve().parent
 env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")), autoescape=True)
+
+def from_json(value):
+    if not value:
+        return {}
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+env.filters["from_json"] = from_json
 
 TACTICAL_DICT = {
     "dashboard": "Overview",
@@ -59,9 +70,9 @@ STANDARD_DICT = {
 }
 
 
-def get_username_map(org_id: str | None = None) -> dict:
+def get_username_map() -> dict:
     try:
-        users = get_all_users_detailed(org_id)
+        users = get_all_users_detailed()
         return {u["id"]: u["display_name"] or u["username"] or "Member" for u in users}
     except Exception as e:
         print(f"get_username_map failed: {e}")
@@ -71,15 +82,13 @@ def get_username_map(org_id: str | None = None) -> dict:
 def render_template(template_name: str, request: Request, **kwargs) -> HTMLResponse:
     template = env.get_template(template_name)
 
-    theme = request.cookies.get("theme", "dark")
+    theme = request.cookies.get("theme", "system")
     ui_mode = request.cookies.get("ui_mode", "standard")
 
     t_dict = TACTICAL_DICT if ui_mode == "tactical" else STANDARD_DICT
 
     if "username_map" not in kwargs:
-        user = kwargs.get("user")
-        org_id = user.get("organization_id") if user else None
-        kwargs["username_map"] = get_username_map(org_id)
+        kwargs["username_map"] = get_username_map()
 
     html_content = template.render(
         request=request,

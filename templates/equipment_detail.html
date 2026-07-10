@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ item.name }} - Equipment{% endblock %}
+{% block header_title %}{{ item.name }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-4">
+        <a href="/equipment" class="text-sm text-primary hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Equipment
+        </a>
+    </div>
+
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-4xl text-primary">{% if item.equipment_type == 'drone' %}flight{% elif item.equipment_type == 'battery' %}battery_charging_full{% elif item.equipment_type == 'part' %}handyman{% elif item.equipment_type == 'charger' %}gamepad{% else %}settings{% endif %}</span>
+                <div>
+                    <h2 class="text-xl font-bold uppercase">{{ item.name }}</h2>
+                    <p class="text-sm text-on-surface-variant">{{ item.brand or '' }}{% if item.model %} / {{ item.model }}{% endif %}</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="/equipment/{{ item.id }}/edit" class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider border border-outline-variant rounded-lg hover:bg-surface-variant/50">Edit</a>
+                <form method="POST" action="/equipment/{{ item.id }}/delete" onsubmit="return confirm('Delete this equipment?')">
+                    <button type="submit" class="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-error border border-error/30 rounded-lg hover:bg-error/10">Delete</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Type</p>
+                <p class="text-sm font-bold mt-1">{{ item.equipment_type }}</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Status</p>
+                <p class="text-sm font-bold mt-1">
+                    <span class="px-2 py-0.5 rounded text-xs {% if item.status == 'available' %}bg-green-900/30 text-green-400{% elif item.status == 'in_use' %}bg-blue-900/30 text-blue-400{% elif item.status == 'maintenance' %}bg-yellow-900/30 text-yellow-400{% elif item.status == 'retired' %}bg-gray-800 text-gray-400{% else %}bg-red-900/30 text-red-400{% endif %}">{{ item.status }}</span>
+                </p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Condition</p>
+                <p class="text-sm font-bold mt-1 capitalize">{{ item.condition }}</p>
+            </div>
+            {% if item.serial_number %}
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Serial Number</p>
+                <p class="text-sm font-bold mt-1 font-mono">{{ item.serial_number }}</p>
+            </div>
+            {% endif %}
+            {% if item.purchase_date %}
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Purchase Date</p>
+                <p class="text-sm font-bold mt-1">{{ item.purchase_date }}</p>
+            </div>
+            {% endif %}
+            {% if item.purchase_price %}
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Purchase Price</p>
+                <p class="text-sm font-bold mt-1">₹{{ "%.2f"|format(item.purchase_price) }}</p>
+            </div>
+            {% endif %}
+            {% if item.assigned_to %}
+            <div class="bg-surface-container-low rounded-lg p-3">
+                <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Assigned To</p>
+                <p class="text-sm font-bold mt-1">{{ username_map.get(item.assigned_to, 'Unknown') }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if item.notes %}
+        <div class="mt-4 p-3 bg-surface-container-low rounded-lg">
+            <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Notes</p>
+            <p class="text-sm">{{ item.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Maintenance Logs -->
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">build</span> Maintenance Logs
+        </h3>
+
+        {% if maintenance %}
+        <div class="space-y-3 mb-4">
+            {% for log in maintenance %}
+            <div class="bg-surface-container-low rounded-lg p-4 flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-bold">{{ log.description }}</p>
+                    <p class="text-xs text-on-surface-variant mt-1">{{ log.maintenance_date }} {% if log.performed_by %}by {{ username_map.get(log.performed_by, 'Unknown') }}{% endif %}</p>
+                    {% if log.notes %}<p class="text-xs text-on-surface-variant mt-1">{{ log.notes }}</p>{% endif %}
+                </div>
+                <div class="flex items-center gap-3">
+                    {% if log.cost %}<span class="text-sm font-bold">₹{{ "%.2f"|format(log.cost) }}</span>{% endif %}
+                    <form method="POST" action="/equipment/maintenance/{{ log.id }}/delete" onsubmit="return confirm('Delete this log?')">
+                        <button class="text-xs text-error hover:text-error/80"><span class="material-symbols-outlined text-sm">delete</span></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant mb-4">No maintenance logs. Record the first one below.</p>
+        {% endif %}
+
+        <form method="POST" action="/equipment/{{ item.id }}/maintenance" class="border-t border-outline-variant pt-4">
+            <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Add Maintenance Record</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" name="description" placeholder="Description" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                <input type="date" name="maintenance_date" required class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                <input type="number" name="cost" step="0.01" placeholder="Cost (₹0.00)" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+                <input type="text" name="notes" placeholder="Notes (optional)" class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0">
+            </div>
+            <button type="submit" class="mt-3 bg-primary text-on-primary px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg">Log Maintenance</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

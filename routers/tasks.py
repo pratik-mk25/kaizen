@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import crud
 from auth import get_current_user, lead_or_admin_required
 from templates_utils import render_template, get_username_map, env as jinja_env
-from database import supabase_admin
+from database import supabase
 from notifications import notify_task_created, notify_task_status_changed, notify_task_updated
 
 router = APIRouter(tags=["tasks"])
@@ -14,26 +14,24 @@ async def add_task(request: Request, project_id: str,
                    priority: str = Form("medium"), due_date: str = Form(""),
                    assignee_id: str = Form(None),
                    user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    project = crud.get_project(project_id, org_id)
+    project = crud.get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    new_task = crud.create_task(title, description, project_id, user["id"], priority, due_date or None, org_id)
+    new_task = crud.create_task(title, description, project_id, user["id"], priority, due_date or None)
     
-    # Notify Discord
     try:
-        notify_task_created(new_task, user.get("email", "Unknown"), org_id=org_id)
+        notify_task_created(new_task, user.get("email", "Unknown"))
     except:
         pass
 
     if assignee_id:
         crud.assign_users_to_task(new_task["id"], [assignee_id], user["id"])
     if request.headers.get("HX-Request") == "true":
-        tasks = crud.get_tasks_for_project(project_id, org_id)
+        tasks = crud.get_tasks_for_project(project_id)
         task_assignees = {t["id"]: crud.get_assignees(t["id"]) for t in tasks}
-        username_map = get_username_map(org_id)
-        assignable_users = crud.get_all_users_detailed(org_id)
+        username_map = get_username_map()
+        assignable_users = crud.get_all_users_detailed()
         return HTMLResponse(jinja_env.get_template("_task_list.html").render(
             tasks=tasks, task_assignees=task_assignees, username_map=username_map,
             assignable_users=assignable_users, user=user
@@ -43,26 +41,24 @@ async def add_task(request: Request, project_id: str,
 @router.post("/tasks/{task_id}/update-status")
 async def update_task_status(request: Request, task_id: str, new_status: str = Form(...),
                              user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
     
     old_status = task["status"]
     try:
-        crud.update_task_status(task_id, new_status, user["id"], org_id)
-        # Notify Discord
+        crud.update_task_status(task_id, new_status, user["id"])
         try:
-            notify_task_status_changed(task, old_status, new_status, user.get("email", "Unknown"), org_id=org_id)
+            notify_task_status_changed(task, old_status, new_status, user.get("email", "Unknown"))
         except:
             pass
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")
 
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if request.headers.get("HX-Request") == "true":
         task_assignees = {task["id"]: crud.get_assignees(task["id"])}
-        username_map = get_username_map(org_id)
+        username_map = get_username_map()
         return HTMLResponse(jinja_env.get_template("_task_card.html").render(
             task=task, task_assignees=task_assignees, username_map=username_map, user=user
         ))
@@ -70,8 +66,7 @@ async def update_task_status(request: Request, task_id: str, new_status: str = F
 
 @router.post("/tasks/{task_id}/assign")
 async def assign_task_endpoint(task_id: str, request: Request, user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
     form_data = await request.form()
@@ -81,21 +76,20 @@ async def assign_task_endpoint(task_id: str, request: Request, user: dict = Depe
 
 @router.get("/tasks/{task_id}")
 async def task_detail(request: Request, task_id: str, user: dict = Depends(get_current_user)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
-    assignable_users = crud.get_all_users_detailed(org_id)
-    comments = crud.get_comments_for_task(task_id, org_id)
-    username_map = get_username_map(org_id)
+    assignable_users = crud.get_all_users_detailed()
+    comments = crud.get_comments_for_task(task_id)
+    username_map = get_username_map()
     assignees = crud.get_assignees(task_id)
     attachments = []
     try:
-        attachments = crud.get_attachments(task_id, org_id)
-        if attachments and supabase_admin:
+        attachments = crud.get_attachments(task_id)
+        if attachments:
             for att in attachments:
                 try:
-                    signed = supabase_admin.storage.from_("task-attachments") \
+                    signed = supabase.storage.from_("task-attachments") \
                         .create_signed_url(att["storage_path"], 3600)
                     att["signed_url"] = signed["signedURL"] if signed else None
                 except:
@@ -113,13 +107,12 @@ async def task_detail(request: Request, task_id: str, user: dict = Depends(get_c
 @router.post("/tasks/{task_id}/comment")
 async def add_comment_endpoint(request: Request, task_id: str, content: str = Form(...),
                                user: dict = Depends(get_current_user)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
-    new_comment = crud.add_comment(task_id, content, user["id"], org_id)
+    new_comment = crud.add_comment(task_id, content, user["id"])
     if request.headers.get("HX-Request") == "true":
-        username_map = get_username_map(org_id)
+        username_map = get_username_map()
         return HTMLResponse(jinja_env.get_template("_comment.html").render(
             comment=new_comment, username=username_map.get(user['id'], 'Unknown')
         ))
@@ -128,8 +121,7 @@ async def add_comment_endpoint(request: Request, task_id: str, content: str = Fo
 @router.post("/tasks/{task_id}/attachments")
 async def upload_attachment(request: Request, task_id: str,
                             user: dict = Depends(get_current_user)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
     form_data = await request.form()
@@ -142,73 +134,63 @@ async def upload_attachment(request: Request, task_id: str,
     mime = file.content_type
     size = len(contents)
     
-    if not supabase_admin:
-        raise HTTPException(status_code=500, detail="Storage operations require SUPABASE_SERVICE_ROLE_KEY to be configured.")
-        
-    supabase_admin.storage.from_("task-attachments").upload(
+    supabase.storage.from_("task-attachments").upload(
         storage_path, contents, {"content-type": mime}
     )
-    crud.add_attachment(task_id, user["id"], filename, storage_path, mime, size, org_id)
-    attachments = crud.get_attachments(task_id, org_id)
+    crud.add_attachment(task_id, user["id"], filename, storage_path, mime, size)
+    attachments = crud.get_attachments(task_id)
     for att in attachments:
         try:
-            signed = supabase_admin.storage.from_("task-attachments") \
+            signed = supabase.storage.from_("task-attachments") \
                 .create_signed_url(att["storage_path"], 3600)
             att["signed_url"] = signed["signedURL"] if signed else None
         except:
             att["signed_url"] = None
     if request.headers.get("HX-Request") == "true":
-        return HTMLResponse(jinja_env.get_template("_attachment_list.html").render(attachments=attachments, task=crud.get_task(task_id, org_id)))
+        return HTMLResponse(jinja_env.get_template("_attachment_list.html").render(attachments=attachments, task=crud.get_task(task_id)))
     return RedirectResponse(url=f"/tasks/{task_id}", status_code=303)
 
 @router.post("/tasks/{task_id}/attachments/{attachment_id}/delete")
 async def delete_attachment_endpoint(task_id: str, attachment_id: str,
                                      user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
-    crud.delete_attachment(attachment_id, user["id"], org_id)
-    attachments = crud.get_attachments(task_id, org_id)
+    crud.delete_attachment(attachment_id, user["id"])
+    attachments = crud.get_attachments(task_id)
     for att in attachments:
-        if supabase_admin:
-            try:
-                signed = supabase_admin.storage.from_("task-attachments") \
-                    .create_signed_url(att["storage_path"], 3600)
-                att["signed_url"] = signed["signedURL"] if signed else None
-            except:
-                att["signed_url"] = None
-        else:
+        try:
+            signed = supabase.storage.from_("task-attachments") \
+                .create_signed_url(att["storage_path"], 3600)
+            att["signed_url"] = signed["signedURL"] if signed else None
+        except:
             att["signed_url"] = None
     if request.headers.get("HX-Request") == "true":
-        return HTMLResponse(jinja_env.get_template("_attachment_list.html").render(attachments=attachments, task=crud.get_task(task_id, org_id)))
+        return HTMLResponse(jinja_env.get_template("_attachment_list.html").render(attachments=attachments, task=crud.get_task(task_id)))
     return RedirectResponse(url=f"/tasks/{task_id}", status_code=303)
 
 @router.post("/tasks/{task_id}/delete")
 async def delete_task(task_id: str, user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     project_id = task["project_id"]
-    crud.delete_task(task_id, user["id"], org_id)
+    crud.delete_task(task_id, user["id"])
     return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
 
 @router.get("/admin/tasks/create")
 async def create_task_form(request: Request, project_id: str, user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    project = crud.get_project(project_id, org_id)
+    project = crud.get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return render_template("task_form.html", request, user=user, project=project, task=None)
 
 @router.get("/tasks/{task_id}/edit")
 async def edit_task_form(request: Request, task_id: str, user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    task = crud.get_task(task_id, org_id)
+    task = crud.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    project = crud.get_project(task["project_id"], org_id)
+    project = crud.get_project(task["project_id"])
     return render_template("task_form.html", request, user=user, project=project, task=task)
 
 @router.post("/tasks/{task_id}/edit")
@@ -216,12 +198,10 @@ async def edit_task_action(task_id: str,
                            title: str = Form(...), description: str = Form(""),
                            priority: str = Form("medium"), due_date: str = Form(None),
                            user: dict = Depends(lead_or_admin_required)):
-    org_id = user.get("organization_id")
-    old_task = crud.get_task(task_id, org_id)
+    old_task = crud.get_task(task_id)
     if not old_task:
         raise HTTPException(status_code=404, detail="Task not found")
     
-    # Track changes for Discord Timeline Alert
     changes = []
     if old_task["title"] != title:
         changes.append(f"🔹 **Title:** {old_task['title']} ➔ {title}")
@@ -232,12 +212,12 @@ async def edit_task_action(task_id: str,
         new_due = due_date or "None"
         changes.append(f"📅 **Timeline:** {old_due} ➔ {new_due}")
 
-    crud.update_task(task_id, title, description, priority, due_date if due_date else None, user["id"], org_id)
+    crud.update_task(task_id, title, description, priority, due_date if due_date else None, user["id"])
     
     if changes:
         try:
-            updated_task = crud.get_task(task_id, org_id)
-            notify_task_updated(updated_task, user.get("email", "Unknown"), changes, org_id=org_id)
+            updated_task = crud.get_task(task_id)
+            notify_task_updated(updated_task, user.get("email", "Unknown"), changes)
         except:
             pass
 
