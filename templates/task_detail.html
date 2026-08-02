@@ -150,14 +150,17 @@
                 </button>
                 <div x-show="showAssign" x-cloak class="mt-4 animate-in fade-in slide-in-from-top-2">
                     <form action="/tasks/{{ task.id }}/assign" method="post" class="space-y-3">
-                        <select name="assignee_ids" multiple size="5" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary transition-all text-on-surface outline-none">
+                        <div class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 max-h-48 overflow-y-auto custom-scrollbar space-y-2">
                             {% for u in assignable_users %}
                                 {% set uid = u.id %}
-                                <option value="{{ uid }}" {% if uid in assignees|map(attribute='id')|list %}selected{% endif %}>
-                                    {{ u.username or u.display_name or 'Unknown' }}
-                                </option>
+                                <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-surface-variant/30 rounded transition-colors">
+                                    <input type="checkbox" name="assignee_ids" value="{{ uid }}" 
+                                           {% if uid in assignees|map(attribute='id')|list %}checked{% endif %}
+                                           class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest">
+                                    <span class="text-sm font-bold text-on-surface">{{ u.username or u.display_name or 'Unknown' }}</span>
+                                </label>
                             {% endfor %}
-                        </select>
+                        </div>
                         <button type="submit" class="w-full py-2.5 bg-primary text-on-primary rounded-lg font-bold text-[10px] uppercase tracking-widest hover:brightness-110 shadow-lg transition-all">Update</button>
                     </form>
                 </div>

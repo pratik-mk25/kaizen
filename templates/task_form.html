@@ -48,13 +48,16 @@
                 {% if assignable_users %}
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Deployed Operatives{% else %}Assignees{% endif %}</label>
-                    <select name="assignee_ids" multiple size="4"
-                            class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-5 py-4 focus:ring-1 focus:ring-primary transition-all text-on-surface outline-none text-sm custom-scrollbar">
+                    <div class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 max-h-48 overflow-y-auto custom-scrollbar space-y-2">
                         {% for u in assignable_users %}
-                        <option value="{{ u.id }}" {% if task_assignees and u.id in task_assignees|map(attribute='id')|list %}selected{% endif %}>{{ u.username or u.email }}</option>
+                        <label class="flex items-center gap-3 cursor-pointer p-2 hover:bg-surface-variant/30 rounded transition-colors">
+                            <input type="checkbox" name="assignee_ids" value="{{ u.id }}" 
+                                   {% if task_assignees and u.id in task_assignees|map(attribute='id')|list %}checked{% endif %}
+                                   class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container-lowest">
+                            <span class="text-sm font-bold text-on-surface">{{ u.username or u.email }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
-                    <p class="text-[9px] text-on-surface-variant mt-2 tracking-widest uppercase">Hold Ctrl (or Cmd) to select multiple</p>
+                    </div>
                 </div>
                 {% endif %}
 
