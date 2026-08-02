@@ -44,6 +44,20 @@
                     </div>
                 </div>
 
+                <!-- NEW FIELD: Assignees -->
+                {% if assignable_users %}
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Deployed Operatives{% else %}Assignees{% endif %}</label>
+                    <select name="assignee_ids" multiple size="4"
+                            class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-5 py-4 focus:ring-1 focus:ring-primary transition-all text-on-surface outline-none text-sm custom-scrollbar">
+                        {% for u in assignable_users %}
+                        <option value="{{ u.id }}" {% if task_assignees and u.id in task_assignees|map(attribute='id')|list %}selected{% endif %}>{{ u.username or u.email }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-[9px] text-on-surface-variant mt-2 tracking-widest uppercase">Hold Ctrl (or Cmd) to select multiple</p>
+                </div>
+                {% endif %}
+
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">{% if ui_mode == 'tactical' %}Directive_Briefing{% else %}Description{% endif %}</label>
                     <textarea name="description" rows="4" 

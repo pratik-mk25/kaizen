@@ -72,7 +72,9 @@
                 <div class="flex justify-between items-center mb-3">
                     <span class="text-[9px] text-primary uppercase font-bold tracking-widest">{% if ui_mode == 'tactical' %}Operation_Status{% else %}Mission Status{% endif %}</span>
                     {% if user.role == 'admin' %}
-                    <a href="/admin/missions/create" class="material-symbols-outlined text-xs text-on-surface-variant hover:text-primary transition-colors">add_circle</a>
+                    <a href="/admin/missions/create" class="px-3 py-1 bg-primary text-on-primary shadow-lg hover:brightness-110 active:scale-95 transition-all text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 rounded">
+                        <span class="material-symbols-outlined text-[10px]">add</span> {% if ui_mode == 'tactical' %}New Operation{% else %}Add Mission{% endif %}
+                    </a>
                     {% endif %}
                 </div>
                 <div class="space-y-2 overflow-y-auto max-h-[140px] pr-2 custom-scrollbar">

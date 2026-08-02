@@ -12,7 +12,6 @@ router = APIRouter(tags=["tasks"])
 async def add_task(request: Request, project_id: str,
                    title: str = Form(...), description: str = Form(""),
                    priority: str = Form("medium"), due_date: str = Form(""),
-                   assignee_id: str = Form(None),
                    user: dict = Depends(lead_or_admin_required)):
     project = crud.get_project(project_id)
     if not project:
@@ -25,8 +24,11 @@ async def add_task(request: Request, project_id: str,
     except:
         pass
 
-    if assignee_id:
-        crud.assign_users_to_task(new_task["id"], [assignee_id], user["id"])
+    form_data = await request.form()
+    assignee_ids = form_data.getlist("assignee_ids")
+    
+    if assignee_ids:
+        crud.assign_users_to_task(new_task["id"], assignee_ids, user["id"])
     if request.headers.get("HX-Request") == "true":
         tasks = crud.get_tasks_for_project(project_id)
         task_assignees = {t["id"]: crud.get_assignees(t["id"]) for t in tasks}
@@ -183,7 +185,8 @@ async def create_task_form(request: Request, project_id: str, user: dict = Depen
     project = crud.get_project(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    return render_template("task_form.html", request, user=user, project=project, task=None)
+    assignable_users = crud.get_all_users_detailed()
+    return render_template("task_form.html", request, user=user, project=project, task=None, assignable_users=assignable_users)
 
 @router.get("/tasks/{task_id}/edit")
 async def edit_task_form(request: Request, task_id: str, user: dict = Depends(lead_or_admin_required)):
@@ -191,10 +194,12 @@ async def edit_task_form(request: Request, task_id: str, user: dict = Depends(le
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     project = crud.get_project(task["project_id"])
-    return render_template("task_form.html", request, user=user, project=project, task=task)
+    assignable_users = crud.get_all_users_detailed()
+    task_assignees = crud.get_assignees(task_id)
+    return render_template("task_form.html", request, user=user, project=project, task=task, assignable_users=assignable_users, task_assignees=task_assignees)
 
 @router.post("/tasks/{task_id}/edit")
-async def edit_task_action(task_id: str, 
+async def edit_task_action(request: Request, task_id: str, 
                            title: str = Form(...), description: str = Form(""),
                            priority: str = Form("medium"), due_date: str = Form(None),
                            user: dict = Depends(lead_or_admin_required)):
@@ -213,6 +218,13 @@ async def edit_task_action(task_id: str,
         changes.append(f"📅 **Timeline:** {old_due} ➔ {new_due}")
 
     crud.update_task(task_id, title, description, priority, due_date if due_date else None, user["id"])
+    
+    form_data = await request.form()
+    assignee_ids = form_data.getlist("assignee_ids")
+    if assignee_ids:
+        crud.assign_users_to_task(task_id, assignee_ids, user["id"])
+    else:
+        crud.assign_users_to_task(task_id, [], user["id"])
     
     if changes:
         try:
