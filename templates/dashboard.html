@@ -124,9 +124,42 @@
     </div>
 
     <!-- Right Column -->
-    <div class="col-span-12 lg:col-span-4 flex flex-col gap-4 overflow-hidden">
+    <div class="col-span-12 lg:col-span-4 flex flex-col gap-4 overflow-visible">
+        
+        <!-- Key Status Widget -->
+        <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl shrink-0 relative overflow-visible z-[100]" x-data="{ open: false }">
+            <div class="flex justify-between items-start mb-1">
+                <span class="text-[9px] text-primary uppercase font-bold tracking-widest flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[12px]">key</span> Key Status
+                </span>
+            </div>
+            
+            <div class="flex items-center justify-between mt-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-on-surface uppercase">{{ key_holder }}</span>
+                </div>
+                <button @click="open = !open" class="text-[9px] font-bold text-primary hover:text-white transition-colors uppercase tracking-widest border border-primary/30 px-2 py-1 rounded bg-primary/10">Update</button>
+            </div>
+            
+            <div x-show="open" @click.away="open = false" style="display: none;" x-transition class="absolute top-[110%] right-0 mt-2 w-64 bg-surface border border-outline-variant rounded-xl shadow-2xl p-4 z-[100]">
+                <form action="/dashboard/update-key" method="post" class="flex flex-col gap-3">
+                    <label class="text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">Select Key Holder</label>
+                    <select name="key_holder" class="bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary">
+                        <option value="HOD Cabin" {% if key_holder == 'HOD Cabin' %}selected{% endif %}>HOD Cabin</option>
+                        <option value="Security Guard" {% if key_holder == 'Security Guard' %}selected{% endif %}>Security Guard</option>
+                        <optgroup label="Members">
+                            {% for p in all_profiles %}
+                            <option value="{{ p.display_name or p.username }}" {% if key_holder == (p.display_name or p.username) %}selected{% endif %}>{{ p.display_name or p.username }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                    <button type="submit" class="w-full bg-primary text-on-primary py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all shadow-[0_0_10px_rgba(139,92,246,0.5)]">Save</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Recent Activity Log -->
-        <div class="hud-border bg-surface-container-lowest/40 flex flex-col flex-1 rounded-xl overflow-hidden min-h-0">
+        <div class="hud-border bg-surface-container-lowest/40 flex flex-col flex-1 rounded-xl overflow-hidden min-h-0 relative z-0">
             <div class="p-3 border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50 shrink-0">
                 <span class="text-[9px] text-primary uppercase font-bold tracking-widest">Recent Activity</span>
             </div>

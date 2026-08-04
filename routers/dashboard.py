@@ -109,6 +109,9 @@ async def dashboard(
             "active_users": active_users_count
         }
 
+        key_holder = crud.get_key_holder()
+        all_profiles = crud.get_all_users_detailed()
+
         recent_logs = crud.get_audit_logs(limit=10)
             
         return render_template("dashboard.html", request, user=user, 
@@ -119,9 +122,19 @@ async def dashboard(
                                all_missions=all_missions,
                                all_projects=all_projects,
                                selected_mission=mission_id,
-                               selected_project=project_id)
+                               selected_project=project_id,
+                               key_holder=key_holder,
+                               all_profiles=all_profiles)
     except Exception as e:
         return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=str(e))
+
+@router.post("/dashboard/update-key")
+async def update_key_holder(request: Request, key_holder: str = Form(...), user: dict = Depends(get_current_user)):
+    try:
+        crud.set_key_holder(key_holder, user["id"])
+    except Exception as e:
+        print(f"Error updating key holder: {e}")
+    return RedirectResponse(url="/dashboard", status_code=303)
 
 @router.get("/tasks")
 async def tasks_view(request: Request, user: dict = Depends(get_current_user)):

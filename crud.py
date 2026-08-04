@@ -693,6 +693,16 @@ def set_kiosk_secret(secret: str, user_id: str):
     supabase.table("organizations").update({"kiosk_secret": secret}).eq("id", org["id"]).execute()
     log_action(user_id, "kiosk_secret_updated", "organization", org["id"], new_values={"kiosk_secret": "***"})
 
+def get_key_holder():
+    org = get_organization()
+    return org.get("key_holder", "HOD Cabin")
+
+def set_key_holder(holder: str, user_id: str):
+    org = get_organization()
+    supabase.table("organizations").update({"key_holder": holder}).eq("id", org["id"]).execute()
+    log_action(user_id, "key_holder_updated", "organization", org["id"], old_values={"key_holder": org.get("key_holder")}, new_values={"key_holder": holder})
+
+
 def create_user_by_admin(email: str, password: str, display_name: str, role: str, admin_id: str):
     try:
         user_resp = supabase_admin.auth.admin.create_user({
