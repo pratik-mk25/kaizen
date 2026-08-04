@@ -11,7 +11,7 @@
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
         {% for p in profiles %}
         {% set is_active = p.id in active_ids %}
-        <form method="POST" action="/attendance/kiosk/toggle" class="m-0">
+        <form method="POST" action="/attendance/kiosk/toggle" class="m-0" onsubmit="if(this.dataset.submitted) return false; this.dataset.submitted='true'; this.querySelector('button').classList.add('opacity-50', 'pointer-events-none'); return true;">
             <input type="hidden" name="user_id" value="{{ p.id }}">
             <button type="submit"
                     class="w-full rounded-xl p-4 text-center transition-all cursor-pointer border-2
@@ -40,13 +40,14 @@
 
     <!-- Today's Records -->
     <div class="bg-surface border border-outline-variant rounded-xl p-6">
-        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Today's Records</h3>
+        <h3 class="text-lg font-bold uppercase tracking-wider mb-4">Recent Records</h3>
         {% set today_records = today_attendance %}
         {% if today_records %}
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant">
+                        <th class="text-left py-2 px-3">Date</th>
                         <th class="text-left py-2 px-3">Member</th>
                         <th class="text-left py-2 px-3">In</th>
                         <th class="text-left py-2 px-3">Out</th>
@@ -58,6 +59,7 @@
                     {% for a in today_records %}
                     {% set times = a.notes|from_json if a.notes else {} %}
                     <tr class="border-b border-outline-variant/30">
+                        <td class="py-2 px-3 font-mono text-xs">{{ a.event_date }}</td>
                         <td class="py-2 px-3 font-bold">{{ username_map.get(a.user_id, 'Member') }}</td>
                         <td class="py-2 px-3 font-mono text-xs">{{ times.get('in', '-') }}</td>
                         <td class="py-2 px-3 font-mono text-xs">{{ times.get('out', '-') }}</td>
@@ -86,7 +88,7 @@
             </table>
         </div>
         {% else %}
-        <p class="text-sm text-on-surface-variant">No attendance records yet today.</p>
+        <p class="text-sm text-on-surface-variant">No recent attendance records.</p>
         {% endif %}
     </div>
 

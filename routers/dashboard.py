@@ -123,8 +123,8 @@ async def dashboard(
     except Exception as e:
         return render_template("dashboard.html", request, user=user, missions=[], stats={}, alerts=[], error=str(e))
 
-@router.get("/my-tasks")
-async def my_tasks(request: Request, user: dict = Depends(get_current_user)):
+@router.get("/tasks")
+async def tasks_view(request: Request, user: dict = Depends(get_current_user)):
     tasks = crud.get_tasks_for_user(user["id"])
     username_map = get_username_map()
     today = date.today()
@@ -163,7 +163,23 @@ async def my_tasks(request: Request, user: dict = Depends(get_current_user)):
         ("upcoming", upcoming),
         ("no_due", no_due),
     ]
-    return render_template("my_tasks.html", request, user=user, groups=groups, username_map=username_map)
+    
+    all_incomplete_query = supabase.table("tasks").select("*").neq("status", "done")
+    all_incomplete_tasks = all_incomplete_query.execute().data or []
+    my_task_ids = {t["id"] for t in tasks}
+    other_incomplete = [t for t in all_incomplete_tasks if t["id"] not in my_task_ids]
+    
+    for t in other_incomplete:
+        proj = crud.get_project(t["project_id"])
+        if not proj: continue
+        mission = crud.get_mission(proj["mission_id"])
+        if not mission: continue
+        t["_project_name"] = proj["name"]
+        t["_mission_name"] = mission["name"]
+
+    task_assignees = {t["id"]: crud.get_assignees(t["id"]) for t in other_incomplete}
+
+    return render_template("tasks.html", request, user=user, groups=groups, other_incomplete=other_incomplete, task_assignees=task_assignees, username_map=username_map)
 
 @router.get("/progress")
 async def progress_dashboard(request: Request, month: str = None, user: dict = Depends(get_current_user)):

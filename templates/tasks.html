@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, status_badge, due_pill, priority_badge, empty_state, avatar with context %}
+
+{% block title %}Tasks - MISSION AVINYA{% endblock %}
+{% block header_title %}Tasks{% endblock %}
+
+{% block content %}
+<div class="space-y-8" x-data="{ activeTab: 'my_tasks' }">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">Tasks</h1>
+            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Manage and track all mission assignments.{% else %}Track and manage assigned tasks.{% endif %}</p>
+        </div>
+        <div class="flex bg-surface-container-low p-1 rounded-lg border border-outline-variant/30">
+            <button @click="activeTab = 'my_tasks'"
+                    :class="activeTab === 'my_tasks' ? 'bg-primary/20 text-primary border-primary/30' : 'text-on-surface-variant hover:bg-surface-variant/50 border-transparent'"
+                    class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md border transition-all">
+                Your Tasks
+            </button>
+            <button @click="activeTab = 'other_tasks'"
+                    :class="activeTab === 'other_tasks' ? 'bg-primary/20 text-primary border-primary/30' : 'text-on-surface-variant hover:bg-surface-variant/50 border-transparent'"
+                    class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md border transition-all">
+                Other Incomplete
+            </button>
+        </div>
+    </div>
+
+    <!-- My Tasks Tab -->
+    <div x-show="activeTab === 'my_tasks'" class="space-y-10" x-transition>
+        {% for title_key, task_list in groups %}
+            {% set title = t[title_key] if title_key in t else title_key %}
+            {% if task_list %}
+            <div x-data="{ open: true }" class="animate-in fade-in slide-in-from-bottom-4 duration-500" style="animation-delay: {{ loop.index0 * 100 }}ms">
+                <button @click="open = !open" class="group flex items-center justify-between w-full text-left mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 border border-outline-variant/30 bg-surface-container-low flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-all rounded">
+                            <span class="material-symbols-outlined text-lg transition-transform duration-200" :class="open ? 'rotate-90' : ''">chevron_right</span>
+                        </div>
+                        <h2 class="text-xs font-black text-on-surface uppercase tracking-[0.2em]">{{ title|capitalize|replace('_', ' ') }}</h2>
+                        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{{ task_list|length }}</span>
+                    </div>
+                    <div class="h-px flex-grow mx-6 bg-outline-variant/20"></div>
+                </button>
+
+                <div x-show="open" x-transition class="space-y-4">
+                    {% for task in task_list %}
+                        <div class="hud-border bg-surface-container-lowest/40 p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:hud-border-active rounded-xl group cursor-pointer"
+                             onclick="window.location='/tasks/{{ task.id }}'">
+                            <div class="flex-grow">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h4 class="text-sm font-bold text-on-surface uppercase tracking-wide group-hover:text-primary transition-colors leading-tight">{{ task.title }}</h4>
+                                    <span class="text-[8px] font-bold text-outline font-mono uppercase tracking-tighter opacity-50">#{{ task.id[:8] }}</span>
+                                </div>
+                                <div class="flex items-center text-[9px] font-bold uppercase tracking-widest text-on-surface-variant gap-2 opacity-70">
+                                    <span class="text-primary">{{ task._mission_name }}</span>
+                                    <span class="opacity-30">/</span>
+                                    <span>{{ task._project_name }}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-4">
+                                {{ priority_badge(task.priority) }}
+                                {{ status_badge(task.status) }}
+                                {{ due_pill(task.due_date) }}
+                                <div class="p-2 border border-outline-variant/30 text-on-surface-variant group-hover:text-primary transition-all rounded">
+                                    <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        {% if not groups[0][1] and not groups[1][1] and not groups[2][1] and not groups[3][1] and not groups[4][1] %}
+            {{ empty_state('No tasks assigned to you.', 'inbox_customize') }}
+        {% endif %}
+    </div>
+
+    <!-- Other Incomplete Tasks Tab -->
+    <div x-show="activeTab === 'other_tasks'" style="display: none;" class="space-y-4" x-transition>
+        {% if other_incomplete %}
+            <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="space-y-4">
+                {% for task in other_incomplete %}
+                    <div class="hud-border bg-surface-container-lowest/40 p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:hud-border-active rounded-xl group cursor-pointer"
+                         onclick="window.location='/tasks/{{ task.id }}'">
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h4 class="text-sm font-bold text-on-surface uppercase tracking-wide group-hover:text-primary transition-colors leading-tight">{{ task.title }}</h4>
+                                <span class="text-[8px] font-bold text-outline font-mono uppercase tracking-tighter opacity-50">#{{ task.id[:8] }}</span>
+                            </div>
+                            <div class="flex items-center text-[9px] font-bold uppercase tracking-widest text-on-surface-variant gap-2 opacity-70">
+                                <span class="text-primary">{{ task._mission_name }}</span>
+                                <span class="opacity-30">/</span>
+                                <span>{{ task._project_name }}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="flex -space-x-2 mr-2">
+                                {% for assignee in task_assignees.get(task.id, []) %}
+                                    <div class="relative group/avatar" title="{{ assignee.display_name or assignee.username }}">
+                                        {{ avatar(assignee, 8) }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {{ priority_badge(task.priority) }}
+                            {{ status_badge(task.status) }}
+                            {{ due_pill(task.due_date) }}
+                            <div class="p-2 border border-outline-variant/30 text-on-surface-variant group-hover:text-primary transition-all rounded">
+                                <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            {{ empty_state('No other incomplete tasks found.', 'task_alt') }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
