@@ -47,13 +47,10 @@ async def add_user_action(request: Request,
 
 @router.post("/users/{user_id}/delete")
 async def delete_user(user_id: str, user: dict = Depends(admin_required)):
-    from database import supabase_admin
     try:
-        supabase_admin.auth.admin.delete_user(user_id)
-    except Exception:
-        pass
-    supabase.table("profiles").delete().eq("id", user_id).execute()
-    crud.log_action(user["id"], "user_deleted", "user", user_id)
+        crud.delete_user_completely(user_id, user["id"])
+    except Exception as e:
+        print(f"Error deleting user {user_id}: {e}")
     return RedirectResponse(url="/admin/users", status_code=303)
 
 @router.get("/audit-log")

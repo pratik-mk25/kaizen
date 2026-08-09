@@ -612,6 +612,55 @@ def fix_all_attendance_utc_to_ist(user_id: str):
         print(f"Error in fix_all_attendance_utc_to_ist: {e}")
         return 0
 
+def delete_user_completely(user_id: str, admin_id: str):
+    client = _get_client()
+    
+    # 1. Clean up child table references
+    tables_to_delete_by_user = ["attendance", "task_assignees", "comments", "member_skills",
+                                "member_certifications", "event_attendees", "audit_logs"]
+    for t in tables_to_delete_by_user:
+        try:
+            client.table(t).delete().eq("user_id", user_id).execute()
+        except Exception as e:
+            print(f"Cleanup error in {t} for {user_id}: {e}")
+
+    try:
+        client.table("equipment_checkouts").delete().eq("borrower_id", user_id).execute()
+    except Exception as e:
+        print(f"Cleanup error in equipment_checkouts for {user_id}: {e}")
+
+    try:
+        client.table("flight_logs").delete().eq("pilot_id", user_id).execute()
+    except Exception as e:
+        print(f"Cleanup error in flight_logs for {user_id}: {e}")
+
+    # Nullify references in parent tables
+    try:
+        client.table("projects").update({"lead_id": None}).eq("lead_id", user_id).execute()
+    except Exception as e:
+        print(f"Cleanup error in projects for {user_id}: {e}")
+
+    try:
+        client.table("equipment").update({"assigned_to": None}).eq("assigned_to", user_id).execute()
+    except Exception as e:
+        print(f"Cleanup error in equipment for {user_id}: {e}")
+
+    try:
+        client.table("events").update({"created_by": None}).eq("created_by", user_id).execute()
+    except Exception as e:
+        print(f"Cleanup error in events for {user_id}: {e}")
+
+    # 2. Delete profile
+    client.table("profiles").delete().eq("id", user_id).execute()
+
+    # 3. Delete Supabase Auth user
+    try:
+        supabase_admin.auth.admin.delete_user(user_id)
+    except Exception as e:
+        print(f"Cleanup error in supabase_admin delete_user: {e}")
+
+    log_action(admin_id, "user_deleted", "user", user_id)
+
 # ==================== BUDGET ====================
 
 def get_budget_categories():
