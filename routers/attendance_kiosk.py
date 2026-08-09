@@ -108,6 +108,11 @@ async def kiosk_toggle(request: Request, user_id: str = Form(...), _=Depends(kio
     )
     return RedirectResponse(url="/attendance/kiosk", status_code=303)
 
+@router.post("/fix-all-ist")
+async def fix_all_attendance_ist(request: Request, user: dict = Depends(get_current_user)):
+    count = crud.fix_all_attendance_utc_to_ist(user["id"])
+    return RedirectResponse(url=request.headers.get("referer", "/attendance"), status_code=303)
+
 @router.post("/kiosk/edit-request")
 async def request_edit_code(attendance_id: str = Form(...), action: str = Form(...),
                             _=Depends(kiosk_required), user: dict = Depends(get_current_user)):

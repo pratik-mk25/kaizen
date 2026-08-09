@@ -8,10 +8,18 @@
             <h2 class="text-xl font-headline font-bold uppercase tracking-tight">{{ today_str }}</h2>
             <p class="text-sm text-on-surface-variant">{{ profiles|length }} members</p>
         </div>
-        <a href="/attendance/kiosk/login" class="inline-flex items-center px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-primary/20 transition-all gap-2">
-            <span class="material-symbols-outlined text-sm">terminal</span>
-            Kiosk Terminal
-        </a>
+        <div class="flex items-center gap-2">
+            <form action="/attendance/fix-all-ist" method="post" onsubmit="return confirm('Convert all past UTC attendance times in database to IST (+5h 30m)?')">
+                <button type="submit" class="inline-flex items-center px-3 py-2 bg-surface-container-high border border-outline-variant/40 text-on-surface text-[10px] font-bold uppercase tracking-widest rounded-lg hover:border-primary transition-all gap-1">
+                    <span class="material-symbols-outlined text-xs text-yellow-400">schedule</span>
+                    Shift Past Timestamps to IST
+                </button>
+            </form>
+            <a href="/attendance/kiosk/login" class="inline-flex items-center px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-primary/20 transition-all gap-2">
+                <span class="material-symbols-outlined text-sm">terminal</span>
+                Kiosk Terminal
+            </a>
+        </div>
     </div>
 
     <!-- Currently In Club -->

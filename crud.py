@@ -566,6 +566,52 @@ def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
         log_action(recorder_id, "attendance_checked_in", "attendance", res["id"], new_values=data)
         return {"action": "checked_in", "record": res}
 
+def fix_all_attendance_utc_to_ist(user_id: str):
+    try:
+        rows = _get_client().table("attendance").select("*").execute().data or []
+        updated_count = 0
+        for r in rows:
+            notes_str = r.get("notes")
+            if not notes_str:
+                continue
+            try:
+                notes = json.loads(notes_str)
+                modified = False
+                for key in ["in", "out"]:
+                    if key in notes and notes[key] and isinstance(notes[key], str):
+                        val = notes[key]
+                        if "AM" in val or "PM" in val or "IST" in val:
+                            continue
+                        parts = val.split(":")
+                        if len(parts) >= 2:
+                            hh = int(parts[0])
+                            mm = int(parts[1])
+                            ss = int(parts[2]) if len(parts) > 2 else 0
+                            
+                            mm_new = mm + 30
+                            hh_add = 0
+                            if mm_new >= 60:
+                                mm_new -= 60
+                                hh_add = 1
+                            hh_new = (hh + 5 + hh_add) % 24
+                            
+                            notes[key] = f"{hh_new:02d}:{mm_new:02d}:{ss:02d}"
+                            modified = True
+                
+                if modified:
+                    _get_client().table("attendance").update({
+                        "notes": json.dumps(notes)
+                    }).eq("id", r["id"]).execute()
+                    updated_count += 1
+            except Exception as e:
+                print(f"Error parsing attendance notes for {r.get('id')}: {e}")
+                
+        log_action(user_id, "fix_all_attendance_ist", "attendance", "all", new_values={"updated_count": updated_count})
+        return updated_count
+    except Exception as e:
+        print(f"Error in fix_all_attendance_utc_to_ist: {e}")
+        return 0
+
 # ==================== BUDGET ====================
 
 def get_budget_categories():
