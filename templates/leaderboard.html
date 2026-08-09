@@ -39,10 +39,14 @@
                 <p class="text-[10px] text-primary uppercase font-bold tracking-widest font-mono">{{ item.profile.role }}</p>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-outline-variant/20 text-center font-mono">
+            <div class="grid grid-cols-4 gap-2 pt-3 border-t border-outline-variant/20 text-center font-mono">
                 <div>
                     <span class="text-[8px] text-on-surface-variant uppercase block">Tasks</span>
                     <span class="text-xs font-bold text-tertiary">{{ item.tasks_completed }}</span>
+                </div>
+                <div>
+                    <span class="text-[8px] text-on-surface-variant uppercase block">Club Time</span>
+                    <span class="text-xs font-bold text-yellow-400">{{ item.club_hours }}h</span>
                 </div>
                 <div>
                     <span class="text-[8px] text-on-surface-variant uppercase block">Airtime</span>
@@ -70,6 +74,7 @@
                         <th class="text-left py-3 px-4">Member</th>
                         <th class="text-left py-3 px-4">Tasks Done</th>
                         <th class="text-left py-3 px-4">Attendance Count</th>
+                        <th class="text-left py-3 px-4">Time Spent in Club</th>
                         <th class="text-left py-3 px-4">Flight Minutes</th>
                         <th class="text-right py-3 px-4">Total Score</th>
                     </tr>
@@ -85,6 +90,7 @@
                         </td>
                         <td class="py-3 px-4 font-mono text-xs text-tertiary">{{ item.tasks_completed }}</td>
                         <td class="py-3 px-4 font-mono text-xs text-on-surface-variant">{{ item.attendance_events }}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-yellow-400 font-bold">{{ item.club_hours }} hrs ({{ item.club_minutes }} mins)</td>
                         <td class="py-3 px-4 font-mono text-xs text-primary">{{ item.flight_minutes }} mins</td>
                         <td class="py-3 px-4 font-mono font-bold text-right text-green-400 text-sm">{{ item.score }} pts</td>
                     </tr>

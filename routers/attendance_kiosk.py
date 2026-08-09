@@ -1,7 +1,7 @@
 import random
 import time
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 import crud
@@ -13,6 +13,13 @@ router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 EDIT_CODES = {}
 KIOSK_COOKIE = "kiosk_auth"
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def get_ist_date():
+    return datetime.now(IST).strftime("%Y-%m-%d")
+
+def get_ist_time():
+    return datetime.now(IST).strftime("%H:%M:%S")
 
 def generate_code():
     return str(random.randint(100000, 999999))
@@ -24,7 +31,7 @@ def kiosk_required(request: Request):
 @router.get("/")
 async def attendance_view(request: Request, user: dict = Depends(get_current_user)):
     profiles = crud.get_all_users_detailed()
-    today_str = date.today().isoformat()
+    today_str = get_ist_date()
     today_attendance = crud.get_attendance(limit=500)
     username_map = get_username_map()
     active_ids = set()
@@ -68,7 +75,7 @@ async def kiosk_logout(request: Request, user: dict = Depends(get_current_user))
 @router.get("/kiosk")
 async def attendance_kiosk(request: Request, _=Depends(kiosk_required), user: dict = Depends(get_current_user)):
     profiles = crud.get_all_users_detailed()
-    today_str = date.today().isoformat()
+    today_str = get_ist_date()
     today_attendance = crud.get_attendance(limit=500)
     username_map = get_username_map()
     import json
@@ -90,13 +97,13 @@ async def attendance_kiosk(request: Request, _=Depends(kiosk_required), user: di
 @router.post("/kiosk/toggle")
 async def kiosk_toggle(request: Request, user_id: str = Form(...), _=Depends(kiosk_required),
                        user: dict = Depends(get_current_user)):
-    today_str = date.today().isoformat()
+    today_str = get_ist_date()
     result = crud.quick_toggle_attendance(user_id, today_str, user["id"])
     uname = user.get("display_name") or user.get("email", "Unknown")
     umap = get_username_map()
     member_name = umap.get(user_id, user_id[:8])
     send_discord_notification(
-        f"**{result['action'].upper()}**\n**Member:** {member_name}\n**Time:** {datetime.now().strftime('%H:%M:%S')}\n**By:** {uname}",
+        f"**{result['action'].upper()}**\n**Member:** {member_name}\n**Time:** {get_ist_time()} (IST)\n**By:** {uname}",
         title="ATTENDANCE TOGGLE", color=0x00f0ff if result["action"] == "checked_in" else 0xff6b35
     )
     return RedirectResponse(url="/attendance/kiosk", status_code=303)

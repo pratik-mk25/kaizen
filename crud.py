@@ -540,7 +540,8 @@ def update_attendance(attendance_id: str, event_name: str, event_date: str, stat
 
 def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
     active = get_active_checkin(user_id, event_date)
-    now = datetime.now().strftime("%H:%M:%S")
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist).strftime("%H:%M:%S")
     if active:
         import json
         existing_notes = {}
@@ -930,12 +931,24 @@ def get_leaderboard_data():
             if any(t["id"] == tid for t in tasks):
                 completed_task_counts[uid] = completed_task_counts.get(uid, 0) + 1
 
-        # Map attendance records per user
+        # Map attendance records & calculate time spent in club
         attendance_counts = {}
+        club_minutes = {}
         for a in attendance:
             uid = a["user_id"]
             if a.get("status") == "present":
                 attendance_counts[uid] = attendance_counts.get(uid, 0) + 1
+                if a.get("notes"):
+                    try:
+                        notes = json.loads(a["notes"])
+                        if "in" in notes and "out" in notes:
+                            t_in = datetime.strptime(notes["in"], "%H:%M:%S")
+                            t_out = datetime.strptime(notes["out"], "%H:%M:%S")
+                            diff = (t_out - t_in).total_seconds() / 60
+                            if diff > 0:
+                                club_minutes[uid] = club_minutes.get(uid, 0) + int(diff)
+                    except Exception:
+                        pass
 
         # Map flight minutes per user
         flight_minutes = {}
@@ -949,15 +962,20 @@ def get_leaderboard_data():
             uid = p["id"]
             t_count = completed_task_counts.get(uid, 0)
             a_count = attendance_counts.get(uid, 0)
+            c_mins = club_minutes.get(uid, 0)
             f_mins = flight_minutes.get(uid, 0)
             
-            # Overall Score formula: (Tasks * 50) + (Attendance * 20) + (Flight Mins * 2)
-            score = (t_count * 50) + (a_count * 20) + (f_mins * 2)
+            c_hours = round(c_mins / 60.0, 1)
+            
+            # Score formula: (Tasks * 50) + (Club Hours * 15) + (Flight Mins * 2) + (Attendance Count * 5)
+            score = int((t_count * 50) + (c_hours * 15) + (f_mins * 2) + (a_count * 5))
             
             leaderboard.append({
                 "profile": p,
                 "tasks_completed": t_count,
                 "attendance_events": a_count,
+                "club_minutes": c_mins,
+                "club_hours": c_hours,
                 "flight_minutes": f_mins,
                 "score": score
             })
