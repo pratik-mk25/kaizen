@@ -58,8 +58,8 @@
                     <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/20">
                         <td class="py-3 px-4 font-mono text-xs">{{ a.event_date }}</td>
                         <td class="py-3 px-4 font-bold">{{ username_map.get(a.user_id, 'Member') }}</td>
-                        <td class="py-3 px-4 font-mono text-xs">{{ times.get('in', '-') }}</td>
-                        <td class="py-3 px-4 font-mono text-xs">{{ times.get('out', '-') }}</td>
+                        <td class="py-3 px-4 font-mono text-xs">{{ times.get('in', '-')|format_time_12h }}</td>
+                        <td class="py-3 px-4 font-mono text-xs">{{ times.get('out', '-')|format_time_12h }}</td>
                         <td class="py-3 px-4">
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded
                                 {% if a.status == 'present' and times.get('in') and not times.get('out') %}bg-green-900/30 text-green-500

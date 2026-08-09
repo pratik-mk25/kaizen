@@ -2,12 +2,14 @@ from fastapi import Request
 from fastapi.responses import HTMLResponse
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 import json
 from crud import get_all_users_detailed
 
 BASE_DIR = Path(__file__).resolve().parent
 env = Environment(loader=FileSystemLoader(str(BASE_DIR / "templates")), autoescape=True)
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 def from_json(value):
     if not value:
@@ -17,7 +19,25 @@ def from_json(value):
     except (json.JSONDecodeError, TypeError):
         return {}
 
+def format_time_12h(time_str):
+    if not time_str or time_str == "-":
+        return "-"
+    try:
+        if "AM" in time_str or "PM" in time_str:
+            return time_str
+        parts = time_str.split(":")
+        hh = int(parts[0])
+        mm = int(parts[1])
+        am_pm = "AM" if hh < 12 else "PM"
+        hh_12 = hh % 12
+        if hh_12 == 0:
+            hh_12 = 12
+        return f"{hh_12:02d}:{mm:02d} {am_pm}"
+    except Exception:
+        return time_str
+
 env.filters["from_json"] = from_json
+env.filters["format_time_12h"] = format_time_12h
 
 TACTICAL_DICT = {
     "dashboard": "Overview",
@@ -90,9 +110,11 @@ def render_template(template_name: str, request: Request, **kwargs) -> HTMLRespo
     if "username_map" not in kwargs:
         kwargs["username_map"] = get_username_map()
 
+    today_ist = datetime.now(IST).date()
+
     html_content = template.render(
         request=request,
-        today=date.today(),
+        today=today_ist,
         theme=theme,
         ui_mode=ui_mode,
         t=t_dict,
