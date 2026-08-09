@@ -723,3 +723,247 @@ def create_user_by_admin(email: str, password: str, display_name: str, role: str
     supabase.table("profiles").insert(profile_data).execute()
     log_action(admin_id, "user_created", "user", new_user.id, new_values=profile_data)
     return new_user
+
+# ==================== FLIGHT LOGBOOK & BATTERIES ====================
+def get_all_flight_logs():
+    try:
+        query = _get_client().table("flight_logs").select("*").order("flight_date", desc=True)
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching flight logs: {e}")
+        return []
+
+def create_flight_log(pilot_id: str, equipment_id: str | None, battery_id: str | None,
+                      flight_date: str, duration_minutes: int, location: str | None,
+                      purpose: str | None, notes: str | None, user_id: str):
+    data = {
+        "pilot_id": pilot_id,
+        "equipment_id": equipment_id,
+        "battery_id": battery_id,
+        "flight_date": flight_date,
+        "duration_minutes": duration_minutes,
+        "location": location,
+        "purpose": purpose,
+        "notes": notes
+    }
+    res = _get_client().table("flight_logs").insert(data).execute().data[0]
+    log_action(user_id, "flight_logged", "flight_log", res["id"], new_values=data)
+    
+    # Auto-increment battery cycles if battery provided
+    if battery_id:
+        try:
+            increment_battery_cycle(battery_id, user_id)
+        except Exception as e:
+            print(f"Failed to increment battery cycle: {e}")
+            
+    return res
+
+def delete_flight_log(log_id: str, user_id: str):
+    old = _get_client().table("flight_logs").select("*").eq("id", log_id).single().execute().data
+    _get_client().table("flight_logs").delete().eq("id", log_id).execute()
+    log_action(user_id, "flight_deleted", "flight_log", log_id, old_values=old)
+
+def get_all_battery_packs():
+    try:
+        query = _get_client().table("battery_packs").select("*").order("name")
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching battery packs: {e}")
+        return []
+
+def create_battery_pack(name: str, cell_count: str, capacity_mah: int, status: str, notes: str | None, user_id: str):
+    data = {
+        "name": name,
+        "cell_count": cell_count,
+        "capacity_mah": capacity_mah,
+        "charge_cycles": 0,
+        "status": status,
+        "notes": notes
+    }
+    res = _get_client().table("battery_packs").insert(data).execute().data[0]
+    log_action(user_id, "battery_created", "battery_pack", res["id"], new_values=data)
+    return res
+
+def increment_battery_cycle(battery_id: str, user_id: str):
+    b = _get_client().table("battery_packs").select("*").eq("id", battery_id).single().execute().data
+    if b:
+        new_cycles = (b.get("charge_cycles") or 0) + 1
+        _get_client().table("battery_packs").update({"charge_cycles": new_cycles}).eq("id", battery_id).execute()
+        log_action(user_id, "battery_cycle_incremented", "battery_pack", battery_id, new_values={"charge_cycles": new_cycles})
+
+def update_battery_status(battery_id: str, status: str, user_id: str):
+    _get_client().table("battery_packs").update({"status": status}).eq("id", battery_id).execute()
+    log_action(user_id, "battery_status_updated", "battery_pack", battery_id, new_values={"status": status})
+
+
+# ==================== EQUIPMENT CHECKOUTS ====================
+def get_active_checkouts():
+    try:
+        query = _get_client().table("equipment_checkouts").select("*").is_("returned_at", "null").order("checked_out_at", desc=True)
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching active checkouts: {e}")
+        return []
+
+def get_checkouts_for_equipment(equipment_id: str):
+    try:
+        query = _get_client().table("equipment_checkouts").select("*").eq("equipment_id", equipment_id).order("checked_out_at", desc=True)
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching checkouts for equipment: {e}")
+        return []
+
+def checkout_equipment(equipment_id: str, borrower_id: str, expected_return_at: str | None,
+                       condition: str, notes: str | None, user_id: str):
+    data = {
+        "equipment_id": equipment_id,
+        "borrower_id": borrower_id,
+        "expected_return_at": expected_return_at,
+        "condition_on_checkout": condition,
+        "notes": notes
+    }
+    res = _get_client().table("equipment_checkouts").insert(data).execute().data[0]
+    # Update equipment status to in_use and set assigned_to
+    _get_client().table("equipment").update({"status": "in_use", "assigned_to": borrower_id}).eq("id", equipment_id).execute()
+    log_action(user_id, "equipment_checked_out", "equipment_checkout", res["id"], new_values=data)
+    return res
+
+def return_equipment(checkout_id: str, condition_on_return: str, notes: str | None, user_id: str):
+    checkout = _get_client().table("equipment_checkouts").select("*").eq("id", checkout_id).single().execute().data
+    if checkout:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        _get_client().table("equipment_checkouts").update({
+            "returned_at": now_iso,
+            "condition_on_return": condition_on_return,
+            "notes": (checkout.get("notes") or "") + (f"\nReturn Note: {notes}" if notes else "")
+        }).eq("id", checkout_id).execute()
+        
+        # Reset equipment status to available
+        _get_client().table("equipment").update({
+            "status": "available",
+            "condition": condition_on_return,
+            "assigned_to": None
+        }).eq("id", checkout["equipment_id"]).execute()
+        log_action(user_id, "equipment_returned", "equipment_checkout", checkout_id, new_values={"returned_at": now_iso, "condition": condition_on_return})
+
+
+# ==================== EVENTS & PROBATION TRACKER ====================
+def get_all_events():
+    try:
+        query = _get_client().table("events").select("*").order("event_date", desc=True)
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching events: {e}")
+        return []
+
+def get_event(event_id: str):
+    try:
+        query = _get_client().table("events").select("*").eq("id", event_id).single()
+        return query.execute().data
+    except Exception as e:
+        print(f"Error fetching event {event_id}: {e}")
+        return None
+
+def create_event(title: str, description: str | None, event_type: str, event_date: str, location: str | None, user_id: str):
+    data = {
+        "title": title,
+        "description": description,
+        "event_type": event_type,
+        "event_date": event_date,
+        "location": location,
+        "created_by": user_id
+    }
+    res = _get_client().table("events").insert(data).execute().data[0]
+    log_action(user_id, "event_created", "event", res["id"], new_values=data)
+    return res
+
+def delete_event(event_id: str, user_id: str):
+    old = get_event(event_id)
+    _get_client().table("events").delete().eq("id", event_id).execute()
+    log_action(user_id, "event_deleted", "event", event_id, old_values=old)
+
+def get_event_attendees(event_id: str):
+    try:
+        query = _get_client().table("event_attendees").select("*").eq("event_id", event_id)
+        return query.execute().data or []
+    except Exception as e:
+        print(f"Error fetching attendees for event {event_id}: {e}")
+        return []
+
+def rsvp_event(event_id: str, user_id: str, status: str = "registered", notes: str | None = None):
+    # Check if existing record
+    existing = _get_client().table("event_attendees").select("*").eq("event_id", event_id).eq("user_id", user_id).execute().data
+    if existing:
+        _get_client().table("event_attendees").update({"status": status, "notes": notes}).eq("id", existing[0]["id"]).execute()
+    else:
+        _get_client().table("event_attendees").insert({
+            "event_id": event_id,
+            "user_id": user_id,
+            "status": status,
+            "notes": notes
+        }).execute()
+    log_action(user_id, "event_rsvp", "event_attendee", event_id, new_values={"status": status})
+
+def get_probation_members():
+    try:
+        profiles = get_all_users_detailed()
+        return [p for p in profiles if p.get("role") in ["probation", "probationary_member", "member", "new_member"]]
+    except Exception as e:
+        print(f"Error fetching probation members: {e}")
+        return []
+
+
+# ==================== LEADERBOARD ====================
+def get_leaderboard_data():
+    try:
+        profiles = get_all_users_detailed()
+        tasks = _get_client().table("tasks").select("*").eq("status", "done").execute().data or []
+        task_assignees = _get_client().table("task_assignees").select("*").execute().data or []
+        attendance = _get_client().table("attendance").select("*").execute().data or []
+        flights = get_all_flight_logs()
+
+        # Map completed tasks per user
+        completed_task_counts = {}
+        for ta in task_assignees:
+            tid = ta["task_id"]
+            uid = ta["user_id"]
+            if any(t["id"] == tid for t in tasks):
+                completed_task_counts[uid] = completed_task_counts.get(uid, 0) + 1
+
+        # Map attendance records per user
+        attendance_counts = {}
+        for a in attendance:
+            uid = a["user_id"]
+            if a.get("status") == "present":
+                attendance_counts[uid] = attendance_counts.get(uid, 0) + 1
+
+        # Map flight minutes per user
+        flight_minutes = {}
+        for f in flights:
+            uid = f.get("pilot_id")
+            if uid:
+                flight_minutes[uid] = flight_minutes.get(uid, 0) + (f.get("duration_minutes") or 0)
+
+        leaderboard = []
+        for p in profiles:
+            uid = p["id"]
+            t_count = completed_task_counts.get(uid, 0)
+            a_count = attendance_counts.get(uid, 0)
+            f_mins = flight_minutes.get(uid, 0)
+            
+            # Overall Score formula: (Tasks * 50) + (Attendance * 20) + (Flight Mins * 2)
+            score = (t_count * 50) + (a_count * 20) + (f_mins * 2)
+            
+            leaderboard.append({
+                "profile": p,
+                "tasks_completed": t_count,
+                "attendance_events": a_count,
+                "flight_minutes": f_mins,
+                "score": score
+            })
+
+        leaderboard.sort(key=lambda x: x["score"], reverse=True)
+        return leaderboard
+    except Exception as e:
+        print(f"Error computing leaderboard: {e}")
+        return []

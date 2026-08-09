@@ -75,6 +75,101 @@
         {% endif %}
     </div>
 
+    <!-- Checkout / Return Section -->
+    <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6" x-data="{ checkoutModal: false, returnModal: false }">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold uppercase tracking-wider flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">assignment_return</span> Equipment Checkout Log
+            </h3>
+            
+            {% set active_c = checkouts|selectattr('returned_at', 'none')|first if checkouts else None %}
+            {% if item.status == 'available' %}
+            <button @click="checkoutModal = true" class="bg-primary text-on-primary px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg hover:brightness-110 shadow-[0_0_12px_rgba(139,92,246,0.3)]">
+                Check Out Equipment
+            </button>
+            {% elif active_c %}
+            <button @click="returnModal = true" class="bg-green-600 text-white px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-lg hover:brightness-110">
+                Return Equipment
+            </button>
+            {% endif %}
+        </div>
+
+        {% if checkouts %}
+        <div class="space-y-3 mb-4">
+            {% for c in checkouts %}
+            <div class="bg-surface-container-low rounded-lg p-4 flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-bold text-on-surface">
+                        Borrowed by {{ username_map.get(c.borrower_id, 'Member') }}
+                    </p>
+                    <p class="text-xs text-on-surface-variant mt-1">
+                        Checked Out: {{ c.checked_out_at[:10] }} 
+                        {% if c.returned_at %} • Returned: {{ c.returned_at[:10] }} ({{ c.condition_on_return|upper }}){% else %}<span class="text-tertiary font-bold"> • ACTIVE</span>{% endif %}
+                    </p>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded border uppercase {% if not c.returned_at %}bg-blue-900/30 text-blue-400 border-blue-500/30{% else %}bg-gray-800 text-gray-400 border-gray-600/30{% endif %}">
+                    {% if not c.returned_at %}In Use{% else %}Returned{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-on-surface-variant">No checkout history for this equipment.</p>
+        {% endif %}
+
+        <!-- Checkout Modal -->
+        <div x-show="checkoutModal" x-transition style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div class="bg-surface border border-outline-variant rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+                <h3 class="text-lg font-bold uppercase tracking-tight">Check Out Equipment</h3>
+                <form action="/equipment/{{ item.id }}/checkout" method="post" class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Borrower</label>
+                        <select name="borrower_id" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-sm text-on-surface outline-none">
+                            {% for m in members %}
+                            <option value="{{ m.id }}">{{ m.display_name or m.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Expected Return Date</label>
+                        <input type="date" name="expected_return_at" class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-sm text-on-surface outline-none" />
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="checkoutModal = false" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Cancel</button>
+                        <button type="submit" class="px-5 py-2 bg-primary text-on-primary text-xs font-bold uppercase tracking-widest rounded-lg">Confirm Checkout</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Return Modal -->
+        {% if active_c %}
+        <div x-show="returnModal" x-transition style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div class="bg-surface border border-outline-variant rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+                <h3 class="text-lg font-bold uppercase tracking-tight">Return Equipment</h3>
+                <form action="/equipment/checkouts/{{ active_c.id }}/return" method="post" class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Condition on Return</label>
+                        <select name="condition_on_return" class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-sm text-on-surface outline-none">
+                            <option value="good" selected>Good / Working</option>
+                            <option value="fair">Fair / Wear & Tear</option>
+                            <option value="damaged">Damaged / Repair Needed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Return Notes</label>
+                        <textarea name="notes" placeholder="Notes on usage or damages..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-sm text-on-surface outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="returnModal = false" class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Cancel</button>
+                        <button type="submit" class="px-5 py-2 bg-green-600 text-white text-xs font-bold uppercase tracking-widest rounded-lg">Complete Return</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- Maintenance Logs -->
     <div class="bg-surface border border-outline-variant rounded-lg p-6 mb-6">
         <h3 class="text-lg font-bold uppercase tracking-wider mb-4 flex items-center gap-2">

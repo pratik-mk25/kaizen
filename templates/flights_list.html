@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Logbook - KAIZEN{% endblock %}
+{% block header_title %}Flight Logbook{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header Controls & Stats -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-headline font-bold uppercase tracking-tight">Flight Logbook</h2>
+            <p class="text-xs text-on-surface-variant uppercase tracking-widest mt-1">Track flight duration, pilot logs, and drone telemetry</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/flights/batteries" class="inline-flex items-center px-4 py-2 bg-surface-container-high border border-outline-variant/40 text-on-surface text-xs font-bold uppercase tracking-widest rounded-lg hover:border-primary transition-all gap-2">
+                <span class="material-symbols-outlined text-sm text-primary">battery_charging_full</span>
+                LiPo Batteries
+            </a>
+            <a href="/flights/new" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:brightness-110 shadow-[0_0_15px_rgba(139,92,246,0.4)] transition-all gap-2">
+                <span class="material-symbols-outlined text-sm">flight_takeoff</span>
+                Log Flight
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl flex items-center justify-between">
+            <div>
+                <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block">Total Flights</span>
+                <span class="text-2xl font-mono font-bold text-primary">{{ total_flights }}</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-xl">flight</span>
+            </div>
+        </div>
+        <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl flex items-center justify-between">
+            <div>
+                <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block">Flight Airtime</span>
+                <span class="text-2xl font-mono font-bold text-tertiary">{{ total_minutes }} mins</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
+                <span class="material-symbols-outlined text-xl">timer</span>
+            </div>
+        </div>
+        <div class="hud-border bg-surface-container-lowest/40 p-4 rounded-xl flex items-center justify-between">
+            <div>
+                <span class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block">Active Fleet</span>
+                <span class="text-2xl font-mono font-bold text-green-400">{{ equipment|length }} Drones</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
+                <span class="material-symbols-outlined text-xl">precision_manufacturing</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flight Logs Table -->
+    <div class="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-outline-variant/30 flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Telemetry Records</h3>
+        </div>
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant bg-surface-container-low">
+                        <th class="text-left py-3 px-4">Date</th>
+                        <th class="text-left py-3 px-4">Pilot</th>
+                        <th class="text-left py-3 px-4">Drone</th>
+                        <th class="text-left py-3 px-4">Airtime</th>
+                        <th class="text-left py-3 px-4">Location</th>
+                        <th class="text-left py-3 px-4">Purpose</th>
+                        <th class="text-right py-3 px-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/20 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs">{{ log.flight_date }}</td>
+                        <td class="py-3 px-4 font-bold text-on-surface">
+                            {{ username_map.get(log.pilot_id, 'Unknown Pilot') }}
+                        </td>
+                        <td class="py-3 px-4 text-xs">
+                            {% set eq = equipment|selectattr('id', 'equalto', log.equipment_id)|first if log.equipment_id else None %}
+                            {% if eq %}
+                                <span class="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold rounded">{{ eq.name }}</span>
+                            {% else %}
+                                <span class="text-on-surface-variant text-[10px] italic">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-xs text-tertiary font-bold">
+                            {{ log.duration_minutes }} mins
+                        </td>
+                        <td class="py-3 px-4 text-xs text-on-surface-variant">
+                            {{ log.location or 'Lab/Field' }}
+                        </td>
+                        <td class="py-3 px-4 text-xs text-on-surface-variant">
+                            {{ log.purpose or 'Test Flight' }}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <form action="/flights/{{ log.id }}/delete" method="post" class="inline" onsubmit="return confirm('Delete this flight log?')">
+                                <button type="submit" class="text-error hover:text-white p-1 rounded transition-colors">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-4xl opacity-30 mb-2 block">flight_land</span>
+            No flight logs recorded yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

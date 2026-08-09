@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from database import supabase
 import auth
 from templates_utils import render_template
-from routers import auth as auth_router, missions, projects, tasks, admin, dashboard, settings, equipment, members, budget, docs, attendance_kiosk
+from routers import auth as auth_router, missions, projects, tasks, admin, dashboard, settings, equipment, members, budget, docs, attendance_kiosk, flights, events, leaderboard
 
 # Force absolute path for .env loading
 env_path = Path(__file__).parent / ".env"
@@ -32,6 +32,9 @@ app.include_router(members.router)
 app.include_router(budget.router)
 app.include_router(docs.router)
 app.include_router(attendance_kiosk.router)
+app.include_router(flights.router)
+app.include_router(events.router)
+app.include_router(leaderboard.router)
 
 @app.get("/")
 async def home(request: Request):

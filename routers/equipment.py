@@ -9,7 +9,11 @@ router = APIRouter(prefix="/equipment", tags=["equipment"])
 @router.get("")
 async def equipment_list(request: Request, user: dict = Depends(get_current_user)):
     items = crud.get_all_equipment()
-    return render_template("equipment_list.html", request, user=user, items=items)
+    checkouts = crud.get_active_checkouts()
+    members = crud.get_all_users_detailed()
+    username_map = get_username_map()
+    return render_template("equipment_list.html", request, user=user, items=items,
+                          checkouts=checkouts, members=members, username_map=username_map)
 
 @router.get("/new")
 async def equipment_create_form(request: Request, user: dict = Depends(get_current_user)):
@@ -86,8 +90,30 @@ async def equipment_detail(request: Request, item_id: str, user: dict = Depends(
     if not item:
         raise HTTPException(status_code=404, detail="Equipment not found")
     maintenance = crud.get_maintenance_logs(item_id)
+    checkouts = crud.get_checkouts_for_equipment(item_id)
+    members = crud.get_all_users_detailed()
     username_map = get_username_map()
-    return render_template("equipment_detail.html", request, user=user, item=item, maintenance=maintenance, username_map=username_map)
+    return render_template("equipment_detail.html", request, user=user, item=item,
+                          maintenance=maintenance, checkouts=checkouts,
+                          members=members, username_map=username_map)
+
+@router.post("/{item_id}/checkout")
+async def checkout_equipment_action(request: Request, item_id: str,
+                                    borrower_id: str = Form(...),
+                                    expected_return_at: str = Form(None),
+                                    condition: str = Form("good"),
+                                    notes: str = Form(None),
+                                    user: dict = Depends(get_current_user)):
+    crud.checkout_equipment(item_id, borrower_id, expected_return_at, condition, notes, user["id"])
+    return RedirectResponse(url=f"/equipment/{item_id}", status_code=303)
+
+@router.post("/checkouts/{checkout_id}/return")
+async def return_equipment_action(request: Request, checkout_id: str,
+                                  condition_on_return: str = Form("good"),
+                                  notes: str = Form(None),
+                                  user: dict = Depends(get_current_user)):
+    crud.return_equipment(checkout_id, condition_on_return, notes, user["id"])
+    return RedirectResponse(url=request.headers.get("referer", "/equipment"), status_code=303)
 
 @router.get("/{item_id}/edit")
 async def equipment_edit_form(request: Request, item_id: str, user: dict = Depends(get_current_user)):

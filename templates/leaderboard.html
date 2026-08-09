@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Member Leaderboard - KAIZEN{% endblock %}
+{% block header_title %}Member Leaderboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-headline font-bold uppercase tracking-tight">Member Leaderboard</h2>
+            <p class="text-xs text-on-surface-variant uppercase tracking-widest mt-1">Recognizing top contributors across flight airtime, task execution, and club attendance</p>
+        </div>
+    </div>
+
+    <!-- Top 3 Podium Cards -->
+    {% if leaderboard %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        {% for item in leaderboard[:3] %}
+        <div class="hud-border bg-surface-container-lowest/50 p-6 rounded-xl relative overflow-hidden flex flex-col justify-between
+            {% if loop.index == 1 %}border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.15)]{% elif loop.index == 2 %}border-gray-400/50{% else %}border-amber-700/50{% endif %}">
+            
+            <div class="flex items-start justify-between">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg font-mono
+                    {% if loop.index == 1 %}bg-yellow-500/20 text-yellow-400 border border-yellow-500/40
+                    {% elif loop.index == 2 %}bg-gray-400/20 text-gray-300 border border-gray-400/40
+                    {% else %}bg-amber-700/20 text-amber-500 border border-amber-700/40{% endif %}">
+                    #{{ loop.index }}
+                </div>
+                <span class="text-2xl">
+                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% else %}🥉{% endif %}
+                </span>
+            </div>
+
+            <div class="my-4">
+                <h3 class="text-lg font-headline font-bold uppercase tracking-wide text-on-surface">
+                    {{ item.profile.display_name or item.profile.username }}
+                </h3>
+                <p class="text-[10px] text-primary uppercase font-bold tracking-widest font-mono">{{ item.profile.role }}</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t border-outline-variant/20 text-center font-mono">
+                <div>
+                    <span class="text-[8px] text-on-surface-variant uppercase block">Tasks</span>
+                    <span class="text-xs font-bold text-tertiary">{{ item.tasks_completed }}</span>
+                </div>
+                <div>
+                    <span class="text-[8px] text-on-surface-variant uppercase block">Airtime</span>
+                    <span class="text-xs font-bold text-primary">{{ item.flight_minutes }}m</span>
+                </div>
+                <div>
+                    <span class="text-[8px] text-on-surface-variant uppercase block">Score</span>
+                    <span class="text-xs font-bold text-green-400">{{ item.score }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Full Leaderboard Table -->
+    <div class="bg-surface border border-outline-variant rounded-xl overflow-hidden shadow-xl mt-6">
+        <div class="p-4 border-b border-outline-variant/30">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Global Member Rankings</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant bg-surface-container-low">
+                        <th class="text-left py-3 px-4">Rank</th>
+                        <th class="text-left py-3 px-4">Member</th>
+                        <th class="text-left py-3 px-4">Tasks Done</th>
+                        <th class="text-left py-3 px-4">Attendance Count</th>
+                        <th class="text-left py-3 px-4">Flight Minutes</th>
+                        <th class="text-right py-3 px-4">Total Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in leaderboard %}
+                    <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/20 transition-colors">
+                        <td class="py-3 px-4 font-mono font-bold text-xs text-primary">#{{ loop.index }}</td>
+                        <td class="py-3 px-4 font-bold text-on-surface">
+                            <a href="/members/{{ item.profile.id }}" class="hover:text-primary transition-colors">
+                                {{ item.profile.display_name or item.profile.username }}
+                            </a>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-xs text-tertiary">{{ item.tasks_completed }}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-on-surface-variant">{{ item.attendance_events }}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-primary">{{ item.flight_minutes }} mins</td>
+                        <td class="py-3 px-4 font-mono font-bold text-right text-green-400 text-sm">{{ item.score }} pts</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="p-8 text-center text-sm text-on-surface-variant bg-surface border border-outline-variant rounded-xl">
+        No ranking data calculated yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - KAIZEN{% endblock %}
+{% block header_title %}Event Management{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="space-y-1">
+            <div class="flex items-center gap-2">
+                <span class="text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-widest bg-primary/10 text-primary border-primary/20">
+                    {{ event.event_type|replace('_', ' ') }}
+                </span>
+                <span class="text-xs font-mono text-on-surface-variant">{{ event.event_date }}</span>
+            </div>
+            <h2 class="text-2xl font-headline font-bold uppercase tracking-tight">{{ event.title }}</h2>
+        </div>
+        <a href="/events" class="text-xs text-on-surface-variant hover:text-white uppercase tracking-widest flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Events
+        </a>
+    </div>
+
+    <!-- Overview Card -->
+    <div class="hud-border bg-surface-container-lowest/40 p-6 rounded-xl space-y-4">
+        <div class="flex items-center gap-4 text-xs font-mono text-tertiary">
+            <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">location_on</span>
+                {{ event.location or 'Club Field/Lab' }}
+            </span>
+        </div>
+        <p class="text-sm text-on-surface-variant leading-relaxed">{{ event.description or 'No detailed agenda provided.' }}</p>
+    </div>
+
+    <!-- Attendance & RSVP Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- RSVP Quick Action -->
+        <div class="bg-surface border border-outline-variant rounded-xl p-5 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Your RSVP</h3>
+            <form action="/events/{{ event.id }}/rsvp" method="post" class="space-y-3">
+                <select name="status" class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-xs text-on-surface outline-none">
+                    <option value="registered">Register / Going</option>
+                    <option value="excused">Excused / Absent</option>
+                </select>
+                <button type="submit" class="w-full py-2 bg-primary text-on-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:brightness-110">Update RSVP</button>
+            </form>
+        </div>
+
+        <!-- Attendance List -->
+        <div class="md:col-span-2 bg-surface border border-outline-variant rounded-xl p-5 space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-primary">Attendee Roster & Probation Check</h3>
+            
+            <div class="space-y-2">
+                {% for m in members %}
+                {% set att = attendees|selectattr('user_id', 'equalto', m.id)|first if attendees else None %}
+                <div class="flex items-center justify-between p-2.5 bg-surface-container-low rounded-lg border border-outline-variant/20">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-on-surface">{{ m.display_name or m.username }}</span>
+                        {% if m.role in ['probation', 'probationary_member', 'member'] %}
+                        <span class="text-[8px] font-bold px-1.5 py-0.5 bg-yellow-900/30 text-yellow-400 border border-yellow-500/30 rounded">PROBATION</span>
+                        {% endif %}
+                    </div>
+
+                    <form action="/events/{{ event.id }}/attendance" method="post" class="flex items-center gap-2">
+                        <input type="hidden" name="user_id" value="{{ m.id }}" />
+                        <select name="status" onchange="this.form.submit()" class="bg-surface border border-outline-variant/30 rounded px-2 py-1 text-[10px] font-bold text-on-surface">
+                            <option value="none" {% if not att %}selected{% endif %}>Not Marked</option>
+                            <option value="registered" {% if att and att.status == 'registered' %}selected{% endif %}>Registered</option>
+                            <option value="attended" {% if att and att.status == 'attended' %}selected{% endif %}>Attended</option>
+                            <option value="excused" {% if att and att.status == 'excused' %}selected{% endif %}>Excused</option>
+                        </select>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event - KAIZEN{% endblock %}
+{% block header_title %}Create Event{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-headline font-bold uppercase tracking-tight">Schedule New Event / Workshop</h2>
+        <a href="/events" class="text-xs text-on-surface-variant hover:text-white uppercase tracking-widest flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+        </a>
+    </div>
+
+    <form action="/events/new" method="post" class="bg-surface border border-outline-variant rounded-xl p-6 space-y-5 shadow-2xl">
+        <div class="space-y-1">
+            <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Event Title</label>
+            <input type="text" name="title" required placeholder="e.g. FPV Soldering Workshop, Flight Test Day" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Event Type</label>
+                <select name="event_type" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none">
+                    <option value="workshop">Workshop / Training</option>
+                    <option value="flight_session">Flight Testing Session</option>
+                    <option value="competition">Competition / Hackathon</option>
+                    <option value="meeting">General Meeting</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Event Date</label>
+                <input type="date" name="event_date" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+        </div>
+
+        <div class="space-y-1">
+            <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Location</label>
+            <input type="text" name="location" placeholder="e.g. Lab 204, Outdoor Flying Field" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none" />
+        </div>
+
+        <div class="space-y-1">
+            <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block">Description & Agenda</label>
+            <textarea name="description" rows="4" placeholder="Overview of topics, materials required, and goals for probation members..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-3">
+            <a href="/events" class="px-4 py-2 border border-outline-variant/40 text-on-surface-variant text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-surface-variant/30">Cancel</a>
+            <button type="submit" class="px-6 py-2 bg-primary text-on-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:brightness-110 shadow-[0_0_15px_rgba(139,92,246,0.4)]">Publish Event</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
