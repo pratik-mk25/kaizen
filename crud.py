@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from database import supabase, supabase_admin
 import uuid
 import json
 
 def _get_client():
-    return supabase
+    return supabase_admin
 
 def log_action(user_id: str, action: str, entity_type: str, entity_id: str,
                old_values: dict | None = None, new_values: dict | None = None):
