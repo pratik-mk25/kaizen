@@ -14,9 +14,18 @@ IST = timezone(timedelta(hours=5, minutes=30))
 def from_json(value):
     if not value:
         return {}
+    if isinstance(value, dict):
+        return value
     try:
         return json.loads(value)
     except (json.JSONDecodeError, TypeError):
+        try:
+            import ast
+            res = ast.literal_eval(value)
+            if isinstance(res, dict):
+                return res
+        except Exception:
+            pass
         return {}
 
 def format_time_12h(time_str):

@@ -516,18 +516,26 @@ def get_attendance_for_member(user_id: str):
         print(f"Error in get_attendance_for_member: {e}")
         return []
 
-def get_active_checkin(user_id: str, event_date: str):
+def get_active_checkin(user_id: str, event_date: str = None):
     import json
     try:
-        res = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("event_date", event_date).eq("status", "present").execute()
+        query = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("status", "present").order("event_date", desc=True)
+        res = query.execute()
         rows = res.data if (res and res.data is not None) else []
         for r in rows:
             notes = {}
             if r.get("notes"):
-                try:
-                    notes = json.loads(r["notes"])
-                except (json.JSONDecodeError, TypeError):
-                    notes = {}
+                if isinstance(r["notes"], dict):
+                    notes = r["notes"]
+                else:
+                    try:
+                        notes = json.loads(r["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            import ast
+                            notes = ast.literal_eval(r["notes"])
+                        except Exception:
+                            notes = {}
             if isinstance(notes, dict) and "in" in notes and "out" not in notes:
                 return r
     except Exception as e:

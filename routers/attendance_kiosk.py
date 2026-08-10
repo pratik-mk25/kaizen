@@ -35,13 +35,20 @@ async def attendance_view(request: Request, user: dict = Depends(get_current_use
     username_map = get_username_map() or {}
     active_ids = set()
     for a in today_attendance:
-        if isinstance(a, dict) and a.get("status") == "present" and a.get("event_date") == today_str:
+        if isinstance(a, dict) and a.get("status") == "present":
             notes = {}
             if a.get("notes"):
-                try:
-                    notes = json.loads(a["notes"])
-                except (json.JSONDecodeError, TypeError):
-                    notes = {}
+                if isinstance(a["notes"], dict):
+                    notes = a["notes"]
+                else:
+                    try:
+                        notes = json.loads(a["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            import ast
+                            notes = ast.literal_eval(a["notes"])
+                        except Exception:
+                            notes = {}
             if isinstance(notes, dict) and "in" in notes and "out" not in notes:
                 if a.get("user_id"):
                     active_ids.add(a["user_id"])
@@ -82,13 +89,20 @@ async def attendance_kiosk(request: Request, user: dict = Depends(get_current_us
     username_map = get_username_map() or {}
     active_ids = set()
     for a in today_attendance:
-        if isinstance(a, dict) and a.get("status") == "present" and a.get("event_date") == today_str:
+        if isinstance(a, dict) and a.get("status") == "present":
             notes = {}
             if a.get("notes"):
-                try:
-                    notes = json.loads(a["notes"])
-                except (json.JSONDecodeError, TypeError):
-                    notes = {}
+                if isinstance(a["notes"], dict):
+                    notes = a["notes"]
+                else:
+                    try:
+                        notes = json.loads(a["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            import ast
+                            notes = ast.literal_eval(a["notes"])
+                        except Exception:
+                            notes = {}
             if isinstance(notes, dict) and "in" in notes and "out" not in notes:
                 if a.get("user_id"):
                     active_ids.add(a["user_id"])
