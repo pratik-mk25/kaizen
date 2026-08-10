@@ -522,9 +522,24 @@ def get_active_checkin(user_id: str, event_date: str):
 
 def add_attendance(user_id: str, event_name: str, event_date: str, status: str, notes: str | None,
                    recorder_id: str):
-    data = {"user_id": user_id, "event_name": event_name, "event_date": event_date, "status": status, "notes": notes}
-    res = _get_client().table("attendance").insert(data).execute().data[0]
-    log_action(recorder_id, "attendance_added", "attendance", res["id"], new_values=data)
+    import json
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime.now(ist).strftime("%H:%M:%S")
+
+    formatted_notes = notes
+    if not notes:
+        formatted_notes = json.dumps({"in": now})
+    elif isinstance(notes, str) and not (notes.startswith("{") and notes.endswith("}")):
+        formatted_notes = json.dumps({"in": now, "info": notes})
+
+    data = {"user_id": user_id, "event_name": event_name, "event_date": event_date, "status": status, "notes": formatted_notes}
+    exec_res = _get_client().table("attendance").insert(data).execute()
+    res = (exec_res.data[0] if (exec_res and exec_res.data) else data)
+    rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
+    try:
+        log_action(recorder_id, "attendance_added", "attendance", rec_id, new_values=data)
+    except Exception:
+        pass
     return res
 
 def delete_attendance(attendance_id: str, user_id: str):
@@ -532,11 +547,14 @@ def delete_attendance(attendance_id: str, user_id: str):
     log_action(user_id, "attendance_deleted", "attendance", attendance_id)
 
 def update_attendance(attendance_id: str, event_name: str, event_date: str, status: str, notes: str | None, user_id: str):
-    old = _get_client().table("attendance").select("*").eq("id", attendance_id).execute().data[0]
+    old_res = _get_client().table("attendance").select("*").eq("id", attendance_id).execute()
+    old = old_res.data[0] if (old_res and old_res.data) else {}
     data = {"event_name": event_name, "event_date": event_date, "status": status, "notes": notes}
     _get_client().table("attendance").update(data).eq("id", attendance_id).execute()
-    log_action(user_id, "attendance_updated", "attendance", attendance_id, old_values=old, new_values=data)
-    log_action(user_id, "attendance_updated", "attendance", attendance_id, old_values=old, new_values=data)
+    try:
+        log_action(user_id, "attendance_updated", "attendance", attendance_id, old_values=old, new_values=data)
+    except Exception:
+        pass
 
 def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
     active = get_active_checkin(user_id, event_date)
@@ -554,16 +572,24 @@ def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
         _get_client().table("attendance").update({
             "notes": json.dumps(existing_notes)
         }).eq("id", active["id"]).execute()
-        log_action(recorder_id, "attendance_checked_out", "attendance", active["id"],
-                   new_values={"out_time": now})
+        try:
+            log_action(recorder_id, "attendance_checked_out", "attendance", active["id"],
+                       new_values={"out_time": now})
+        except Exception:
+            pass
         return {"action": "checked_out", "record": active}
     else:
         import json
         notes = json.dumps({"in": now})
         data = {"user_id": user_id, "event_name": "Club Session", "event_date": event_date,
                 "status": "present", "notes": notes}
-        res = _get_client().table("attendance").insert(data).execute().data[0]
-        log_action(recorder_id, "attendance_checked_in", "attendance", res["id"], new_values=data)
+        exec_res = _get_client().table("attendance").insert(data).execute()
+        res = (exec_res.data[0] if (exec_res and exec_res.data) else data)
+        rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
+        try:
+            log_action(recorder_id, "attendance_checked_in", "attendance", rec_id, new_values=data)
+        except Exception:
+            pass
         return {"action": "checked_in", "record": res}
 
 def fix_all_attendance_utc_to_ist(user_id: str):
