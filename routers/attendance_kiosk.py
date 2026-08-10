@@ -100,19 +100,20 @@ async def attendance_kiosk(request: Request, user: dict = Depends(get_current_us
 async def kiosk_toggle(request: Request, user_id: str = Form(...), user: dict = Depends(get_current_user)):
     if not check_kiosk_auth(request):
         return RedirectResponse(url="/attendance/kiosk/login", status_code=303)
-    today_str = get_ist_date()
-    result = crud.quick_toggle_attendance(user_id, today_str, user["id"])
-    uname = user.get("display_name") or user.get("email", "Unknown")
-    umap = get_username_map() or {}
-    member_name = umap.get(user_id, user_id[:8])
     try:
-        act = (result.get("action") or "toggled").upper() if isinstance(result, dict) else "TOGGLED"
-        send_discord_notification(
-            f"**{act}**\n**Member:** {member_name}\n**Time:** {get_ist_time()} (IST)\n**By:** {uname}",
-            title="ATTENDANCE TOGGLE", color=0x00f0ff if act == "CHECKED_IN" else 0xff6b35
-        )
+        today_str = get_ist_date()
+        result = crud.quick_toggle_attendance(user_id, today_str, user["id"])
+        uname = user.get("display_name") or user.get("email", "Unknown")
+        umap = get_username_map() or {}
+        member_name = umap.get(user_id, user_id[:8])
+        if isinstance(result, dict) and result.get("action") != "error":
+            act = (result.get("action") or "toggled").upper()
+            send_discord_notification(
+                f"**{act}**\n**Member:** {member_name}\n**Time:** {get_ist_time()} (IST)\n**By:** {uname}",
+                title="ATTENDANCE TOGGLE", color=0x00f0ff if act == "CHECKED_IN" else 0xff6b35
+            )
     except Exception as e:
-        print(f"Error sending discord notification: {e}")
+        print(f"Error in kiosk_toggle: {e}")
     return RedirectResponse(url="/attendance/kiosk", status_code=303)
 
 @router.post("/fix-all-ist")

@@ -571,40 +571,44 @@ def update_attendance(attendance_id: str, event_name: str, event_date: str, stat
         pass
 
 def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
-    active = get_active_checkin(user_id, event_date)
-    ist = timezone(timedelta(hours=5, minutes=30))
-    now = datetime.now(ist).strftime("%H:%M:%S")
-    if active:
-        import json
-        existing_notes = {}
-        if active.get("notes"):
+    try:
+        active = get_active_checkin(user_id, event_date)
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist).strftime("%H:%M:%S")
+        if active:
+            import json
+            existing_notes = {}
+            if active.get("notes"):
+                try:
+                    existing_notes = json.loads(active["notes"])
+                except (json.JSONDecodeError, TypeError):
+                    existing_notes = {}
+            existing_notes["out"] = now
+            _get_client().table("attendance").update({
+                "notes": json.dumps(existing_notes)
+            }).eq("id", active["id"]).execute()
             try:
-                existing_notes = json.loads(active["notes"])
-            except (json.JSONDecodeError, TypeError):
-                existing_notes = {}
-        existing_notes["out"] = now
-        _get_client().table("attendance").update({
-            "notes": json.dumps(existing_notes)
-        }).eq("id", active["id"]).execute()
-        try:
-            log_action(recorder_id, "attendance_checked_out", "attendance", active["id"],
-                       new_values={"out_time": now})
-        except Exception:
-            pass
-        return {"action": "checked_out", "record": active}
-    else:
-        import json
-        notes = json.dumps({"in": now})
-        data = {"user_id": user_id, "event_name": "Club Session", "event_date": event_date,
-                "status": "present", "notes": notes}
-        exec_res = _get_client().table("attendance").insert(data).execute()
-        res = (exec_res.data[0] if (exec_res and exec_res.data) else data)
-        rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
-        try:
-            log_action(recorder_id, "attendance_checked_in", "attendance", rec_id, new_values=data)
-        except Exception:
-            pass
-        return {"action": "checked_in", "record": res}
+                log_action(recorder_id, "attendance_checked_out", "attendance", active["id"],
+                           new_values={"out_time": now})
+            except Exception:
+                pass
+            return {"action": "checked_out", "record": active}
+        else:
+            import json
+            notes = json.dumps({"in": now})
+            data = {"user_id": user_id, "event_name": "Club Session", "event_date": event_date,
+                    "status": "present", "notes": notes}
+            exec_res = _get_client().table("attendance").insert(data).execute()
+            res = (exec_res.data[0] if (exec_res and exec_res.data) else data)
+            rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
+            try:
+                log_action(recorder_id, "attendance_checked_in", "attendance", rec_id, new_values=data)
+            except Exception:
+                pass
+            return {"action": "checked_in", "record": res}
+    except Exception as e:
+        print(f"Error in quick_toggle_attendance: {e}")
+        return {"action": "error", "message": str(e)}
 
 def fix_all_attendance_utc_to_ist(user_id: str):
     try:
