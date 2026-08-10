@@ -499,25 +499,39 @@ def delete_member_certification(cert_id: str, user_id: str):
 # ==================== ATTENDANCE ====================
 
 def get_attendance(limit: int = 100):
-    query = _get_client().table("attendance").select("*").order("event_date", desc=True).limit(limit)
-    return query.execute().data
+    try:
+        query = _get_client().table("attendance").select("*").order("event_date", desc=True).limit(limit)
+        res = query.execute()
+        return res.data if (res and res.data is not None) else []
+    except Exception as e:
+        print(f"Error in get_attendance: {e}")
+        return []
 
 def get_attendance_for_member(user_id: str):
-    query = _get_client().table("attendance").select("*").eq("user_id", user_id).order("event_date", desc=True)
-    return query.execute().data
+    try:
+        query = _get_client().table("attendance").select("*").eq("user_id", user_id).order("event_date", desc=True)
+        res = query.execute()
+        return res.data if (res and res.data is not None) else []
+    except Exception as e:
+        print(f"Error in get_attendance_for_member: {e}")
+        return []
 
 def get_active_checkin(user_id: str, event_date: str):
     import json
-    rows = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("event_date", event_date).eq("status", "present").execute().data
-    for r in rows:
-        notes = {}
-        if r.get("notes"):
-            try:
-                notes = json.loads(r["notes"])
-            except (json.JSONDecodeError, TypeError):
-                notes = {}
-        if "in" in notes and "out" not in notes:
-            return r
+    try:
+        res = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("event_date", event_date).eq("status", "present").execute()
+        rows = res.data if (res and res.data is not None) else []
+        for r in rows:
+            notes = {}
+            if r.get("notes"):
+                try:
+                    notes = json.loads(r["notes"])
+                except (json.JSONDecodeError, TypeError):
+                    notes = {}
+            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
+                return r
+    except Exception as e:
+        print(f"Error in get_active_checkin: {e}")
     return None
 
 def add_attendance(user_id: str, event_name: str, event_date: str, status: str, notes: str | None,

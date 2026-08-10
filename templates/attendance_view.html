@@ -31,9 +31,8 @@
         {% if active_ids %}
         <div class="flex flex-wrap gap-2">
             {% for pid in active_ids %}
-            {% set p = profiles|selectattr('id', 'equalto', pid)|first %}
             <span class="px-3 py-1.5 bg-green-900/20 border border-green-500/30 text-green-400 text-xs font-bold rounded-lg">
-                {{ p.display_name or p.username if p else pid[:8] }}
+                {{ username_map.get(pid, pid[:8]) }}
             </span>
             {% endfor %}
         </div>

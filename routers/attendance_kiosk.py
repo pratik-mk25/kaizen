@@ -30,21 +30,22 @@ def kiosk_required(request: Request):
 
 @router.get("/")
 async def attendance_view(request: Request, user: dict = Depends(get_current_user)):
-    profiles = crud.get_all_users_detailed()
+    profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500)
-    username_map = get_username_map()
+    today_attendance = crud.get_attendance(limit=500) or []
+    username_map = get_username_map() or {}
     active_ids = set()
     for a in today_attendance:
-        if a["status"] == "present" and a["event_date"] == today_str:
+        if isinstance(a, dict) and a.get("status") == "present" and a.get("event_date") == today_str:
             notes = {}
             if a.get("notes"):
                 try:
                     notes = json.loads(a["notes"])
                 except (json.JSONDecodeError, TypeError):
                     notes = {}
-            if "in" in notes and "out" not in notes:
-                active_ids.add(a["user_id"])
+            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
+                if a.get("user_id"):
+                    active_ids.add(a["user_id"])
     return render_template("attendance_view.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -74,22 +75,22 @@ async def kiosk_logout(request: Request, user: dict = Depends(get_current_user))
 
 @router.get("/kiosk")
 async def attendance_kiosk(request: Request, _=Depends(kiosk_required), user: dict = Depends(get_current_user)):
-    profiles = crud.get_all_users_detailed()
+    profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500)
-    username_map = get_username_map()
-    import json
+    today_attendance = crud.get_attendance(limit=500) or []
+    username_map = get_username_map() or {}
     active_ids = set()
     for a in today_attendance:
-        if a["status"] == "present" and a["event_date"] == today_str:
+        if isinstance(a, dict) and a.get("status") == "present" and a.get("event_date") == today_str:
             notes = {}
             if a.get("notes"):
                 try:
                     notes = json.loads(a["notes"])
                 except (json.JSONDecodeError, TypeError):
                     notes = {}
-            if "in" in notes and "out" not in notes:
-                active_ids.add(a["user_id"])
+            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
+                if a.get("user_id"):
+                    active_ids.add(a["user_id"])
     return render_template("attendance_kiosk.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -100,12 +101,16 @@ async def kiosk_toggle(request: Request, user_id: str = Form(...), _=Depends(kio
     today_str = get_ist_date()
     result = crud.quick_toggle_attendance(user_id, today_str, user["id"])
     uname = user.get("display_name") or user.get("email", "Unknown")
-    umap = get_username_map()
+    umap = get_username_map() or {}
     member_name = umap.get(user_id, user_id[:8])
-    send_discord_notification(
-        f"**{result['action'].upper()}**\n**Member:** {member_name}\n**Time:** {get_ist_time()} (IST)\n**By:** {uname}",
-        title="ATTENDANCE TOGGLE", color=0x00f0ff if result["action"] == "checked_in" else 0xff6b35
-    )
+    try:
+        act = (result.get("action") or "toggled").upper() if isinstance(result, dict) else "TOGGLED"
+        send_discord_notification(
+            f"**{act}**\n**Member:** {member_name}\n**Time:** {get_ist_time()} (IST)\n**By:** {uname}",
+            title="ATTENDANCE TOGGLE", color=0x00f0ff if act == "CHECKED_IN" else 0xff6b35
+        )
+    except Exception as e:
+        print(f"Error sending discord notification: {e}")
     return RedirectResponse(url="/attendance/kiosk", status_code=303)
 
 @router.post("/fix-all-ist")
