@@ -66,8 +66,12 @@ async def delete_member_cert(member_id: str, cert_id: str, user: dict = Depends(
 async def add_attendance(request: Request, user_id: str = Form(...), event_name: str = Form(...),
                          event_date: str = Form(...), status: str = Form("present"), notes: str = Form(None),
                          user: dict = Depends(get_current_user)):
-    crud.add_attendance(user_id, event_name, event_date, status, notes, user["id"])
-    return RedirectResponse(url=f"/members/{user_id}", status_code=303)
+    try:
+        crud.add_attendance(user_id, event_name, event_date, status, notes, user["id"])
+    except Exception as e:
+        print(f"Error adding attendance: {e}")
+    redirect_url = request.headers.get("referer", f"/members/{user_id}")
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @router.post("/attendance/{att_id}/delete")
 async def delete_attendance(att_id: str, request: Request,

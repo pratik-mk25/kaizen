@@ -46,7 +46,7 @@ async def attendance_view(request: Request, user: dict = Depends(get_current_use
             if "in" in notes and "out" not in notes:
                 active_ids.add(a["user_id"])
     return render_template("attendance_view.html", request, user=user, profiles=profiles,
-                          today_attendance=today_attendance, username_map=username_map,
+                          today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
 
 @router.get("/kiosk/login")
@@ -91,7 +91,7 @@ async def attendance_kiosk(request: Request, _=Depends(kiosk_required), user: di
             if "in" in notes and "out" not in notes:
                 active_ids.add(a["user_id"])
     return render_template("attendance_kiosk.html", request, user=user, profiles=profiles,
-                          today_attendance=today_attendance, username_map=username_map,
+                          today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
 
 @router.post("/kiosk/toggle")
