@@ -70,8 +70,8 @@
                             </div>
                         </div>
 
-                        {% if user.role == 'admin' %}
-                        <div x-data="{ open: false }" class="relative z-10" @click.stop>
+                        {% if user.role in ['admin', 'lead'] or user.id == project.lead_id %}
+                        <div x-data="{ open: false, openLeadModal: false }" class="relative z-10" @click.stop>
                             <button @click="open = !open" class="p-1 text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
                                 <span class="material-symbols-outlined text-lg">more_horiz</span>
                             </button>
@@ -82,6 +82,11 @@
                                  x-transition:enter-start="opacity-0 scale-95"
                                  x-transition:enter-end="opacity-100 scale-100"
                                  class="absolute right-0 mt-2 w-48 bg-surface-container-high border border-outline-variant shadow-2xl z-20 p-1 rounded-lg">
+                                <button @click="open = false; openLeadModal = true" class="w-full flex items-center gap-3 px-3 py-2 text-[10px] font-bold text-primary hover:bg-primary/10 rounded transition-colors uppercase tracking-widest text-left">
+                                    <span class="material-symbols-outlined text-sm">manage_accounts</span>
+                                    {% if ui_mode == 'tactical' %}Assign_Node_Lead{% else %}Assign Lead{% endif %}
+                                </button>
+                                {% if user.role == 'admin' %}
                                 <a href="/admin/projects/{{ project.id }}/edit" class="flex items-center gap-3 px-3 py-2 text-[10px] font-bold text-on-surface hover:bg-surface-variant rounded transition-colors uppercase tracking-widest">
                                     <span class="material-symbols-outlined text-sm">edit</span>
                                     {% if ui_mode == 'tactical' %}Sync_Metadata{% else %}Edit Project{% endif %}
@@ -92,6 +97,45 @@
                                         {% if ui_mode == 'tactical' %}Purge_Node{% else %}Delete Project{% endif %}
                                     </button>
                                 </form>
+                                {% endif %}
+                            </div>
+
+                            <!-- Assign Lead Modal -->
+                            <div x-show="openLeadModal" 
+                                 x-cloak 
+                                 @click.away="openLeadModal = false" 
+                                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm text-left"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100">
+                                <div class="hud-border bg-surface-container-high border border-outline-variant p-6 rounded-xl shadow-2xl max-w-md w-full" @click.stop>
+                                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-outline-variant/30">
+                                        <h3 class="text-sm font-bold text-on-surface uppercase tracking-widest flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-primary text-base">manage_accounts</span>
+                                            Assign Project Lead
+                                        </h3>
+                                        <button @click="openLeadModal = false" class="text-on-surface-variant hover:text-on-surface">
+                                            <span class="material-symbols-outlined text-sm">close</span>
+                                        </button>
+                                    </div>
+                                    <form action="/projects/{{ project.id }}/assign-lead" method="POST" class="space-y-4">
+                                        <div>
+                                            <label class="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Select Team Member / Lead:</label>
+                                            <select name="lead_id" class="w-full bg-surface-container-low border border-outline-variant/40 rounded-lg px-4 py-3 text-xs text-on-surface focus:ring-1 focus:ring-primary outline-none">
+                                                <option value="">-- Unassigned --</option>
+                                                {% for u in assignable_users %}
+                                                    <option value="{{ u.id }}" {% if project.lead_id == u.id %}selected{% endif %}>
+                                                        {{ u.display_name or u.username or u.email }} ({{ (u.role or 'member')|capitalize }})
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="pt-3 flex justify-end gap-3 border-t border-outline-variant/20">
+                                            <button type="button" @click="openLeadModal = false" class="px-4 py-2 border border-outline-variant text-[10px] font-bold uppercase tracking-widest rounded text-on-surface-variant hover:bg-surface-variant/30">Cancel</button>
+                                            <button type="submit" class="px-5 py-2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest rounded hover:brightness-110 shadow-lg">Save Lead</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         {% endif %}

@@ -48,3 +48,7 @@ def notify_task_updated(task: dict, user_name: str, changes: list):
     content = f"**Task Updated**\n**Task:** {task['title']}\n**Priority:** {priority}\n**Deadline:** {due_date}\n\n**Changes:**\n{change_text}\n\n**Updated By:** {user_name}"
     color = 0xef4444 if priority == "HIGH" else 0x3b82f6
     send_discord_notification(content, title="TASK UPDATED", color=color)
+
+def notify_project_lead_assigned(project_name: str, lead_name: str, assigned_by: str):
+    content = f"**Project Lead Assigned**\n**Project:** {project_name}\n**New Lead:** {lead_name}\n**Assigned By:** {assigned_by}"
+    send_discord_notification(content, title="LEAD ASSIGNED", color=0x8b5cf6)

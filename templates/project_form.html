@@ -36,11 +36,11 @@
                         <option value="">-- {% if ui_mode == 'tactical' %}UNASSIGNED_LEAD{% else %}Assign a Lead (Optional){% endif %} --</option>
                         {% for lead in leads %}
                             <option value="{{ lead.id }}" {% if project and project.lead_id == lead.id %}selected{% endif %}>
-                                {{ lead.username or lead.display_name or 'Unknown Member' }}
+                                {{ lead.display_name or lead.username or lead.email }} ({{ (lead.role or 'member')|capitalize }})
                             </option>
                         {% endfor %}
                     </select>
-                    <p class="mt-2 text-[9px] text-on-surface-variant uppercase tracking-widest opacity-60">{% if ui_mode == 'tactical' %}LEADS_GRANTED_MOD_PRIVILEGES{% else %}Leads have permission to manage tasks within this project.{% endif %}</p>
+                    <p class="mt-2 text-[9px] text-on-surface-variant uppercase tracking-widest opacity-60">{% if ui_mode == 'tactical' %}LEADS_GRANTED_MOD_PRIVILEGES{% else %}Project leads can manage tasks, assign team members, and oversee project delivery.{% endif %}</p>
                 </div>
 
                 <div>

@@ -12,7 +12,8 @@ async def mission_detail(request: Request, mission_id: str, user: dict = Depends
     if not mission:
         raise HTTPException(status_code=403, detail="Forbidden")
     projects = crud.get_projects_for_mission(mission_id)
-    return render_template("mission_detail.html", request, user=user, mission=mission, projects=projects)
+    assignable_users = crud.get_all_users_detailed() or []
+    return render_template("mission_detail.html", request, user=user, mission=mission, projects=projects, assignable_users=assignable_users)
 
 @router.get("/admin/missions/create")
 async def create_mission_form(request: Request, user: dict = Depends(admin_required)):
