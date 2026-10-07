@@ -23,6 +23,55 @@ from .base import _get_client, log_action
 # Define Indian Standard Time (IST = UTC + 5 hours 30 minutes)
 IST = timezone(timedelta(hours=5, minutes=30))
 _LOCAL_ATTENDANCE_STATE = {}
+_LOCAL_LAST_TOGGLE = {}
+
+
+def _calculate_seconds_elapsed(earlier_time_str: str, now_dt: datetime) -> int | None:
+    """
+    Calculates elapsed seconds between an earlier 'HH:MM:SS' string (today) and now_dt.
+    """
+    try:
+        parts = str(earlier_time_str).strip().split(":")
+        if len(parts) >= 2:
+            hh = int(parts[0])
+            mm = int(parts[1])
+            ss = int(parts[2]) if len(parts) > 2 else 0
+            earlier_total = hh * 3600 + mm * 60 + ss
+            now_total = now_dt.hour * 3600 + now_dt.minute * 60 + now_dt.second
+            diff = now_total - earlier_total
+            if diff < 0:
+                diff += 86400  # Wrap around midnight
+            return diff
+    except Exception:
+        pass
+    return None
+
+
+def get_currently_active_user_ids(today_records: list = None) -> set:
+    """
+    Returns the set of user_ids who currently have an active check-in (in time, no out time).
+    """
+    if today_records is None:
+        today_records = get_attendance(limit=500)
+    active_ids = set()
+    for a in (today_records or []):
+        if isinstance(a, dict) and a.get("status") == "present":
+            notes = {}
+            if a.get("notes"):
+                if isinstance(a["notes"], dict):
+                    notes = a["notes"]
+                else:
+                    try:
+                        notes = json.loads(a["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            notes = ast.literal_eval(a["notes"])
+                        except Exception:
+                            notes = {}
+            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
+                if a.get("user_id"):
+                    active_ids.add(a["user_id"])
+    return active_ids
 
 
 def get_attendance(limit: int = 100):
@@ -143,37 +192,106 @@ def update_attendance(attendance_id: str, event_name: str, event_date: str, stat
         pass
 
 
-def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
+def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str, cooldown_seconds: int = 90):
     """
-    Toggles a member's kiosk attendance status:
-      - If member is currently checked in: marks 'out' time (Check Out).
+    Toggles a member's kiosk attendance status with intelligent debounce/cooldown protection:
+      - If member checked in less than `cooldown_seconds` ago: returns 'already_checked_in' without modifying status.
+      - If member checked out less than `cooldown_seconds` ago: returns 'already_checked_out' without modifying status.
+      - If member has an active open check-in session older than cooldown: marks 'out' time (Check Out).
       - If member is not checked in: creates new 'present' entry with 'in' time (Check In).
     """
+    now_dt = datetime.now(IST)
+    now = now_dt.strftime("%H:%M:%S")
+
+    # Fast in-memory debounce check to stop immediate camera prefetch and rapid double-hits
+    last_info = _LOCAL_LAST_TOGGLE.get(user_id)
+    if last_info and cooldown_seconds > 0:
+        last_action, last_ts, last_time_str = last_info
+        if (time.time() - last_ts) < cooldown_seconds:
+            return {
+                "action": f"already_{last_action}",
+                "record": {"user_id": user_id, "status": "present"},
+                "in_time": last_time_str,
+                "out_time": last_time_str,
+                "elapsed": int(time.time() - last_ts)
+            }
+
     try:
         # Check if member has an active open check-in session
         active = get_active_checkin(user_id, event_date)
-        now = datetime.now(IST).strftime("%H:%M:%S")
         
         if active:
-            # === CHECK OUT FLOW ===
             existing_notes = {}
             if active.get("notes"):
-                try:
-                    existing_notes = json.loads(active["notes"])
-                except (json.JSONDecodeError, TypeError):
-                    existing_notes = {}
-            # Update notes dictionary with check-out timestamp
+                if isinstance(active["notes"], dict):
+                    existing_notes = active["notes"]
+                else:
+                    try:
+                        existing_notes = json.loads(active["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            existing_notes = ast.literal_eval(active["notes"])
+                        except Exception:
+                            existing_notes = {}
+            
+            in_time_str = existing_notes.get("in")
+            # Database-backed debounce check (handles cross-container requests)
+            if in_time_str and cooldown_seconds > 0:
+                elapsed = _calculate_seconds_elapsed(in_time_str, now_dt)
+                if elapsed is not None and elapsed < cooldown_seconds:
+                    _LOCAL_LAST_TOGGLE[user_id] = ("checked_in", time.time(), in_time_str)
+                    return {
+                        "action": "already_checked_in",
+                        "record": active,
+                        "in_time": in_time_str,
+                        "elapsed": elapsed
+                    }
+
+            # === CHECK OUT FLOW ===
             existing_notes["out"] = now
             _get_client().table("attendance").update({
                 "notes": json.dumps(existing_notes)
             }).eq("id", active["id"]).execute()
             
+            _LOCAL_LAST_TOGGLE[user_id] = ("checked_out", time.time(), now)
             try:
                 log_action(recorder_id, "attendance_checked_out", "attendance", active["id"], new_values={"out_time": now})
             except Exception:
                 pass
-            return {"action": "checked_out", "record": active}
+            return {"action": "checked_out", "record": active, "out_time": now}
         else:
+            # Check if user just checked out recently today (debounce check for rapid re-checkin)
+            if cooldown_seconds > 0:
+                try:
+                    latest_query = _get_client().table("attendance").select("*") \
+                        .eq("user_id", user_id) \
+                        .eq("event_date", event_date) \
+                        .order("created_at", desc=True) \
+                        .limit(1)
+                    latest_res = latest_query.execute()
+                    latest_records = latest_res.data if (latest_res and latest_res.data) else []
+                    if latest_records:
+                        last_rec = latest_records[0]
+                        last_notes = {}
+                        if last_rec.get("notes"):
+                            try:
+                                last_notes = json.loads(last_rec["notes"]) if isinstance(last_rec["notes"], str) else (last_rec["notes"] or {})
+                            except Exception:
+                                pass
+                        out_time_str = last_notes.get("out")
+                        if out_time_str:
+                            elapsed = _calculate_seconds_elapsed(out_time_str, now_dt)
+                            if elapsed is not None and elapsed < cooldown_seconds:
+                                _LOCAL_LAST_TOGGLE[user_id] = ("checked_out", time.time(), out_time_str)
+                                return {
+                                    "action": "already_checked_out",
+                                    "record": last_rec,
+                                    "out_time": out_time_str,
+                                    "elapsed": elapsed
+                                }
+                except Exception:
+                    pass
+
             # === CHECK IN FLOW ===
             notes = json.dumps({"in": now})
             data = {
@@ -187,19 +305,24 @@ def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str):
             res = (exec_res.data[0] if (exec_res and exec_res.data) else data)
             rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
             
+            _LOCAL_LAST_TOGGLE[user_id] = ("checked_in", time.time(), now)
             try:
                 log_action(recorder_id, "attendance_checked_in", "attendance", rec_id, new_values=data)
             except Exception:
                 pass
+            return {"action": "checked_in", "record": res, "in_time": now}
     except Exception as e:
         print(f"Error in quick_toggle_attendance (fallback to in-memory state): {e}")
-        now = datetime.now(IST).strftime("%H:%M:%S")
+        now_dt = datetime.now(IST)
+        now = now_dt.strftime("%H:%M:%S")
         if _LOCAL_ATTENDANCE_STATE.get(user_id) == "present":
             _LOCAL_ATTENDANCE_STATE[user_id] = "left"
-            return {"action": "checked_out", "record": {"user_id": user_id, "status": "present", "notes": json.dumps({"in": "09:00:00", "out": now})}}
+            _LOCAL_LAST_TOGGLE[user_id] = ("checked_out", time.time(), now)
+            return {"action": "checked_out", "record": {"user_id": user_id, "status": "present", "notes": json.dumps({"in": "09:00:00", "out": now})}, "out_time": now}
         else:
             _LOCAL_ATTENDANCE_STATE[user_id] = "present"
-            return {"action": "checked_in", "record": {"user_id": user_id, "status": "present", "notes": json.dumps({"in": now})}}
+            _LOCAL_LAST_TOGGLE[user_id] = ("checked_in", time.time(), now)
+            return {"action": "checked_in", "record": {"user_id": user_id, "status": "present", "notes": json.dumps({"in": now})}, "in_time": now}
 
 
 def fix_all_attendance_utc_to_ist(user_id: str):

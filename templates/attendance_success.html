@@ -2,7 +2,11 @@
 
 {% block title %}
     {% if success %}
-        {{ 'Checked In' if action == 'checked_in' else 'Checked Out' }} - KAIZEN
+        {% if action in ('checked_in', 'already_checked_in') %}
+            Checked In - KAIZEN
+        {% else %}
+            Checked Out - KAIZEN
+        {% endif %}
     {% else %}
         Verification Failed - KAIZEN
     {% endif %}
@@ -13,38 +17,62 @@
     <div class="w-full max-w-md bg-surface-container-lowest/80 p-8 rounded-3xl hud-border shadow-2xl text-center relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         
         {% if success %}
+            {% set is_checked_in = action in ('checked_in', 'already_checked_in') %}
             <!-- Ambient Success Glow -->
-            <div class="absolute -top-20 -right-20 w-52 h-52 {% if action == 'checked_in' %}bg-emerald-500/15{% else %}bg-blue-500/15{% endif %} rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -top-20 -right-20 w-52 h-52 {% if is_checked_in %}bg-emerald-500/15{% else %}bg-blue-500/15{% endif %} rounded-full blur-3xl pointer-events-none"></div>
 
             <!-- Status Icon -->
-            <div class="w-20 h-20 mx-auto mb-6 rounded-3xl {% if action == 'checked_in' %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/20{% else %}bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/20{% endif %} flex items-center justify-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-3xl {% if is_checked_in %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/20{% else %}bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/20{% endif %} flex items-center justify-center">
                 <span class="material-symbols-outlined text-4xl animate-bounce">
-                    {% if action == 'checked_in' %}sensor_door{% else %}logout{% endif %}
+                    {% if is_checked_in %}sensor_door{% else %}logout{% endif %}
                 </span>
             </div>
 
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full {% if action == 'checked_in' %}bg-emerald-950/50 border border-emerald-500/30 text-emerald-400{% else %}bg-blue-950/50 border border-blue-500/30 text-blue-400{% endif %} text-[10px] font-bold uppercase tracking-widest mb-3">
-                <span class="w-2 h-2 rounded-full {% if action == 'checked_in' %}bg-emerald-400 animate-pulse{% else %}bg-blue-400{% endif %}"></span>
-                Physical Presence Verified
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full {% if is_checked_in %}bg-emerald-950/50 border border-emerald-500/30 text-emerald-400{% else %}bg-blue-950/50 border border-blue-500/30 text-blue-400{% endif %} text-[10px] font-bold uppercase tracking-widest mb-3">
+                <span class="w-2 h-2 rounded-full {% if is_checked_in %}bg-emerald-400 animate-pulse{% else %}bg-blue-400{% endif %}"></span>
+                {% if action == 'already_checked_in' %}
+                    Session Already Active
+                {% elif action == 'already_checked_out' %}
+                    Session Concluded
+                {% else %}
+                    Physical Presence Verified
+                {% endif %}
             </div>
 
             <h1 class="text-3xl font-headline font-bold text-on-surface uppercase tracking-tight">
-                {% if action == 'checked_in' %}
+                {% if action == 'already_checked_in' %}
+                    Already Checked In
+                {% elif action == 'checked_in' %}
                     Checked In!
+                {% elif action == 'already_checked_out' %}
+                    Already Checked Out
                 {% else %}
                     Checked Out!
                 {% endif %}
             </h1>
 
             <p class="text-sm text-on-surface-variant mt-1">
-                Welcome back, <span class="text-primary font-bold">{{ user.display_name or user.username or 'Member' }}</span>.
+                {% if action == 'already_checked_in' %}
+                    You are already active in the lab, <span class="text-primary font-bold">{{ user.display_name or user.username or 'Member' }}</span>.
+                {% elif is_checked_in %}
+                    Welcome back, <span class="text-primary font-bold">{{ user.display_name or user.username or 'Member' }}</span>.
+                {% else %}
+                    Have a great day, <span class="text-primary font-bold">{{ user.display_name or user.username or 'Member' }}</span>.
+                {% endif %}
             </p>
 
             <!-- Verification Metadata Box -->
             <div class="my-6 p-4 rounded-2xl bg-surface-container/60 border border-outline-variant/30 space-y-2 text-left">
                 <div class="flex justify-between items-center text-xs">
+                    <span class="text-on-surface-variant font-mono uppercase text-[10px]">Status</span>
+                    <span class="font-bold {% if is_checked_in %}text-emerald-400{% else %}text-blue-400{% endif %} flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">{% if is_checked_in %}verified{% else %}check_circle{% endif %}</span>
+                        {% if is_checked_in %}Active in Lab{% else %}Checked Out{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
                     <span class="text-on-surface-variant font-mono uppercase text-[10px]">Timestamp</span>
-                    <span class="font-mono font-bold text-on-surface">{{ time_str }} IST</span>
+                    <span class="font-mono font-bold text-on-surface">{{ in_time or time_str }} IST</span>
                 </div>
                 <div class="flex justify-between items-center text-xs">
                     <span class="text-on-surface-variant font-mono uppercase text-[10px]">Date</span>
@@ -53,7 +81,7 @@
                 <div class="flex justify-between items-center text-xs">
                     <span class="text-on-surface-variant font-mono uppercase text-[10px]">Premises</span>
                     <span class="font-bold text-emerald-400 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-xs">verified</span> Club Lab Verified
+                        <span class="material-symbols-outlined text-xs">location_on</span> Club Lab Verified
                     </span>
                 </div>
             </div>

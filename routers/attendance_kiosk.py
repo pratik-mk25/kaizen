@@ -33,25 +33,7 @@ async def attendance_view(request: Request, user: dict = Depends(get_current_use
     today_str = get_ist_date()
     today_attendance = crud.get_attendance(limit=500) or []
     username_map = get_username_map() or {}
-    active_ids = set()
-    for a in today_attendance:
-        if isinstance(a, dict) and a.get("status") == "present":
-            notes = {}
-            if a.get("notes"):
-                if isinstance(a["notes"], dict):
-                    notes = a["notes"]
-                else:
-                    try:
-                        notes = json.loads(a["notes"])
-                    except (json.JSONDecodeError, TypeError):
-                        try:
-                            import ast
-                            notes = ast.literal_eval(a["notes"])
-                        except Exception:
-                            notes = {}
-            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
-                if a.get("user_id"):
-                    active_ids.add(a["user_id"])
+    active_ids = crud.get_currently_active_user_ids(today_attendance)
     return render_template("attendance_view.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -87,25 +69,7 @@ async def attendance_kiosk(request: Request, user: dict = Depends(get_current_us
     today_str = get_ist_date()
     today_attendance = crud.get_attendance(limit=500) or []
     username_map = get_username_map() or {}
-    active_ids = set()
-    for a in today_attendance:
-        if isinstance(a, dict) and a.get("status") == "present":
-            notes = {}
-            if a.get("notes"):
-                if isinstance(a["notes"], dict):
-                    notes = a["notes"]
-                else:
-                    try:
-                        notes = json.loads(a["notes"])
-                    except (json.JSONDecodeError, TypeError):
-                        try:
-                            import ast
-                            notes = ast.literal_eval(a["notes"])
-                        except Exception:
-                            notes = {}
-            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
-                if a.get("user_id"):
-                    active_ids.add(a["user_id"])
+    active_ids = crud.get_currently_active_user_ids(today_attendance)
     return render_template("attendance_kiosk.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -204,25 +168,7 @@ async def clubhouse_display(request: Request, user: dict = Depends(get_current_u
     today_str = get_ist_date()
     today_attendance = crud.get_attendance(limit=500) or []
     username_map = get_username_map() or {}
-    active_ids = set()
-    for a in today_attendance:
-        if isinstance(a, dict) and a.get("status") == "present":
-            notes = {}
-            if a.get("notes"):
-                if isinstance(a["notes"], dict):
-                    notes = a["notes"]
-                else:
-                    try:
-                        notes = json.loads(a["notes"])
-                    except (json.JSONDecodeError, TypeError):
-                        try:
-                            import ast
-                            notes = ast.literal_eval(a["notes"])
-                        except Exception:
-                            notes = {}
-            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
-                if a.get("user_id"):
-                    active_ids.add(a["user_id"])
+    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance)), key=lambda x: username_map.get(x, "").lower())
                     
     qr_status = crud.get_qr_token_status()
     base_url = str(request.base_url).rstrip("/")
@@ -232,6 +178,27 @@ async def clubhouse_display(request: Request, user: dict = Depends(get_current_u
                           today_attendance=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str,
                           qr_status=qr_status, initial_scan_url=initial_scan_url)
+
+
+@router.get("/display/active-members")
+async def get_active_members_partial(request: Request):
+    """
+    HTMX partial endpoint polled every 4 seconds by the clubhouse display screen.
+    Returns _active_members.html to update the real-time presence list without
+    re-rendering or flickering the QR code.
+    """
+    profiles = crud.get_all_users_detailed() or []
+    today_str = get_ist_date()
+    today_attendance = crud.get_attendance(limit=500) or []
+    username_map = get_username_map() or {}
+    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance)), key=lambda x: username_map.get(x, "").lower())
+    
+    return render_template("_active_members.html", request,
+                           profiles=profiles,
+                           today_str=today_str,
+                           today_attendance=today_attendance,
+                           username_map=username_map,
+                           active_ids=active_ids)
 
 
 @router.get("/qr-token")
@@ -278,19 +245,21 @@ async def attendance_scan_endpoint(request: Request, token: str = None):
     result = crud.quick_toggle_attendance(user["id"], today_str, user["id"])
     action = result.get("action", "checked_in") if isinstance(result, dict) else "checked_in"
     
-    # Dispatch Discord alert
+    # Dispatch Discord alert ONLY if action in ("checked_in", "checked_out") (suppress duplicate scans)
     uname = user.get("display_name") or user.get("username") or user.get("email", "Member")
-    action_label = "CHECKED IN" if action == "checked_in" else "CHECKED OUT"
-    color = 0x10b981 if action == "checked_in" else 0x3b82f6
-    try:
-        send_discord_notification(
-            f"**{action_label} (QR Verified)**\n**Member:** {uname}\n**Time:** {time_str} (IST)\n**Location:** Clubhouse Premises",
-            title="ATTENDANCE (PHYSICAL PRESENCE VERIFIED)",
-            color=color
-        )
-    except Exception:
-        pass
+    if action in ("checked_in", "checked_out"):
+        action_label = "CHECKED IN" if action == "checked_in" else "CHECKED OUT"
+        color = 0x10b981 if action == "checked_in" else 0x3b82f6
+        try:
+            send_discord_notification(
+                f"**{action_label} (QR Verified)**\n**Member:** {uname}\n**Time:** {time_str} (IST)\n**Location:** Clubhouse Premises",
+                title="ATTENDANCE (PHYSICAL PRESENCE VERIFIED)",
+                color=color
+            )
+        except Exception:
+            pass
         
     return render_template("attendance_success.html", request, user=user, success=True,
-                          action=action, time_str=time_str, today_str=today_str)
+                          action=action, time_str=time_str, today_str=today_str,
+                          in_time=result.get("in_time") if isinstance(result, dict) else None)
 

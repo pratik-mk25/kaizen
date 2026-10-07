@@ -79,6 +79,7 @@ from .attendance import (
     get_attendance,
     get_attendance_for_member,
     get_active_checkin,
+    get_currently_active_user_ids,
     add_attendance,
     delete_attendance,
     update_attendance,
