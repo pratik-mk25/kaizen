@@ -84,6 +84,9 @@ from .attendance import (
     update_attendance,
     quick_toggle_attendance,
     fix_all_attendance_utc_to_ist,
+    generate_qr_attendance_token,
+    get_qr_token_status,
+    verify_qr_attendance_token,
 )
 
 # Equipment, Inventory & Checkouts

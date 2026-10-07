@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if success %}
+        {{ 'Checked In' if action == 'checked_in' else 'Checked Out' }} - KAIZEN
+    {% else %}
+        Verification Failed - KAIZEN
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-container-lowest/80 p-8 rounded-3xl hud-border shadow-2xl text-center relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+        
+        {% if success %}
+            <!-- Ambient Success Glow -->
+            <div class="absolute -top-20 -right-20 w-52 h-52 {% if action == 'checked_in' %}bg-emerald-500/15{% else %}bg-blue-500/15{% endif %} rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Status Icon -->
+            <div class="w-20 h-20 mx-auto mb-6 rounded-3xl {% if action == 'checked_in' %}bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/20{% else %}bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/20{% endif %} flex items-center justify-center">
+                <span class="material-symbols-outlined text-4xl animate-bounce">
+                    {% if action == 'checked_in' %}sensor_door{% else %}logout{% endif %}
+                </span>
+            </div>
+
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full {% if action == 'checked_in' %}bg-emerald-950/50 border border-emerald-500/30 text-emerald-400{% else %}bg-blue-950/50 border border-blue-500/30 text-blue-400{% endif %} text-[10px] font-bold uppercase tracking-widest mb-3">
+                <span class="w-2 h-2 rounded-full {% if action == 'checked_in' %}bg-emerald-400 animate-pulse{% else %}bg-blue-400{% endif %}"></span>
+                Physical Presence Verified
+            </div>
+
+            <h1 class="text-3xl font-headline font-bold text-on-surface uppercase tracking-tight">
+                {% if action == 'checked_in' %}
+                    Checked In!
+                {% else %}
+                    Checked Out!
+                {% endif %}
+            </h1>
+
+            <p class="text-sm text-on-surface-variant mt-1">
+                Welcome back, <span class="text-primary font-bold">{{ user.display_name or user.username or 'Member' }}</span>.
+            </p>
+
+            <!-- Verification Metadata Box -->
+            <div class="my-6 p-4 rounded-2xl bg-surface-container/60 border border-outline-variant/30 space-y-2 text-left">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-on-surface-variant font-mono uppercase text-[10px]">Timestamp</span>
+                    <span class="font-mono font-bold text-on-surface">{{ time_str }} IST</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-on-surface-variant font-mono uppercase text-[10px]">Date</span>
+                    <span class="font-mono font-bold text-on-surface">{{ today_str }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-on-surface-variant font-mono uppercase text-[10px]">Premises</span>
+                    <span class="font-bold text-emerald-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-xs">verified</span> Club Lab Verified
+                    </span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3 pt-2">
+                <a href="/dashboard" class="w-full py-3.5 px-4 bg-primary text-on-primary rounded-xl font-bold uppercase tracking-wider text-xs hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">dashboard</span>
+                    Go to Dashboard
+                </a>
+                <a href="/tasks" class="w-full py-3 px-4 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl font-bold uppercase tracking-wider text-xs border border-outline-variant/30 transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">inbox</span>
+                    View My Tasks
+                </a>
+            </div>
+
+            <p class="text-[10px] text-on-surface-variant/70 mt-6" x-data="{ count: 6 }" x-init="setInterval(() => { count--; if(count <= 0) window.location.href = '/dashboard'; }, 1000)">
+                Redirecting to dashboard in <span x-text="count" class="font-bold text-primary"></span>s...
+            </p>
+
+        {% else %}
+            <!-- Error / Expired Token State -->
+            <div class="w-20 h-20 mx-auto mb-6 rounded-3xl bg-error/20 text-error border border-error/30 flex items-center justify-center shadow-lg shadow-error/20">
+                <span class="material-symbols-outlined text-4xl">timer_off</span>
+            </div>
+
+            <h1 class="text-2xl font-headline font-bold text-error uppercase tracking-tight">QR Code Expired</h1>
+
+            <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">
+                {{ error or "This QR token has expired. For club security, tokens rotate every 60 seconds to verify physical presence." }}
+            </p>
+
+            <div class="my-6 p-4 rounded-2xl bg-surface-container/60 border border-outline-variant/30 text-left space-y-1">
+                <p class="text-[11px] font-bold text-on-surface uppercase flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm text-primary">lightbulb</span>
+                    How to fix
+                </p>
+                <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                    Look at the clubhouse monitor screen and scan the freshly generated QR code.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <a href="/attendance" class="w-full py-3.5 px-4 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl font-bold uppercase tracking-wider text-xs border border-outline-variant/30 transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span>
+                    Back to Attendance
+                </a>
+                <a href="/dashboard" class="w-full py-3 px-4 text-on-surface-variant hover:text-on-surface text-xs font-bold uppercase tracking-wider">
+                    Go to Dashboard
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

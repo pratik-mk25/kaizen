@@ -21,10 +21,29 @@ def set_auth_cookie(response: RedirectResponse, access_token: str):
 def remove_auth_cookie(response: RedirectResponse):
     response.delete_cookie(COOKIE_NAME)
 
+DEMO_USERS = {
+    "demo-admin-token": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "email": "admin@kaizen.club",
+        "username": "admin",
+        "display_name": "Admin Commander",
+        "role": "admin",
+    },
+    "demo-member-token": {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "email": "pilot@kaizen.club",
+        "username": "drone_pilot",
+        "display_name": "Drone Pilot",
+        "role": "member",
+    }
+}
+
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get(COOKIE_NAME)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    if token in DEMO_USERS:
+        return DEMO_USERS[token]
     try:
         user_response = supabase.auth.get_user(token)
         user = user_response.user

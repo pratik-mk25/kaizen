@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Clubhouse Live Display - KAIZEN{% endblock %}
+{% block header_title %}Clubhouse Presence Display{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6" x-data="qrDisplay()">
+    <!-- Top Header Bar -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-low/40 p-5 rounded-2xl hud-border">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center font-bold">
+                <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+            </div>
+            <div>
+                <h1 class="font-headline text-3xl font-bold tracking-tight text-on-surface uppercase">Clubhouse Presence Terminal</h1>
+                <p class="text-xs text-on-surface-variant font-mono uppercase tracking-widest mt-0.5">Physical Presence Verified &middot; IST: <span x-text="currentTime" class="text-primary font-bold"></span></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="/attendance" class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-outline-variant/30 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                Table View
+            </a>
+            <a href="/attendance/kiosk" class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-outline-variant/30 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">touch_app</span>
+                Touch Kiosk
+            </a>
+            <button @click="toggleFullscreen()" class="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm" x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'">fullscreen</span>
+                <span x-text="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Live Display Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Dynamic Rolling QR Code Card -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center bg-surface-container-lowest/60 p-8 rounded-3xl hud-border text-center shadow-2xl relative overflow-hidden">
+            <!-- Ambient Glow -->
+            <div class="absolute -top-24 -left-24 w-72 h-72 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-widest mb-6">
+                <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+                Live Rolling Security Token
+            </div>
+
+            <!-- QR Canvas Wrapper with High Contrast for Phone Cameras -->
+            <div class="bg-white p-5 rounded-2xl shadow-2xl border-4 border-primary/40 relative group">
+                <div id="qrcode-box" class="flex items-center justify-center min-w-[240px] min-h-[240px]"></div>
+                
+                <!-- Center Logo Overlay -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-10 h-10 bg-slate-900 border-2 border-primary rounded-xl flex items-center justify-center shadow-md">
+                        <span class="font-headline font-bold text-xs text-white tracking-tighter">KZ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Countdown Timer Progress Bar -->
+            <div class="w-full max-w-xs mt-6 space-y-2">
+                <div class="flex items-center justify-between text-xs font-mono font-bold">
+                    <span class="text-on-surface-variant uppercase text-[10px] tracking-wider">Auto-Refresh In</span>
+                    <span class="text-primary font-bold text-sm" x-text="secondsLeft + 's'"></span>
+                </div>
+                <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden border border-outline-variant/30">
+                    <div class="h-full bg-primary transition-all duration-1000 ease-linear rounded-full"
+                         :style="'width: ' + ((secondsLeft / totalInterval) * 100) + '%'"></div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="mt-6 p-4 rounded-xl bg-surface-container/60 border border-outline-variant/30 text-left w-full max-w-xs space-y-1">
+                <p class="text-[11px] font-bold text-on-surface uppercase flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm text-primary">photo_camera</span>
+                    Point Phone Camera
+                </p>
+                <p class="text-[10px] text-on-surface-variant leading-relaxed">
+                    Open your phone camera & scan to Check In or Check Out. Token rotates every 60s to enforce lab presence.
+                </p>
+            </div>
+        </div>
+
+        <!-- Right: Real-Time Presence Monitor -->
+        <div class="lg:col-span-7 flex flex-col bg-surface-container-lowest/60 p-6 rounded-3xl hud-border">
+            <div class="flex items-center justify-between pb-4 border-b border-outline-variant/30 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <h2 class="text-lg font-headline font-bold uppercase tracking-tight text-on-surface">Currently in Lab</h2>
+                </div>
+                <div class="px-3 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-mono text-sm font-bold">
+                    {{ active_ids|length }} <span class="text-xs uppercase font-sans font-normal opacity-75">Members Present</span>
+                </div>
+            </div>
+
+            <!-- Active Members Grid -->
+            {% if active_ids %}
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[380px] pr-1 custom-scrollbar">
+                {% for pid in active_ids %}
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container/70 border border-emerald-500/20 hover:border-emerald-500/40 transition-all">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 border border-emerald-500/30">
+                        {{ username_map.get(pid, '?')[:1].upper() }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold text-on-surface truncate">{{ username_map.get(pid, 'Member') }}</p>
+                        <p class="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ACTIVE IN LAB
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="flex-1 flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-outline-variant/30 rounded-2xl">
+                <span class="material-symbols-outlined text-4xl text-on-surface-variant opacity-40 mb-2">sensor_door</span>
+                <p class="text-sm font-bold uppercase text-on-surface-variant tracking-wider">Lab Currently Empty</p>
+                <p class="text-xs text-on-surface-variant opacity-60 mt-1">Scan the QR code with your phone to be the first to check in.</p>
+            </div>
+            {% endif %}
+
+            <!-- Today's Total Sorties & Check-Ins Summary -->
+            <div class="mt-auto pt-6 border-t border-outline-variant/30 grid grid-cols-3 gap-3 text-center">
+                <div class="p-3 bg-surface-container/40 rounded-xl border border-outline-variant/20">
+                    <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Date</p>
+                    <p class="text-sm font-mono font-bold text-on-surface mt-0.5">{{ today_str }}</p>
+                </div>
+                <div class="p-3 bg-surface-container/40 rounded-xl border border-outline-variant/20">
+                    <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Total Registered</p>
+                    <p class="text-sm font-mono font-bold text-primary mt-0.5">{{ profiles|length }}</p>
+                </div>
+                <div class="p-3 bg-surface-container/40 rounded-xl border border-outline-variant/20">
+                    <p class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Today's Logs</p>
+                    <p class="text-sm font-mono font-bold text-emerald-400 mt-0.5">{{ today_attendance|length }}</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Lightweight QRCode.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function qrDisplay() {
+    return {
+        qrCodeObj: null,
+        currentScanUrl: "{{ initial_scan_url }}",
+        secondsLeft: {{ qr_status.expires_in }},
+        totalInterval: {{ qr_status.interval }},
+        currentTime: "",
+        isFullscreen: false,
+
+        init() {
+            this.updateClock();
+            setInterval(() => this.updateClock(), 1000);
+
+            // Initialize QR code object
+            const container = document.getElementById("qrcode-box");
+            this.qrCodeObj = new QRCode(container, {
+                text: this.currentScanUrl,
+                width: 240,
+                height: 240,
+                colorDark: "#09090b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            // Start countdown and token refresher
+            this.startTimer();
+        },
+
+        updateClock() {
+            const now = new Date();
+            this.currentTime = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+        },
+
+        startTimer() {
+            setInterval(async () => {
+                this.secondsLeft--;
+                if (this.secondsLeft <= 0) {
+                    await this.refreshToken();
+                }
+            }, 1000);
+        },
+
+        async refreshToken() {
+            try {
+                const res = await fetch('/attendance/qr-token');
+                if (!res.ok) return;
+                const data = await res.json();
+                this.currentScanUrl = data.scan_url;
+                this.secondsLeft = data.expires_in;
+                this.totalInterval = data.interval;
+
+                if (this.qrCodeObj) {
+                    this.qrCodeObj.clear();
+                    this.qrCodeObj.makeCode(this.currentScanUrl);
+                }
+            } catch (err) {
+                console.error("Failed to refresh QR token:", err);
+                this.secondsLeft = 5; // retry quickly
+            }
+        },
+
+        toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    this.isFullscreen = true;
+                }).catch(err => console.error(err));
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().then(() => {
+                        this.isFullscreen = false;
+                    });
+                }
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

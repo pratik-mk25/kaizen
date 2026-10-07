@@ -3,7 +3,7 @@ import time
 import json
 from datetime import date, datetime, timezone, timedelta
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 import crud
 from auth import get_current_user
 from templates_utils import render_template, get_username_map
@@ -188,3 +188,109 @@ async def confirm_edit(request: Request, attendance_id: str = Form(...), code: s
         if event_name and event_date and status:
             crud.update_attendance(attendance_id, event_name, event_date, status, notes, user["id"])
     return RedirectResponse(url="/attendance/kiosk", status_code=303)
+
+
+# =============================================================================
+# DYNAMIC ROTATING QR CODE ATTENDANCE ROUTES
+# =============================================================================
+
+@router.get("/display")
+async def clubhouse_display(request: Request, user: dict = Depends(get_current_user)):
+    """
+    Clubhouse monitor & TV view displaying rolling dynamic QR code,
+    live countdown timer, and members currently present in the club.
+    """
+    profiles = crud.get_all_users_detailed() or []
+    today_str = get_ist_date()
+    today_attendance = crud.get_attendance(limit=500) or []
+    username_map = get_username_map() or {}
+    active_ids = set()
+    for a in today_attendance:
+        if isinstance(a, dict) and a.get("status") == "present":
+            notes = {}
+            if a.get("notes"):
+                if isinstance(a["notes"], dict):
+                    notes = a["notes"]
+                else:
+                    try:
+                        notes = json.loads(a["notes"])
+                    except (json.JSONDecodeError, TypeError):
+                        try:
+                            import ast
+                            notes = ast.literal_eval(a["notes"])
+                        except Exception:
+                            notes = {}
+            if isinstance(notes, dict) and "in" in notes and "out" not in notes:
+                if a.get("user_id"):
+                    active_ids.add(a["user_id"])
+                    
+    qr_status = crud.get_qr_token_status()
+    base_url = str(request.base_url).rstrip("/")
+    initial_scan_url = f"{base_url}/attendance/scan?token={qr_status['token']}"
+    
+    return render_template("attendance_display.html", request, user=user, profiles=profiles,
+                          today_attendance=today_attendance, username_map=username_map,
+                          active_ids=active_ids, today_str=today_str,
+                          qr_status=qr_status, initial_scan_url=initial_scan_url)
+
+
+@router.get("/qr-token")
+async def get_qr_token_endpoint(request: Request):
+    """
+    Polling API endpoint for the display screen to retrieve the latest rolling token
+    and remaining seconds.
+    """
+    status = crud.get_qr_token_status()
+    base_url = str(request.base_url).rstrip("/")
+    status["scan_url"] = f"{base_url}/attendance/scan?token={status['token']}"
+    return JSONResponse(status)
+
+
+@router.get("/scan")
+async def attendance_scan_endpoint(request: Request, token: str = None):
+    """
+    Destination URL encoded in the QR code scanned by members' phone cameras.
+    Verifies rolling token freshness and toggles check-in/out status.
+    """
+    if not token:
+        return render_template("attendance_success.html", request, success=False,
+                              error="No attendance token detected. Please scan the live QR code on the clubhouse screen.")
+    
+    # Check if user is authenticated via session cookie
+    token_cookie = request.cookies.get("access_token")
+    if not token_cookie:
+        return RedirectResponse(url=f"/login?next=/attendance/scan?token={token}", status_code=303)
+        
+    try:
+        user = await get_current_user(request)
+    except Exception:
+        return RedirectResponse(url=f"/login?next=/attendance/scan?token={token}", status_code=303)
+
+    # Verify rolling token freshness
+    is_valid = crud.verify_qr_attendance_token(token)
+    if not is_valid:
+        return render_template("attendance_success.html", request, user=user, success=False,
+                              error="QR Code has expired. Please scan the current code displayed on the club screen.")
+                              
+    # Perform instant attendance toggle
+    today_str = get_ist_date()
+    time_str = get_ist_time()
+    result = crud.quick_toggle_attendance(user["id"], today_str, user["id"])
+    action = result.get("action", "checked_in") if isinstance(result, dict) else "checked_in"
+    
+    # Dispatch Discord alert
+    uname = user.get("display_name") or user.get("username") or user.get("email", "Member")
+    action_label = "CHECKED IN" if action == "checked_in" else "CHECKED OUT"
+    color = 0x10b981 if action == "checked_in" else 0x3b82f6
+    try:
+        send_discord_notification(
+            f"**{action_label} (QR Verified)**\n**Member:** {uname}\n**Time:** {time_str} (IST)\n**Location:** Clubhouse Premises",
+            title="ATTENDANCE (PHYSICAL PRESENCE VERIFIED)",
+            color=color
+        )
+    except Exception:
+        pass
+        
+    return render_template("attendance_success.html", request, user=user, success=True,
+                          action=action, time_str=time_str, today_str=today_str)
+
