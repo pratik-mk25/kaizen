@@ -112,6 +112,7 @@
         <form method="POST" action="/attendance/kiosk/edit-confirm" onsubmit="return combineTimes()">
             <input type="hidden" name="attendance_id" id="editId">
             <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="event_name" value="Club Session">
             <div class="space-y-3">
                 <div class="flex gap-2">
                     <div class="flex-1">
@@ -198,6 +199,10 @@ function openEdit(id, memberName, times) {
     document.getElementById('editMemberName').textContent = 'Member: ' + memberName;
     document.getElementById('editIn').value = times.in || '';
     document.getElementById('editOut').value = times.out || '';
+    const dateInput = document.getElementById('editDate');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = '{{ today_str }}';
+    }
     document.getElementById('editCode').value = '';
     document.getElementById('editCodeHidden').value = '';
     document.getElementById('editGeneratedCode').classList.add('hidden');

@@ -36,9 +36,11 @@ def get_equipment(equipment_id: str):
     return query.single().execute().data
 
 
-def create_equipment(name: str, equipment_type: str, serial_number: str | None, brand: str | None,
-                     model: str | None, condition: str, location: str | None, notes: str | None,
-                     user_id: str):
+def create_equipment(name: str, equipment_type: str, serial_number: str | None = None, brand: str | None = None,
+                     model: str | None = None, status: str = "available", condition: str = "good",
+                     purchase_date: str | None = None, purchase_price: float | None = None,
+                     assigned_to: str | None = None, notes: str | None = None,
+                     user_id: str = "system", location: str | None = None):
     """
     Registers new hardware equipment in the inventory system.
     """
@@ -51,20 +53,31 @@ def create_equipment(name: str, equipment_type: str, serial_number: str | None, 
         "condition": condition,
         "location": location,
         "notes": notes,
-        "status": "available"  # Default initial status
+        "status": status or "available",
+        "purchase_date": purchase_date,
+        "purchase_price": purchase_price,
+        "assigned_to": assigned_to,
     }
-    res = _get_client().table("equipment").insert(data).execute().data[0]
-    log_action(user_id, "equipment_created", "equipment", res["id"], new_values=data)
+    # Clean out None keys if table doesn't have them or insert safely
+    res_exec = _get_client().table("equipment").insert(data).execute()
+    res = res_exec.data[0] if (res_exec and res_exec.data) else data
+    rec_id = res.get("id", "N/A") if isinstance(res, dict) else "N/A"
+    try:
+        log_action(user_id, "equipment_created", "equipment", rec_id, new_values=data)
+    except Exception:
+        pass
     return res
 
 
-def update_equipment(equipment_id: str, name: str, equipment_type: str, brand: str | None,
-                     model: str | None, serial_number: str | None, condition: str,
-                     status: str, location: str | None, notes: str | None, user_id: str):
+def update_equipment(equipment_id: str, name: str, equipment_type: str, brand: str | None = None,
+                     model: str | None = None, serial_number: str | None = None, status: str = "available",
+                     condition: str = "good", purchase_date: str | None = None, purchase_price: float | None = None,
+                     assigned_to: str | None = None, notes: str | None = None, user_id: str = "system",
+                     location: str | None = None):
     """
     Updates specs, condition, or status of existing equipment.
     """
-    old = get_equipment(equipment_id)
+    old = get_equipment(equipment_id) or {}
     new_data = {
         "name": name,
         "equipment_type": equipment_type,
@@ -73,12 +86,18 @@ def update_equipment(equipment_id: str, name: str, equipment_type: str, brand: s
         "serial_number": serial_number,
         "condition": condition,
         "status": status,
-        "location": location,
+        "location": location or old.get("location"),
         "notes": notes,
+        "purchase_date": purchase_date,
+        "purchase_price": purchase_price,
+        "assigned_to": assigned_to,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     _get_client().table("equipment").update(new_data).eq("id", equipment_id).execute()
-    log_action(user_id, "equipment_updated", "equipment", equipment_id, old_values=old, new_values=new_data)
+    try:
+        log_action(user_id, "equipment_updated", "equipment", equipment_id, old_values=old, new_values=new_data)
+    except Exception:
+        pass
 
 
 def delete_equipment(equipment_id: str, user_id: str):

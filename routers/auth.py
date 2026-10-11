@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from database import supabase
@@ -24,15 +25,16 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
     email_clean = email.strip().lower()
     dest = next or request.query_params.get("next") or "/dashboard"
     
-    # 1-Click / Demo login bypass
-    if email_clean in ("admin@kaizen.club", "admin"):
-        response = RedirectResponse(url=dest, status_code=303)
-        set_auth_cookie(response, "demo-admin-token")
-        return response
-    if email_clean in ("pilot@kaizen.club", "member", "pilot"):
-        response = RedirectResponse(url=dest, status_code=303)
-        set_auth_cookie(response, "demo-member-token")
-        return response
+    # 1-Click / Demo login bypass (allowed in local/preview or when explicitly enabled)
+    if auth.ENABLE_DEMO_LOGIN or os.environ.get("VERCEL_ENV") != "production":
+        if email_clean in ("admin@kaizen.club", "admin"):
+            response = RedirectResponse(url=dest, status_code=303)
+            set_auth_cookie(response, "demo-admin-token")
+            return response
+        if email_clean in ("pilot@kaizen.club", "member", "pilot"):
+            response = RedirectResponse(url=dest, status_code=303)
+            set_auth_cookie(response, "demo-member-token")
+            return response
 
     try:
         auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})

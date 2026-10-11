@@ -26,11 +26,16 @@ _LOCAL_ATTENDANCE_STATE = {}
 _LOCAL_LAST_TOGGLE = {}
 
 
-def _calculate_seconds_elapsed(earlier_time_str: str, now_dt: datetime) -> int | None:
+def _calculate_seconds_elapsed(earlier_time_str: str, now_dt: datetime, earlier_date_str: str = None) -> int | None:
     """
-    Calculates elapsed seconds between an earlier 'HH:MM:SS' string (today) and now_dt.
+    Calculates elapsed seconds between an earlier 'HH:MM:SS' string and now_dt.
+    Prevents 24-hour modulo wrap-around if earlier timestamp is from a different calendar date.
     """
     try:
+        today_date_str = now_dt.strftime("%Y-%m-%d")
+        if earlier_date_str and earlier_date_str != today_date_str:
+            return 999999  # Clearly past any cooldown window
+
         parts = str(earlier_time_str).strip().split(":")
         if len(parts) >= 2:
             hh = int(parts[0])
@@ -47,15 +52,19 @@ def _calculate_seconds_elapsed(earlier_time_str: str, now_dt: datetime) -> int |
     return None
 
 
-def get_currently_active_user_ids(today_records: list = None) -> set:
+def get_currently_active_user_ids(today_records: list = None, today_str: str = None) -> set:
     """
     Returns the set of user_ids who currently have an active check-in (in time, no out time).
+    Filters strictly to today's sessions if today_str is provided.
     """
     if today_records is None:
         today_records = get_attendance(limit=500)
     active_ids = set()
     for a in (today_records or []):
         if isinstance(a, dict) and a.get("status") == "present":
+            # If today_str provided, skip records from previous days
+            if today_str and a.get("event_date") and a.get("event_date") != today_str:
+                continue
             notes = {}
             if a.get("notes"):
                 if isinstance(a["notes"], dict):
@@ -106,11 +115,13 @@ def get_attendance_for_member(user_id: str):
 def get_active_checkin(user_id: str, event_date: str = None):
     """
     Searches for an open check-in record for a user (status='present' with an 'in' time but NO 'out' time).
-    Searches across dates to handle overnight/cross-date sessions seamlessly.
+    Prioritizes the specified event_date to prevent historical unclosed sessions from hijacking new visits.
     """
     try:
-        # Query present attendance entries for user_id ordered descending
-        query = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("status", "present").order("event_date", desc=True)
+        query = _get_client().table("attendance").select("*").eq("user_id", user_id).eq("status", "present")
+        if event_date:
+            query = query.eq("event_date", event_date)
+        query = query.order("event_date", desc=True)
         res = query.execute()
         rows = res.data if (res and res.data is not None) else []
         
@@ -122,11 +133,9 @@ def get_active_checkin(user_id: str, event_date: str = None):
                     notes = r["notes"]
                 else:
                     try:
-                        # Attempt standard JSON decoding
                         notes = json.loads(r["notes"])
                     except (json.JSONDecodeError, TypeError):
                         try:
-                            # Fallback AST literal eval for single-quoted Python dict strings
                             notes = ast.literal_eval(r["notes"])
                         except Exception:
                             notes = {}
@@ -237,7 +246,7 @@ def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str, coo
             in_time_str = existing_notes.get("in")
             # Database-backed debounce check (handles cross-container requests)
             if in_time_str and cooldown_seconds > 0:
-                elapsed = _calculate_seconds_elapsed(in_time_str, now_dt)
+                elapsed = _calculate_seconds_elapsed(in_time_str, now_dt, active.get("event_date"))
                 if elapsed is not None and elapsed < cooldown_seconds:
                     _LOCAL_LAST_TOGGLE[user_id] = ("checked_in", time.time(), in_time_str)
                     return {
@@ -280,7 +289,7 @@ def quick_toggle_attendance(user_id: str, event_date: str, recorder_id: str, coo
                                 pass
                         out_time_str = last_notes.get("out")
                         if out_time_str:
-                            elapsed = _calculate_seconds_elapsed(out_time_str, now_dt)
+                            elapsed = _calculate_seconds_elapsed(out_time_str, now_dt, last_rec.get("event_date"))
                             if elapsed is not None and elapsed < cooldown_seconds:
                                 _LOCAL_LAST_TOGGLE[user_id] = ("checked_out", time.time(), out_time_str)
                                 return {

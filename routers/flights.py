@@ -4,6 +4,9 @@ import crud
 from auth import get_current_user, lead_or_admin_required
 from templates_utils import render_template, get_username_map
 
+from datetime import datetime, timezone, timedelta
+IST = timezone(timedelta(hours=5, minutes=30))
+
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 @router.get("")
@@ -15,8 +18,8 @@ async def flight_logs_list(request: Request, user: dict = Depends(get_current_us
     username_map = get_username_map()
     
     # Calculate stats
-    total_minutes = sum(l.get("duration_minutes", 0) for l in logs)
-    total_flights = len(logs)
+    total_minutes = sum((l.get("duration_minutes") or 0) for l in (logs or []))
+    total_flights = len(logs or [])
     
     return render_template("flights_list.html", request, user=user, logs=logs,
                           equipment=equipment, batteries=batteries, members=members,
@@ -28,8 +31,9 @@ async def flight_log_form(request: Request, user: dict = Depends(get_current_use
     equipment = crud.get_all_equipment()
     batteries = crud.get_all_battery_packs()
     members = crud.get_all_users_detailed()
+    today_str = datetime.now(IST).strftime("%Y-%m-%d")
     return render_template("flight_form.html", request, user=user, equipment=equipment,
-                          batteries=batteries, members=members)
+                          batteries=batteries, members=members, today_str=today_str)
 
 @router.post("/new")
 async def create_flight_action(request: Request,
@@ -42,12 +46,14 @@ async def create_flight_action(request: Request,
                                purpose: str = Form(None),
                                notes: str = Form(None),
                                user: dict = Depends(get_current_user)):
-    crud.create_flight_log(pilot_id, equipment_id, battery_id, flight_date,
+    clean_eq_id = equipment_id.strip() if (equipment_id and equipment_id.strip()) else None
+    clean_bat_id = battery_id.strip() if (battery_id and battery_id.strip()) else None
+    crud.create_flight_log(pilot_id, clean_eq_id, clean_bat_id, flight_date,
                           duration_minutes, location, purpose, notes, user["id"])
     return RedirectResponse(url="/flights", status_code=303)
 
 @router.post("/{log_id}/delete")
-async def delete_flight_action(log_id: str, user: dict = Depends(get_current_user)):
+async def delete_flight_action(log_id: str, user: dict = Depends(lead_or_admin_required)):
     crud.delete_flight_log(log_id, user["id"])
     return RedirectResponse(url="/flights", status_code=303)
 

@@ -350,9 +350,10 @@ def delete_attachment(attachment_id: str, user_id: str):
         log_action(user_id, "attachment_deleted", "task_attachment", attachment_id, old_values=records[0])
 
 
-def get_monthly_progress(month: str):
+def get_monthly_progress(month: str = None):
     """
     Calculates completed task metrics and mission breakdown for a target YYYY-MM month.
+    Returns (mission_stats, assignee_stats) tuple matching templates/progress.html expectations.
     """
     try:
         # Fetch all tasks from database
@@ -370,37 +371,42 @@ def get_monthly_progress(month: str):
         for t in tasks:
             if t.get("status") == "done":
                 updated_at = t.get("updated_at")
-                if updated_at and updated_at.startswith(month):
+                if not month or (updated_at and str(updated_at).startswith(month)):
                     completed_in_month.append(t)
 
-        # Build project to mission mapping dictionary
-        project_to_mission = {p["id"]: p["mission_id"] for p in projects}
-        mission_names = {m["id"]: m["name"] for m in missions}
+        completed_set = {t["id"] for t in completed_in_month}
 
-        # Count completed tasks per mission
-        mission_counts = {}
-        for t in completed_in_month:
-            pid = t.get("project_id")
-            mid = project_to_mission.get(pid)
-            if mid:
-                mname = mission_names.get(mid, "Unknown Mission")
-                mission_counts[mname] = mission_counts.get(mname, 0) + 1
+        # Build nested mission_stats: {mid: {"name": mname, "projects": {pid: {"name": pname, "completed": X, "total": Y}}}}
+        mission_stats = {}
+        for m in missions:
+            mid = m["id"]
+            m_projects = [p for p in projects if p.get("mission_id") == mid]
+            proj_dict = {}
+            for p in m_projects:
+                pid = p["id"]
+                p_tasks = [t for t in tasks if t.get("project_id") == pid]
+                p_done = sum(1 for t in p_tasks if t.get("id") in completed_set)
+                proj_dict[pid] = {
+                    "name": p["name"],
+                    "completed": p_done,
+                    "total": len(p_tasks)
+                }
+            mission_stats[mid] = {
+                "name": m["name"],
+                "projects": proj_dict
+            }
 
         # Calculate assignee task counts
-        task_ids = [t["id"] for t in completed_in_month]
+        task_ids = list(completed_set)
         assignee_counts = {}
         if task_ids:
             all_rows = _get_client().table("task_assignees").select("task_id, user_id").in_("task_id", task_ids).execute().data or []
             for r in all_rows:
-                uid = r["user_id"]
-                assignee_counts[uid] = assignee_counts.get(uid, 0) + 1
+                uid = r.get("user_id")
+                if uid:
+                    assignee_counts[uid] = assignee_counts.get(uid, 0) + 1
 
-        return {
-            "month": month,
-            "total_completed": len(completed_in_month),
-            "mission_breakdown": mission_counts,
-            "assignee_counts": assignee_counts
-        }
+        return mission_stats, assignee_counts
     except Exception as e:
         print(f"Error computing monthly progress: {e}")
-        return {"month": month, "total_completed": 0, "mission_breakdown": {}, "assignee_counts": {}}
+        return {}, {}

@@ -99,13 +99,25 @@ STANDARD_DICT = {
 }
 
 
-def get_username_map() -> dict:
+import time
+
+_USERNAME_MAP_CACHE = None
+_USERNAME_MAP_CACHE_EXPIRY = 0
+
+def get_username_map(force_refresh: bool = False) -> dict:
+    global _USERNAME_MAP_CACHE, _USERNAME_MAP_CACHE_EXPIRY
+    now = time.time()
+    if not force_refresh and _USERNAME_MAP_CACHE is not None and now < _USERNAME_MAP_CACHE_EXPIRY:
+        return _USERNAME_MAP_CACHE
     try:
         users = get_all_users_detailed()
-        return {u["id"]: u["display_name"] or u["username"] or "Member" for u in users}
+        mapping = {u["id"]: u["display_name"] or u["username"] or "Member" for u in users}
+        _USERNAME_MAP_CACHE = mapping
+        _USERNAME_MAP_CACHE_EXPIRY = now + 60
+        return mapping
     except Exception as e:
         print(f"get_username_map failed: {e}")
-        return {}
+        return _USERNAME_MAP_CACHE or {}
 
 
 def render_template(template_name: str, request: Request, **kwargs) -> HTMLResponse:

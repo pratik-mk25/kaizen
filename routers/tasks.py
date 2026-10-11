@@ -40,12 +40,53 @@ async def add_task(request: Request, project_id: str,
         ))
     return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
 
+@router.post("/projects/{project_id}/tasks/quick-add")
+async def quick_add_task(request: Request, project_id: str,
+                         title: str = Form(...),
+                         status: str = Form("todo"),
+                         priority: str = Form("medium"),
+                         user: dict = Depends(get_current_user)):
+    project = crud.get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if not title or not title.strip():
+        raise HTTPException(status_code=400, detail="Title cannot be empty")
+        
+    new_task = crud.create_task(title.strip(), "", project_id, user["id"], priority)
+    if status and status != "todo":
+        try:
+            crud.update_task_status(new_task["id"], status, user["id"])
+            new_task["status"] = status
+        except Exception:
+            pass
+    try:
+        notify_task_created(new_task, user.get("email", "Unknown"))
+    except Exception:
+        pass
+
+    if request.headers.get("HX-Request") == "true":
+        task_assignees = {new_task["id"]: []}
+        username_map = get_username_map()
+        return HTMLResponse(jinja_env.get_template("_task_card.html").render(
+            task=new_task, task_assignees=task_assignees, username_map=username_map, user=user
+        ))
+    referer = request.headers.get("referer")
+    return RedirectResponse(url=referer or f"/projects/{project_id}", status_code=303)
+
 @router.post("/tasks/{task_id}/update-status")
 async def update_task_status(request: Request, task_id: str, new_status: str = Form(...),
-                             user: dict = Depends(lead_or_admin_required)):
+                             user: dict = Depends(get_current_user)):
     task = crud.get_task(task_id)
     if not task:
          raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Permission check: lead/admin OR assigned member
+    assignees = crud.get_assignees(task_id) or []
+    is_assigned = any((a.get("id") == user["id"] or a.get("user_id") == user["id"]) for a in assignees)
+    is_lead_or_admin = user.get("role") in ("lead", "admin")
+    
+    if not (is_assigned or is_lead_or_admin):
+        raise HTTPException(status_code=403, detail="Not authorized to update this task")
     
     old_status = task["status"]
     try:
@@ -64,7 +105,8 @@ async def update_task_status(request: Request, task_id: str, new_status: str = F
         return HTMLResponse(jinja_env.get_template("_task_card.html").render(
             task=task, task_assignees=task_assignees, username_map=username_map, user=user
         ))
-    return RedirectResponse(url=f"/projects/{task['project_id']}", status_code=303)
+    referer = request.headers.get("referer")
+    return RedirectResponse(url=referer or f"/projects/{task.get('project_id')}", status_code=303)
 
 @router.post("/tasks/{task_id}/assign")
 async def assign_task_endpoint(task_id: str, request: Request, user: dict = Depends(lead_or_admin_required)):

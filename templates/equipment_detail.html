@@ -126,7 +126,7 @@
                         <label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-1">Borrower</label>
                         <select name="borrower_id" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded px-3 py-2 text-sm text-on-surface outline-none">
                             {% for m in members %}
-                            <option value="{{ m.id }}">{{ m.display_name or m.username }}</option>
+                            <option value="{{ m.id }}" {% if m.id == user.id %}selected{% endif %}>{{ m.display_name or m.username }}{% if m.id == user.id %} (You){% endif %}</option>
                             {% endfor %}
                         </select>
                     </div>

@@ -1,6 +1,7 @@
 import random
 import time
 import json
+import urllib.parse
 from datetime import date, datetime, timezone, timedelta
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
@@ -31,9 +32,10 @@ def check_kiosk_auth(request: Request) -> bool:
 async def attendance_view(request: Request, user: dict = Depends(get_current_user)):
     profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500) or []
+    all_attendance = crud.get_attendance(limit=500) or []
+    today_attendance = [a for a in all_attendance if isinstance(a, dict) and a.get("event_date") == today_str]
     username_map = get_username_map() or {}
-    active_ids = crud.get_currently_active_user_ids(today_attendance)
+    active_ids = crud.get_currently_active_user_ids(today_attendance, today_str=today_str)
     return render_template("attendance_view.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -67,9 +69,10 @@ async def attendance_kiosk(request: Request, user: dict = Depends(get_current_us
         return RedirectResponse(url="/attendance/kiosk/login", status_code=303)
     profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500) or []
+    all_attendance = crud.get_attendance(limit=500) or []
+    today_attendance = [a for a in all_attendance if isinstance(a, dict) and a.get("event_date") == today_str]
     username_map = get_username_map() or {}
-    active_ids = crud.get_currently_active_user_ids(today_attendance)
+    active_ids = crud.get_currently_active_user_ids(today_attendance, today_str=today_str)
     return render_template("attendance_kiosk.html", request, user=user, profiles=profiles,
                           today_attendance=today_attendance, today_records=today_attendance, username_map=username_map,
                           active_ids=active_ids, today_str=today_str)
@@ -80,7 +83,7 @@ async def kiosk_toggle(request: Request, user_id: str = Form(...), user: dict = 
         return RedirectResponse(url="/attendance/kiosk/login", status_code=303)
     try:
         today_str = get_ist_date()
-        result = crud.quick_toggle_attendance(user_id, today_str, user["id"])
+        result = crud.quick_toggle_attendance(user_id, today_str, user["id"], cooldown_seconds=0)
         uname = user.get("display_name") or user.get("email", "Unknown")
         umap = get_username_map() or {}
         member_name = umap.get(user_id, user_id[:8])
@@ -149,8 +152,10 @@ async def confirm_edit(request: Request, attendance_id: str = Form(...), code: s
         except Exception:
             pass
     elif action == "edit":
-        if event_name and event_date and status:
-            crud.update_attendance(attendance_id, event_name, event_date, status, notes, user["id"])
+        evt_name = event_name or "Club Session"
+        evt_date = event_date or get_ist_date()
+        stat = status or "present"
+        crud.update_attendance(attendance_id, evt_name, evt_date, stat, notes, user["id"])
     return RedirectResponse(url="/attendance/kiosk", status_code=303)
 
 
@@ -166,9 +171,10 @@ async def clubhouse_display(request: Request, user: dict = Depends(get_current_u
     """
     profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500) or []
+    all_attendance = crud.get_attendance(limit=500) or []
+    today_attendance = [a for a in all_attendance if isinstance(a, dict) and a.get("event_date") == today_str]
     username_map = get_username_map() or {}
-    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance)), key=lambda x: username_map.get(x, "").lower())
+    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance, today_str=today_str)), key=lambda x: username_map.get(x, "").lower())
                     
     qr_status = crud.get_qr_token_status()
     base_url = str(request.base_url).rstrip("/")
@@ -189,9 +195,10 @@ async def get_active_members_partial(request: Request):
     """
     profiles = crud.get_all_users_detailed() or []
     today_str = get_ist_date()
-    today_attendance = crud.get_attendance(limit=500) or []
+    all_attendance = crud.get_attendance(limit=500) or []
+    today_attendance = [a for a in all_attendance if isinstance(a, dict) and a.get("event_date") == today_str]
     username_map = get_username_map() or {}
-    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance)), key=lambda x: username_map.get(x, "").lower())
+    active_ids = sorted(list(crud.get_currently_active_user_ids(today_attendance, today_str=today_str)), key=lambda x: username_map.get(x, "").lower())
     
     return render_template("_active_members.html", request,
                            profiles=profiles,
@@ -225,13 +232,14 @@ async def attendance_scan_endpoint(request: Request, token: str = None):
     
     # Check if user is authenticated via session cookie
     token_cookie = request.cookies.get("access_token")
+    next_url = urllib.parse.quote(f"/attendance/scan?token={token}")
     if not token_cookie:
-        return RedirectResponse(url=f"/login?next=/attendance/scan?token={token}", status_code=303)
+        return RedirectResponse(url=f"/login?next={next_url}", status_code=303)
         
     try:
         user = await get_current_user(request)
     except Exception:
-        return RedirectResponse(url=f"/login?next=/attendance/scan?token={token}", status_code=303)
+        return RedirectResponse(url=f"/login?next={next_url}", status_code=303)
 
     # Verify rolling token freshness
     is_valid = crud.verify_qr_attendance_token(token)

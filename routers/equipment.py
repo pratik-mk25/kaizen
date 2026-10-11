@@ -16,7 +16,7 @@ async def equipment_list(request: Request, user: dict = Depends(get_current_user
                           checkouts=checkouts, members=members, username_map=username_map)
 
 @router.get("/new")
-async def equipment_create_form(request: Request, user: dict = Depends(get_current_user)):
+async def equipment_create_form(request: Request, user: dict = Depends(lead_or_admin_required)):
     members = crud.get_all_users_detailed()
     return render_template("equipment_form.html", request, user=user, item=None, members=members)
 
@@ -26,7 +26,7 @@ async def equipment_create_action(request: Request, name: str = Form(...), equip
                                    status: str = Form("available"), condition: str = Form("good"),
                                    purchase_date: str = Form(None), purchase_price: float = Form(None),
                                    assigned_to: str = Form(None), notes: str = Form(None),
-                                   user: dict = Depends(get_current_user)):
+                                   user: dict = Depends(lead_or_admin_required)):
     crud.create_equipment(name, equipment_type, serial_number, brand, model, status, condition,
                           purchase_date, purchase_price, assigned_to, notes, user["id"])
     return RedirectResponse(url="/equipment", status_code=303)
@@ -45,12 +45,12 @@ async def inventory_form(request: Request, user: dict = Depends(get_current_user
 async def create_inventory(request: Request, name: str = Form(...), category: str = Form(...),
                             quantity: int = Form(0), min_threshold: int = Form(5), unit: str = Form("piece"),
                             location: str = Form(None), notes: str = Form(None),
-                            user: dict = Depends(get_current_user)):
+                            user: dict = Depends(lead_or_admin_required)):
     crud.create_inventory_item(name, category, quantity, min_threshold, unit, location, notes, user["id"])
     return RedirectResponse(url="/equipment/inventory", status_code=303)
 
 @router.get("/inventory/{item_id}/edit")
-async def inventory_edit_form(request: Request, item_id: str, user: dict = Depends(get_current_user)):
+async def inventory_edit_form(request: Request, item_id: str, user: dict = Depends(lead_or_admin_required)):
     item = crud.get_inventory_item(item_id)
     if not item:
         raise HTTPException(status_code=404)
@@ -60,28 +60,25 @@ async def inventory_edit_form(request: Request, item_id: str, user: dict = Depen
 async def inventory_edit_action(request: Request, item_id: str, name: str = Form(...), category: str = Form(...),
                               quantity: int = Form(0), min_threshold: int = Form(5), unit: str = Form("piece"),
                               location: str = Form(None), notes: str = Form(None),
-                              user: dict = Depends(get_current_user)):
+                              user: dict = Depends(lead_or_admin_required)):
     crud.update_inventory_item(item_id, name, category, quantity, min_threshold, unit, location, notes, user["id"])
     return RedirectResponse(url="/equipment/inventory", status_code=303)
 
 @router.post("/inventory/{item_id}/delete")
-async def inventory_delete(item_id: str, user: dict = Depends(get_current_user)):
+async def inventory_delete(item_id: str, user: dict = Depends(admin_required)):
     crud.delete_inventory_item(item_id, user["id"])
     return RedirectResponse(url="/equipment/inventory", status_code=303)
 
 @router.post("/inventory/{item_id}/adjust")
 async def inventory_adjust(request: Request, item_id: str, change_amount: int = Form(...),
                            transaction_type: str = Form(...), notes: str = Form(None),
-                           user: dict = Depends(get_current_user)):
+                           user: dict = Depends(lead_or_admin_required)):
     item = crud.get_inventory_item(item_id)
     if not item:
         raise HTTPException(status_code=404)
-    new_qty = item["quantity"] + change_amount
-    if new_qty < 0:
-        new_qty = 0
-    crud.update_inventory_item(item_id, item["name"], item["category"], new_qty, item["min_threshold"],
-                               item["unit"], item.get("location"), item.get("notes"), user["id"])
-    crud.log_inventory_transaction(item_id, change_amount, transaction_type, None, notes, user["id"])
+    # Correct signed delta: 'remove' subtracts stock, 'add' adds stock
+    delta = -abs(change_amount) if transaction_type == "remove" else abs(change_amount)
+    crud.log_inventory_transaction(item_id, delta, transaction_type, None, notes, user["id"])
     return RedirectResponse(url="/equipment/inventory", status_code=303)
 
 @router.get("/{item_id}")
@@ -136,18 +133,22 @@ async def equipment_edit_action(request: Request, item_id: str, name: str = Form
     return RedirectResponse(url=f"/equipment/{item_id}", status_code=303)
 
 @router.post("/{item_id}/delete")
-async def equipment_delete(item_id: str, user: dict = Depends(get_current_user)):
+async def equipment_delete(item_id: str, user: dict = Depends(admin_required)):
     crud.delete_equipment(item_id, user["id"])
     return RedirectResponse(url="/equipment", status_code=303)
 
 @router.post("/{item_id}/maintenance")
 async def add_maintenance(request: Request, item_id: str, description: str = Form(...),
-                          maintenance_date: str = Form(...), cost: float = Form(0), notes: str = Form(None),
+                          maintenance_date: str = Form(...), cost: str = Form("0"), notes: str = Form(None),
                           user: dict = Depends(get_current_user)):
-    crud.add_maintenance_log(item_id, description, maintenance_date, user["id"], cost, notes, user["id"])
+    try:
+        cost_val = float(cost) if (cost and cost.strip()) else 0.0
+    except (ValueError, TypeError):
+        cost_val = 0.0
+    crud.add_maintenance_log(item_id, description, maintenance_date, user["id"], cost_val, notes, user["id"])
     return RedirectResponse(url=f"/equipment/{item_id}", status_code=303)
 
 @router.post("/maintenance/{log_id}/delete")
-async def delete_maintenance(log_id: str, request: Request, user: dict = Depends(get_current_user)):
+async def delete_maintenance(log_id: str, request: Request, user: dict = Depends(admin_required)):
     crud.delete_maintenance_log(log_id, user["id"])
     return RedirectResponse(url=request.headers.get("referer", "/equipment"), status_code=303)

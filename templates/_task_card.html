@@ -9,13 +9,11 @@
             {{ due_pill(task.due_date) }}
         </div>
         
-        {% if user.role in ('lead', 'admin') %}
         <div class="opacity-0 group-hover:opacity-100 transition-opacity">
-            <a href="/tasks/{{ task.id }}" class="p-1 text-on-surface-variant hover:text-primary transition-colors">
+            <a href="/tasks/{{ task.id }}" class="p-1 text-on-surface-variant hover:text-primary transition-colors" title="View Details">
                 <span class="material-symbols-outlined text-sm">visibility</span>
             </a>
         </div>
-        {% endif %}
     </div>
 
     <h4 class="text-sm font-bold text-on-surface mb-3 leading-snug uppercase tracking-wide">
@@ -33,22 +31,64 @@
             {% endfor %}
         </div>
         
-        <div class="flex items-center gap-2">
-            {% if task.status != 'done' and user.role in ('lead', 'admin') %}
+        {% set is_assigned = false %}
+        {% for a in task_assignees.get(task.id, []) %}
+            {% if a.id == user.id or a.user_id == user.id %}
+                {% set is_assigned = true %}
+            {% endif %}
+        {% endfor %}
+        {% set can_update = user.role in ('lead', 'admin') or is_assigned %}
+
+        <div class="flex items-center gap-1.5">
+            {% if can_update and task.status == 'todo' %}
             <form hx-post="/tasks/{{ task.id }}/update-status" 
                   hx-target="closest [data-task-id]" 
-                  hx-swap="outerHTML">
-                <input type="hidden" name="new_status" value="{{ 'in_progress' if task.status == 'todo' else 'done' }}">
+                  hx-swap="outerHTML" class="inline">
+                <input type="hidden" name="new_status" value="in_progress">
                 <button type="submit" 
-                        class="p-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary transition-all active:scale-90"
-                        title="{{ 'Start Task' if task.status == 'todo' else 'Complete Task' }}">
-                    <span class="material-symbols-outlined text-sm">{% if task.status == 'todo' %}play_arrow{% else %}check{% endif %}</span>
+                        class="p-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary transition-all active:scale-90 flex items-center"
+                        title="Start Work">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span>
+                </button>
+            </form>
+            <form hx-post="/tasks/{{ task.id }}/update-status" 
+                  hx-target="closest [data-task-id]" 
+                  hx-swap="outerHTML" class="inline">
+                <input type="hidden" name="new_status" value="done">
+                <button type="submit" 
+                        class="p-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-tertiary hover:border-tertiary transition-all active:scale-90 flex items-center"
+                        title="Mark Done Immediately">
+                    <span class="material-symbols-outlined text-sm">done_all</span>
+                </button>
+            </form>
+            {% elif can_update and task.status == 'in_progress' %}
+            <form hx-post="/tasks/{{ task.id }}/update-status" 
+                  hx-target="closest [data-task-id]" 
+                  hx-swap="outerHTML" class="inline">
+                <input type="hidden" name="new_status" value="done">
+                <button type="submit" 
+                        class="p-1.5 rounded-lg bg-primary/20 border border-primary/40 text-primary hover:brightness-125 transition-all active:scale-90 flex items-center"
+                        title="Complete Task">
+                    <span class="material-symbols-outlined text-sm">check</span>
                 </button>
             </form>
             {% elif task.status == 'done' %}
+                {% if can_update %}
+                <form hx-post="/tasks/{{ task.id }}/update-status" 
+                      hx-target="closest [data-task-id]" 
+                      hx-swap="outerHTML" class="inline">
+                    <input type="hidden" name="new_status" value="in_progress">
+                    <button type="submit" 
+                            class="p-1.5 rounded-lg bg-tertiary/10 text-tertiary border border-tertiary/30 hover:bg-tertiary/20 transition-all"
+                            title="Re-open Task">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                    </button>
+                </form>
+                {% else %}
                 <span class="p-1.5 rounded-lg bg-tertiary/10 text-tertiary border border-tertiary/30">
                     <span class="material-symbols-outlined text-sm">check_circle</span>
                 </span>
+                {% endif %}
             {% endif %}
         </div>
     </div>

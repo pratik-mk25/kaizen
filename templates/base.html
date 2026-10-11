@@ -364,7 +364,7 @@
     </aside>
     {% endif %}
 
-    <main class="flex-1 {% if user %}md:ml-64{% endif %} bg-background min-h-screen flex flex-col relative overflow-hidden {% if user %}pt-14 md:pt-0{% endif %}">
+    <main class="flex-1 {% if user %}md:ml-64{% endif %} bg-background min-h-screen flex flex-col relative overflow-hidden {% if user %}pt-14 md:pt-0 pb-20 md:pb-0{% endif %}">
         {% if user %}
         <header class="hidden md:flex justify-between items-center w-full px-8 h-16 sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-outline-variant shadow-[0_0_8px_rgba(139,92,246,0.1)]">
             <div class="flex items-center gap-4">
@@ -399,6 +399,31 @@
             </div>
         </footer>
     </main>
+
+    {% if user %}
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/40 px-3 py-1 flex items-center justify-around shadow-2xl">
+        <a href="/dashboard" class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-all {% if request.url.path == '/dashboard' %}text-primary font-bold{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+            <span class="material-symbols-outlined text-xl">dashboard</span>
+            <span class="text-[8px] uppercase tracking-wider font-semibold">Home</span>
+        </a>
+        <a href="/tasks" class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-all {% if request.url.path == '/tasks' %}text-primary font-bold{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+            <span class="material-symbols-outlined text-xl">inbox</span>
+            <span class="text-[8px] uppercase tracking-wider font-semibold">Tasks</span>
+        </a>
+        <a href="/attendance" class="flex flex-col items-center justify-center -mt-5 bg-primary text-on-primary w-12 h-12 rounded-full shadow-[0_0_15px_rgba(139,92,246,0.5)] border-2 border-background active:scale-95 transition-all" title="Clubhouse Attendance">
+            <span class="material-symbols-outlined text-2xl">qr_code_scanner</span>
+        </a>
+        <a href="/search" class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-all {% if request.url.path == '/search' %}text-primary font-bold{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+            <span class="material-symbols-outlined text-xl">search</span>
+            <span class="text-[8px] uppercase tracking-wider font-semibold">Search</span>
+        </a>
+        <button @click="mobileNav = true" type="button" class="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-all text-on-surface-variant hover:text-on-surface">
+            <span class="material-symbols-outlined text-xl">menu</span>
+            <span class="text-[8px] uppercase tracking-wider font-semibold">Menu</span>
+        </button>
+    </nav>
+    {% endif %}
 
     <div id="toast-container" class="fixed bottom-5 right-5 z-[110] flex flex-col gap-2"></div>
     
