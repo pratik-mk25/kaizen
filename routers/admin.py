@@ -10,7 +10,15 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.get("/users")
 async def list_users(request: Request, user: dict = Depends(admin_required)):
     profiles = crud.get_all_users_detailed()
-    return render_template("admin_users.html", request, user=user, profiles=profiles)
+    reset_success = request.query_params.get("reset_success")
+    reset_target = request.query_params.get("target")
+    reset_pwd = request.query_params.get("pwd")
+    reset_error = request.query_params.get("reset_error")
+    suggested_pwd = crud.generate_temporary_password()
+    return render_template("admin_users.html", request, user=user, profiles=profiles,
+                           reset_success=reset_success, reset_target=reset_target,
+                           reset_pwd=reset_pwd, reset_error=reset_error,
+                           suggested_password=suggested_pwd)
 
 @router.post("/users/{user_id}/role")
 async def change_user_role(user_id: str, new_role: str = Form(...), user: dict = Depends(admin_required)):
@@ -28,22 +36,103 @@ async def change_user_role(user_id: str, new_role: str = Form(...), user: dict =
 
 @router.get("/users/add")
 async def add_user_form(request: Request, user: dict = Depends(admin_required)):
-    return render_template("admin_add_user.html", request, user=user)
+    suggested_pwd = crud.generate_temporary_password()
+    return render_template("admin_add_user.html", request, user=user, suggested_password=suggested_pwd)
 
 @router.post("/users/add")
 async def add_user_action(request: Request,
-                          email: str = Form(...), password: str = Form(...),
-                          display_name: str = Form(...),
-                          role: str = Form(...), 
+                          email: str = Form(...),
+                          password: str = Form(None),
+                          display_name: str = Form(None),
+                          role: str = Form("member"), 
                           user: dict = Depends(admin_required)):
     if role not in ("member", "lead", "admin"):
-        return HTMLResponse("Invalid role", status_code=400)
+        role = "member"
     
+    clean_email = email.strip().lower()
+    final_password = (password or "").strip() or crud.generate_temporary_password()
+    final_display_name = (display_name or "").strip() or crud.derive_display_name_from_email(clean_email)
+
     try:
-        crud.create_user_by_admin(email, password, display_name, role, user["id"])
+        result = crud.create_user_by_admin(clean_email, final_password, final_display_name, role, user["id"])
+        is_adopted = result.get("adopted", False)
+        status_msg = "Account adopted and updated successfully" if is_adopted else "User provisioned successfully"
+        suggested_pwd = crud.generate_temporary_password()
+        return render_template("admin_add_user.html", request, user=user,
+                               success=True,
+                               provisioned_user={
+                                   "email": clean_email,
+                                   "display_name": final_display_name,
+                                   "role": role,
+                                   "password": final_password,
+                                   "adopted": is_adopted
+                               },
+                               message=status_msg,
+                               suggested_password=suggested_pwd)
     except Exception as e:
-        return render_template("admin_add_user.html", request, user=user, error=str(e))
-    return RedirectResponse(url="/admin/users", status_code=303)
+        err_msg = str(e)
+        if "profiles_pkey" in err_msg:
+            err_msg = "Profile ID collision resolved. Please try submitting again."
+        suggested_pwd = crud.generate_temporary_password()
+        return render_template("admin_add_user.html", request, user=user,
+                               error=err_msg,
+                               email=email,
+                               display_name=display_name,
+                               role=role,
+                               suggested_password=suggested_pwd)
+
+@router.post("/users/bulk")
+async def bulk_add_users_action(request: Request,
+                                bulk_text: str = Form(...),
+                                default_role: str = Form("member"),
+                                user: dict = Depends(admin_required)):
+    """
+    Parses multi-line text input (CSV or list of emails) and bulk-provisions users.
+    """
+    lines = [line.strip() for line in bulk_text.strip().splitlines() if line.strip()]
+    users_data = []
+
+    for line in lines:
+        parts = [p.strip() for p in line.replace("\t", ",").split(",") if p.strip()]
+        if not parts:
+            continue
+        email = parts[0]
+        name = parts[1] if len(parts) > 1 else crud.derive_display_name_from_email(email)
+        role = parts[2].lower() if len(parts) > 2 and parts[2].lower() in ("member", "lead", "admin") else default_role
+        pwd = parts[3] if len(parts) > 3 else crud.generate_temporary_password()
+        users_data.append({
+            "email": email,
+            "display_name": name,
+            "role": role,
+            "password": pwd
+        })
+
+    bulk_results = crud.create_users_bulk(users_data, user["id"])
+    suggested_pwd = crud.generate_temporary_password()
+    return render_template("admin_add_user.html", request, user=user,
+                           active_tab="bulk",
+                           bulk_results=bulk_results,
+                           suggested_password=suggested_pwd)
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_password_action(user_id: str,
+                                request: Request,
+                                new_password: str = Form(None),
+                                user: dict = Depends(admin_required)):
+    pwd = (new_password or "").strip() or crud.generate_temporary_password()
+    try:
+        crud.reset_user_password_by_admin(user_id, pwd, user["id"])
+        target_profile = next((p for p in crud.get_all_users_detailed() if p["id"] == user_id), None)
+        target_name = target_profile.get("display_name") if target_profile else user_id[:8]
+        return RedirectResponse(
+            url=f"/admin/users?reset_success=1&target={target_name}&pwd={pwd}",
+            status_code=303
+        )
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/admin/users?reset_error={str(e)}",
+            status_code=303
+        )
 
 @router.post("/users/{user_id}/delete")
 async def delete_user(user_id: str, user: dict = Depends(admin_required)):

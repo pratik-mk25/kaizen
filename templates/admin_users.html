@@ -5,46 +5,129 @@
 {% block header_title %}{{ t.users }}{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="space-y-6" x-data="{
+    searchQuery: '',
+    roleFilter: 'all',
+    resetModalUser: null,
+    resetPasswordVal: '{{ suggested_password or '' }}',
+    copied: false,
+    copyText(text) {
+        navigator.clipboard.writeText(text);
+        this.copied = true;
+        setTimeout(() => { this.copied = false; }, 2500);
+    },
+    generatePassword() {
+        const prefixes = ['Kaizen', 'Avinya', 'Pilot', 'Drone', 'Falcon', 'Apex', 'Vortex'];
+        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const num = Math.floor(1000 + Math.random() * 9000);
+        this.resetPasswordVal = prefix + '-' + num;
+    }
+}">
+
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">{% if ui_mode == 'tactical' %}Registered Personnel{% else %}User Management{% endif %}</h1>
-            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Manage member clearance levels and authority protocols.{% else %}Manage users, their roles and permissions.{% endif %}</p>
+            <h1 class="text-3xl font-headline font-bold text-on-surface tracking-tighter uppercase leading-none">{% if ui_mode == 'tactical' %}Registered Personnel{% else %}Personnel Directory{% endif %}</h1>
+            <p class="text-[11px] text-on-surface-variant uppercase tracking-widest mt-2">{% if ui_mode == 'tactical' %}Manage member clearance levels and authority protocols.{% else %}Autonomous personnel provisioning, role clearance, and password control.{% endif %}</p>
         </div>
         
-        <a href="/admin/users/add" class="inline-flex items-center px-6 py-2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-[0.2em] rounded shadow-lg hover:brightness-110 active:scale-95 transition-all gap-2">
-            <span class="material-symbols-outlined text-sm">person_add</span>
-            {% if ui_mode == 'tactical' %}Initialize_New_Member{% else %}Add New User{% endif %}
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="/admin/users/add" class="inline-flex items-center px-4 py-2.5 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg shadow-lg hover:brightness-110 active:scale-95 transition-all gap-2">
+                <span class="material-symbols-outlined text-sm">person_add</span>
+                Add Personnel
+            </a>
+        </div>
     </div>
 
+    <!-- Password Reset Success Notification -->
+    {% if reset_success and reset_pwd %}
+    <div class="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-xl shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-3 animate-in fade-in duration-300">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-emerald-400">check_circle</span>
+            <div>
+                <p class="text-xs font-bold text-emerald-300 uppercase">Password Reset Successfully for {{ reset_target or 'Member' }}</p>
+                <p class="text-[11px] font-mono text-emerald-400/90 mt-0.5">New Temporary Password: <span class="font-bold underline">{{ reset_pwd }}</span></p>
+            </div>
+        </div>
+        {% set reset_copy = "Your KAIZEN password has been reset:
+Temporary Password: " ~ reset_pwd ~ "
+Login URL: https://kaizen-sage.vercel.app/login" %}
+        <button type="button" @click="copyText(`{{ reset_copy }}`)"
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all self-start md:self-auto">
+            <span class="material-symbols-outlined text-xs" x-text="copied ? 'check' : 'content_copy'"></span>
+            <span x-text="copied ? 'Copied!' : 'Copy Credentials'"></span>
+        </button>
+    </div>
+    {% endif %}
+
+    {% if reset_error %}
+    <div class="p-4 bg-error/10 border border-error/30 text-error rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">error</span>
+        <span>Password reset failed: {{ reset_error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-container-low/60 p-2.5 rounded-xl border border-outline-variant/30">
+        <div class="relative w-full sm:w-72">
+            <input type="text" x-model="searchQuery" placeholder="Search by name, email, or username..."
+                   class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-9 pr-4 py-2 text-xs text-on-surface placeholder:text-on-surface-variant/40 outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+            <span class="material-symbols-outlined absolute left-2.5 top-2.5 text-sm text-on-surface-variant">search</span>
+        </div>
+
+        <div class="flex items-center gap-1 w-full sm:w-auto overflow-x-auto">
+            <button type="button" @click="roleFilter = 'all'"
+                    :class="roleFilter === 'all' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant/40'"
+                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all">
+                All ({{ profiles|length }})
+            </button>
+            <button type="button" @click="roleFilter = 'admin'"
+                    :class="roleFilter === 'admin' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant/40'"
+                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all">
+                Admins
+            </button>
+            <button type="button" @click="roleFilter = 'lead'"
+                    :class="roleFilter === 'lead' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant/40'"
+                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all">
+                Leads
+            </button>
+            <button type="button" @click="roleFilter = 'member'"
+                    :class="roleFilter === 'member' ? 'bg-primary text-on-primary font-bold shadow-sm' : 'text-on-surface-variant hover:bg-surface-variant/40'"
+                    class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all">
+                Members
+            </button>
+        </div>
+    </div>
+
+    <!-- Users Table -->
     <div class="hud-border bg-surface-container-lowest/40 rounded-xl overflow-hidden shadow-2xl">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-surface-container-low border-b border-outline-variant/30">
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Member Identity{% else %}Name{% endif %}</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Member Identity{% else %}Personnel{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Access_ID{% else %}Username{% endif %}</th>
-                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Authority_Level{% else %}Role{% endif %}</th>
+                        <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{% if ui_mode == 'tactical' %}Authority_Level{% else %}Clearance Role{% endif %}</th>
                         <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">{% if ui_mode == 'tactical' %}Directives{% else %}Actions{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-outline-variant/10">
                     {% for p in profiles %}
-                    <tr class="hover:bg-surface-variant/20 transition-colors">
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-4">
-                                {{ avatar(p, size=10) }}
+                    <tr class="hover:bg-surface-variant/20 transition-colors"
+                        x-show="(roleFilter === 'all' || roleFilter === '{{ p.role }}') && (searchQuery === '' || '{{ (p.display_name or '')|lower }}'.includes(searchQuery.toLowerCase()) || '{{ (p.email or '')|lower }}'.includes(searchQuery.toLowerCase()) || '{{ (p.username or '')|lower }}'.includes(searchQuery.toLowerCase()))">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                {{ avatar(p, size=9) }}
                                 <div>
-                                    <p class="text-sm font-bold text-on-surface leading-none mb-1 uppercase tracking-wide">{{ p.display_name or 'UNIDENTIFIED' }}</p>
-                                    <p class="text-[9px] text-on-surface-variant {% if ui_mode == 'tactical' %}font-mono{% endif %} uppercase tracking-tighter">{{ p.email }}</p>
+                                    <p class="text-xs font-bold text-on-surface leading-tight uppercase tracking-wide">{{ p.display_name or 'UNIDENTIFIED' }}</p>
+                                    <p class="text-[9px] text-on-surface-variant font-mono uppercase tracking-tighter mt-0.5">{{ p.email }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-5">
-                            <span class="text-xs font-bold text-primary {% if ui_mode == 'tactical' %}font-mono{% endif %} tracking-widest uppercase bg-primary/10 px-2 py-1 border border-primary/20 rounded-sm">{{ p.username or 'PENDING_SYNC' }}</span>
+                        <td class="px-6 py-4">
+                            <span class="text-[11px] font-bold text-primary font-mono tracking-wider uppercase bg-primary/10 px-2 py-0.5 border border-primary/20 rounded">{{ p.username or 'PENDING' }}</span>
                         </td>
-                        <td class="px-6 py-5">
+                        <td class="px-6 py-4">
                             {% if p.role == 'admin' %}
                                 {{ badge(t.admin.upper() if ui_mode == 'tactical' else t.admin, 'red') }}
                             {% elif p.role == 'lead' %}
@@ -53,74 +136,52 @@
                                 {{ badge(t.member.upper() if ui_mode == 'tactical' else t.member, 'gray') }}
                             {% endif %}
                         </td>
-                        <td class="px-6 py-5 text-right">
-                            <div class="flex gap-2 justify-end">
-                            <form method="POST" action="/admin/users/{{ p.id }}/delete" onsubmit="return confirm('Delete {{ p.display_name or p.username }}? This cannot be undone.')">
-                                <button type="submit" class="px-3 py-1.5 border border-error/50 text-[9px] font-bold uppercase tracking-widest text-error hover:bg-error/10 transition-all rounded">
-                                    Delete
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex gap-1.5 justify-end items-center">
+                                <!-- Reset Password Button -->
+                                <button type="button" @click="resetModalUser = { id: '{{ p.id }}', name: '{{ p.display_name or p.username }}', email: '{{ p.email }}' }; generatePassword();"
+                                        class="px-2.5 py-1.5 border border-outline-variant/40 hover:border-primary text-[9px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-primary transition-all rounded flex items-center gap-1"
+                                        title="Reset Password directly in KAIZEN without touching Supabase">
+                                    <span class="material-symbols-outlined text-xs">key</span>
+                                    <span>Reset Key</span>
                                 </button>
-                            </form>
-                            <div x-data="{ modalOpen: false }">
-                                <button @click="modalOpen = true" class="px-3 py-1.5 border border-outline-variant text-[9px] font-bold uppercase tracking-widest text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all focus:outline-none rounded">
-                                    {% if ui_mode == 'tactical' %}MOD_CLEARANCE{% else %}Change Role{% endif %}
-                                </button>
-                                
-                                <template x-teleport="body">
-                                    <div x-show="modalOpen" 
-                                         x-cloak
-                                         class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                                        <!-- Backdrop -->
-                                        <div x-show="modalOpen" 
-                                             x-transition:enter="transition ease-out duration-300"
-                                             x-transition:enter-start="opacity-0"
-                                             x-transition:enter-end="opacity-100"
-                                             @click="modalOpen = false" 
-                                             class="absolute inset-0 bg-surface-container-lowest/90 backdrop-blur-md"></div>
-                                        
-                                        <!-- Modal Content -->
-                                        <div x-show="modalOpen"
-                                             x-transition:enter="transition ease-out duration-300"
-                                             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-                                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                             class="relative bg-surface-container-high border border-primary shadow-[0_0_50px_rgba(139,92,246,0.2)] p-8 max-w-sm w-full {% if ui_mode == 'tactical' %}font-mono{% endif %} rounded-xl">
-                                            
-                                            <div class="mb-6 flex items-center gap-3">
-                                                <div class="w-2 h-2 bg-primary animate-pulse"></div>
-                                                <h3 class="text-xs font-bold text-on-surface uppercase tracking-widest">{% if ui_mode == 'tactical' %}Protocol: Authority_Update{% else %}Update User Role{% endif %}</h3>
-                                            </div>
 
-                                            <div class="mb-8">
-                                                <p class="text-[10px] text-on-surface-variant uppercase tracking-widest leading-relaxed">
-                                                    {% if ui_mode == 'tactical' %}Modifying clearance for:{% else %}Updating role for:{% endif %}
-                                                    <span class="text-primary block mt-1 font-black text-xs">{{ p.display_name or p.username }}</span>
+                                <!-- Change Role Button -->
+                                <div x-data="{ modalOpen: false }">
+                                    <button @click="modalOpen = true" class="px-2.5 py-1.5 border border-outline-variant/40 text-[9px] font-bold uppercase tracking-wider text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-all rounded">
+                                        Role
+                                    </button>
+                                    
+                                    <template x-teleport="body">
+                                        <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                                            <div @click="modalOpen = false" class="absolute inset-0 bg-surface-container-lowest/90 backdrop-blur-md"></div>
+                                            <div class="relative bg-surface-container-high border border-primary shadow-2xl p-6 max-w-sm w-full rounded-2xl">
+                                                <h3 class="text-xs font-bold text-on-surface uppercase tracking-widest mb-4">Update Clearance Role</h3>
+                                                <p class="text-[10px] text-on-surface-variant uppercase tracking-wider mb-6">
+                                                    Assign authority clearance for <span class="text-primary font-bold">{{ p.display_name or p.username }}</span>:
                                                 </p>
+                                                <form action="/admin/users/{{ p.id }}/role" method="post" class="space-y-2.5">
+                                                    {% for role_key in ['member', 'lead', 'admin'] %}
+                                                    <button type="submit" name="new_role" value="{{ role_key }}" 
+                                                            class="w-full text-left px-4 py-2.5 border transition-all uppercase text-[10px] font-bold tracking-widest flex items-center justify-between rounded-lg
+                                                            {% if p.role == role_key %}border-primary bg-primary/20 text-primary{% else %}border-outline-variant text-on-surface-variant hover:bg-surface-variant/30{% endif %}">
+                                                        <span>{{ role_key|upper }}</span>
+                                                        {% if p.role == role_key %}<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>{% endif %}
+                                                    </button>
+                                                    {% endfor %}
+                                                </form>
+                                                <button @click="modalOpen = false" class="mt-6 w-full py-2 text-[10px] font-bold text-on-surface-variant hover:text-on-surface uppercase tracking-widest border border-outline-variant/30 rounded-lg">Cancel</button>
                                             </div>
-
-                                            <form action="/admin/users/{{ p.id }}/role" method="post" class="space-y-3">
-                                                {% set available_roles = ['member', 'lead', 'admin'] %}
-                                                {% for role_key in available_roles %}
-                                                <button type="submit" name="new_role" value="{{ role_key }}" 
-                                                        class="w-full text-left px-4 py-3 border transition-all uppercase text-[10px] font-bold tracking-widest flex items-center justify-between group rounded-lg
-                                                        {% if p.role == role_key %}
-                                                            border-primary bg-primary/20 text-primary shadow-[0_0_15px_rgba(139,92,246,0.1)]
-                                                        {% else %}
-                                                            border-outline-variant text-on-surface-variant hover:border-primary/50 hover:text-on-surface hover:bg-surface-variant/30
-                                                        {% endif %}">
-                                                    <span>{{ role_key|upper if ui_mode == 'tactical' else role_key|capitalize }}</span>
-                                                    {% if p.role == role_key %}
-                                                        <span class="w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_#8B5CF6]"></span>
-                                                    {% endif %}
-                                                </button>
-                                                {% endfor %}
-                                            </form>
-
-                                            <button @click="modalOpen = false" class="mt-8 w-full py-2.5 text-[10px] font-bold text-on-surface-variant hover:text-on-surface transition-colors uppercase tracking-widest border border-outline-variant/30 rounded">
-                                                {% if ui_mode == 'tactical' %}Abort_Operation{% else %}Cancel{% endif %}
-                                            </button>
                                         </div>
-                                    </div>
-                                </template>
-                            </div>
+                                    </template>
+                                </div>
+
+                                <!-- Cascade Delete Button -->
+                                <form method="POST" action="/admin/users/{{ p.id }}/delete" onsubmit="return confirm('Completely remove {{ p.display_name or p.username }} from KAIZEN and Auth? This deletes their assignments and profile permanently.')">
+                                    <button type="submit" class="p-1.5 border border-error/30 text-error hover:bg-error/10 transition-all rounded" title="Delete Account">
+                                        <span class="material-symbols-outlined text-xs">delete</span>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -129,5 +190,43 @@
             </table>
         </div>
     </div>
+
+    <!-- Direct In-KAIZEN Password Reset Modal -->
+    <template x-teleport="body">
+        <div x-show="resetModalUser !== null" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div @click="resetModalUser = null" class="absolute inset-0 bg-surface-container-lowest/90 backdrop-blur-md"></div>
+            <div class="relative bg-surface-container-high border border-primary shadow-2xl p-6 max-w-sm w-full rounded-2xl animate-in zoom-in-95 duration-200">
+                <div class="flex items-center gap-2 mb-4 text-primary">
+                    <span class="material-symbols-outlined text-lg">vpn_key</span>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface">Reset Access Password</h3>
+                </div>
+                
+                <p class="text-[10px] text-on-surface-variant leading-relaxed mb-4">
+                    Resets credentials directly inside Supabase Auth for:
+                    <br><span class="text-on-surface font-bold" x-text="resetModalUser ? resetModalUser.name : ''"></span>
+                    <span class="text-primary font-mono block text-[9px]" x-text="resetModalUser ? resetModalUser.email : ''"></span>
+                </p>
+
+                <form :action="resetModalUser ? `/admin/users/${resetModalUser.id}/reset-password` : ''" method="post" class="space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">New Temporary Password</label>
+                            <button type="button" @click="generatePassword()" class="text-[8px] font-bold text-primary hover:underline uppercase tracking-wider flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-[10px]">shuffle</span> Re-roll
+                            </button>
+                        </div>
+                        <input type="text" name="new_password" x-model="resetPasswordVal" required
+                               class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-3 py-2 text-xs font-mono text-on-surface outline-none focus:border-primary">
+                    </div>
+
+                    <div class="pt-2 flex gap-2">
+                        <button type="button" @click="resetModalUser = null" class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest border border-outline-variant/30 text-on-surface-variant hover:text-on-surface rounded-lg">Cancel</button>
+                        <button type="submit" class="flex-1 py-2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest rounded-lg shadow hover:brightness-110 active:scale-95">Set Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
 </div>
 {% endblock %}

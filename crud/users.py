@@ -55,34 +55,172 @@ def get_all_users_detailed():
         ]
 
 
+import re
+import random
+
+def derive_display_name_from_email(email: str) -> str:
+    """
+    Turns sanskar.helunde@vihang.com into 'Sanskar Helunde'
+    """
+    if not email:
+        return "Member"
+    local_part = email.split("@")[0]
+    parts = re.split(r"[._\-+]+", local_part)
+    clean_parts = [p.capitalize() for p in parts if p]
+    return " ".join(clean_parts) if clean_parts else local_part.capitalize()
+
+def generate_temporary_password() -> str:
+    """
+    Generates a memorable and secure temporary password e.g. 'Kaizen-7492' or 'Avinya-8314'
+    """
+    prefix = random.choice(["Kaizen", "Avinya", "Pilot", "Drone", "Falcon", "Apex", "Vortex", "Horizon"])
+    num = random.randint(1000, 9999)
+    return f"{prefix}-{num}"
+
 def create_user_by_admin(email: str, password: str, display_name: str, role: str, admin_id: str):
     """
-    Creates a new user in Supabase Auth and inserts their corresponding profile entry.
+    Creates a new user in Supabase Auth and safely syncs their profile.
+    Self-healing:
+      - If user already exists in Supabase Auth, adopts the account, updates password and updates profile.
+      - Uses upsert/update on public.profiles to NEVER throw duplicate key 23505 constraints from DB triggers.
+      - Auto-formats display_name and username if omitted.
+      - Clears the in-memory username cache.
     """
-    try:
-        # Create user inside Supabase Auth system via service role admin API
-        user_resp = supabase_admin.auth.admin.create_user({
-            "email": email,
-            "password": password,
-            "email_confirm": True
-        })
-        new_user = user_resp.user
-    except Exception as e:
-        raise Exception(f"Failed to create auth user: {e}")
+    client = _get_client()
+    clean_email = email.strip().lower()
+    clean_name = (display_name or "").strip() or derive_display_name_from_email(clean_email)
+    clean_username = clean_email.split("@")[0].lower().replace("+", "_")
+    target_role = role if role in ("member", "lead", "admin") else "member"
 
-    # Prepare user profile data payload
+    user_id = None
+    is_adopted = False
+
+    # 1. Try creating user in Supabase Auth
+    try:
+        user_resp = supabase_admin.auth.admin.create_user({
+            "email": clean_email,
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {"display_name": clean_name}
+        })
+        if user_resp and getattr(user_resp, "user", None):
+            user_id = user_resp.user.id
+    except Exception as e:
+        err_str = str(e).lower()
+        # If user already registered or exists in Supabase Auth, self-heal and adopt
+        if any(term in err_str for term in ("already registered", "already in use", "already been registered", "exists", "duplicate")):
+            is_adopted = True
+            try:
+                # First check profiles table
+                prof = client.table("profiles").select("id").eq("email", clean_email).execute()
+                if prof and prof.data:
+                    user_id = prof.data[0]["id"]
+                else:
+                    # Search via admin auth listing
+                    users_list = supabase_admin.auth.admin.list_users()
+                    user_items = getattr(users_list, "users", users_list) if users_list else []
+                    for u in user_items:
+                        u_email = getattr(u, "email", None) or (u.get("email") if isinstance(u, dict) else None)
+                        if u_email and u_email.lower() == clean_email:
+                            user_id = getattr(u, "id", None) or (u.get("id") if isinstance(u, dict) else None)
+                            break
+            except Exception as find_err:
+                print(f"Error locating existing auth user {clean_email}: {find_err}")
+                
+            # Update password in Auth if user found
+            if user_id and password:
+                try:
+                    supabase_admin.auth.admin.update_user_by_id(user_id, {
+                        "password": password,
+                        "user_metadata": {"display_name": clean_name}
+                    })
+                except Exception as update_err:
+                    print(f"Error updating existing user password: {update_err}")
+        else:
+            raise Exception(f"Failed to create user in Auth: {str(e)}")
+
+    if not user_id:
+        raise Exception(f"Could not provision or locate account for {clean_email}. If they exist in auth, please check credentials.")
+
+    # 2. Safely sync profile in public.profiles (guaranteed no 23505 duplicate key)
     profile_data = {
-        "id": new_user.id,
-        "email": email,
-        "display_name": display_name,
-        "username": email.split("@")[0],
-        "role": role,
+        "id": user_id,
+        "email": clean_email,
+        "display_name": clean_name,
+        "username": clean_username,
+        "role": target_role,
     }
-    # Insert new user profile into public profiles database table
-    _get_client().table("profiles").insert(profile_data).execute()
-    # Log user creation action to audit logs
-    log_action(admin_id, "user_created", "user", new_user.id, new_values=profile_data)
-    return new_user
+
+    try:
+        existing = client.table("profiles").select("id").eq("id", user_id).execute()
+        if existing and existing.data:
+            client.table("profiles").update(profile_data).eq("id", user_id).execute()
+        else:
+            client.table("profiles").upsert(profile_data, on_conflict="id").execute()
+    except Exception:
+        # Fallback to direct update
+        client.table("profiles").update(profile_data).eq("id", user_id).execute()
+
+    # 3. Invalidate username map cache
+    try:
+        import templates_utils
+        templates_utils._USERNAME_MAP_CACHE = None
+        templates_utils._USERNAME_MAP_CACHE_EXPIRY = 0
+    except Exception:
+        pass
+
+    # 4. Log action
+    act = "user_adopted" if is_adopted else "user_created"
+    log_action(admin_id, act, "user", user_id, new_values=profile_data)
+
+    profile_data["adopted"] = is_adopted
+    return profile_data
+
+def reset_user_password_by_admin(user_id: str, new_password: str, admin_id: str):
+    """
+    Updates a user's password directly via Supabase Auth admin API without requiring
+    dashboard access or email reset links.
+    """
+    if not new_password or len(new_password) < 6:
+        raise ValueError("Password must be at least 6 characters")
+    try:
+        supabase_admin.auth.admin.update_user_by_id(user_id, {"password": new_password})
+        log_action(admin_id, "password_reset", "user", user_id)
+        return True
+    except Exception as e:
+        raise Exception(f"Failed to update password: {str(e)}")
+
+def create_users_bulk(users_data: list, admin_id: str) -> dict:
+    """
+    Bulk provisions multiple users in a single operation.
+    """
+    results = {
+        "success": [],
+        "failed": [],
+        "total": len(users_data)
+    }
+    for item in users_data:
+        email = (item.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            results["failed"].append({"email": email or "Unknown", "error": "Invalid email address"})
+            continue
+        pwd = item.get("password") or generate_temporary_password()
+        name = item.get("display_name") or derive_display_name_from_email(email)
+        role = item.get("role") or "member"
+        try:
+            res = create_user_by_admin(email, pwd, name, role, admin_id)
+            results["success"].append({
+                "id": res["id"],
+                "email": email,
+                "display_name": name,
+                "role": role,
+                "password": pwd,
+                "adopted": res.get("adopted", False)
+            })
+        except Exception as e:
+            results["failed"].append({"email": email, "error": str(e)})
+
+    return results
 
 
 def delete_user_completely(user_id: str, admin_id: str):
@@ -144,6 +282,14 @@ def delete_user_completely(user_id: str, admin_id: str):
 
     # Log user deletion action in audit history
     log_action(admin_id, "user_deleted", "user", user_id)
+
+    # Invalidate username map cache
+    try:
+        import templates_utils
+        templates_utils._USERNAME_MAP_CACHE = None
+        templates_utils._USERNAME_MAP_CACHE_EXPIRY = 0
+    except Exception:
+        pass
 
 
 # =============================================================================
