@@ -38,15 +38,13 @@ DEMO_USERS = {
     }
 }
 
-ENABLE_DEMO_LOGIN = os.environ.get("ENABLE_DEMO_LOGIN", "true").lower() in ("true", "1", "yes")
+ENABLE_DEMO_LOGIN = os.environ.get("ENABLE_DEMO_LOGIN", "false").lower() in ("true", "1", "yes")
 
 async def get_current_user(request: Request) -> dict:
     token = request.cookies.get(COOKIE_NAME)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    if token in DEMO_USERS:
-        if _IS_HTTPS and os.environ.get("VERCEL_ENV") == "production" and not ENABLE_DEMO_LOGIN:
-            raise HTTPException(status_code=401, detail="Demo login disabled in production")
+    if ENABLE_DEMO_LOGIN and token in DEMO_USERS:
         return DEMO_USERS[token]
     try:
         user_response = supabase.auth.get_user(token)

@@ -49,10 +49,8 @@ def get_all_users_detailed():
         res = query.execute()
         return res.data if (res and res.data is not None) else []
     except Exception as e:
-        return [
-            {"id": "11111111-1111-1111-1111-111111111111", "display_name": "Admin Commander", "username": "admin", "email": "admin@kaizen.club", "role": "admin"},
-            {"id": "22222222-2222-2222-2222-222222222222", "display_name": "Drone Pilot", "username": "drone_pilot", "email": "pilot@kaizen.club", "role": "member"}
-        ]
+        print(f"Error in get_all_users_detailed: {e}")
+        return []
 
 
 import re

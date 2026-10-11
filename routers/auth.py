@@ -8,14 +8,6 @@ from templates_utils import render_template
 
 router = APIRouter(tags=["auth"])
 
-@router.get("/demo-login")
-async def demo_login(request: Request, role: str = "admin", next: str = None):
-    token = "demo-admin-token" if role == "admin" else "demo-member-token"
-    dest = next or request.query_params.get("next") or "/dashboard"
-    response = RedirectResponse(url=dest, status_code=303)
-    set_auth_cookie(response, token)
-    return response
-
 @router.get("/login")
 async def login_page(request: Request, message: str = None, next: str = None):
     return render_template("login.html", request, message=message, next=next)
@@ -24,31 +16,14 @@ async def login_page(request: Request, message: str = None, next: str = None):
 async def login_post(request: Request, email: str = Form(...), password: str = Form(...), next: str = Form(None)):
     email_clean = email.strip().lower()
     dest = next or request.query_params.get("next") or "/dashboard"
-    
-    # 1-Click / Demo login bypass (allowed in local/preview or when explicitly enabled)
-    if auth.ENABLE_DEMO_LOGIN or os.environ.get("VERCEL_ENV") != "production":
-        if email_clean in ("admin@kaizen.club", "admin"):
-            response = RedirectResponse(url=dest, status_code=303)
-            set_auth_cookie(response, "demo-admin-token")
-            return response
-        if email_clean in ("pilot@kaizen.club", "member", "pilot"):
-            response = RedirectResponse(url=dest, status_code=303)
-            set_auth_cookie(response, "demo-member-token")
-            return response
 
     try:
-        auth_response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        auth_response = supabase.auth.sign_in_with_password({"email": email_clean, "password": password})
         access_token = auth_response.session.access_token
         response = RedirectResponse(url=dest, status_code=303)
         set_auth_cookie(response, access_token)
         return response
     except Exception as e:
-        err_msg = str(e).lower()
-        # Graceful fallback if Supabase is unreachable/offline locally
-        if any(term in err_msg for term in ("temporary failure", "supabase_url is required", "invalid api key", "could not resolve")):
-            response = RedirectResponse(url=dest, status_code=303)
-            set_auth_cookie(response, "demo-admin-token")
-            return response
         return render_template("login.html", request, error=str(e), next=next)
 
 @router.get("/logout")
