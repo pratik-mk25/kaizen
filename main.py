@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database import supabase
 import auth
 from templates_utils import render_template
+from routers import access_requests
 from routers import auth as auth_router, missions, projects, tasks, admin, dashboard, settings, equipment, members, budget, docs, attendance_kiosk, flights, events, leaderboard
 
 # Force absolute path for .env loading
@@ -21,6 +22,7 @@ async def unauthorized_exception_handler(request: Request, exc):
 
 # Include Routers
 app.include_router(auth_router.router)
+app.include_router(access_requests.router)
 app.include_router(missions.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
