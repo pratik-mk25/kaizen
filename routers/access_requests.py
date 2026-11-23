@@ -4,6 +4,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from postgrest.exceptions import APIError
 
+from notifications import notify_club_access_request
 from database import supabase_admin
 from templates_utils import render_template
 
@@ -49,4 +50,6 @@ def submit(request: Request, club_name: str = Form(""), contact_email: str = For
             return page(request, 503, error="Unable to submit right now. Please try again.", **values)
     except Exception:
         return page(request, 503, error="Unable to submit right now. Please try again.", **values)
+    else:
+        notify_club_access_request(club_name, contact_email)
     return RedirectResponse("/request-access/received", status_code=303)
