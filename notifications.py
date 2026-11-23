@@ -1,6 +1,10 @@
 import os
 import requests
 import json
+import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 
@@ -52,3 +56,29 @@ def notify_task_updated(task: dict, user_name: str, changes: list):
 def notify_project_lead_assigned(project_name: str, lead_name: str, assigned_by: str):
     content = f"**Project Lead Assigned**\n**Project:** {project_name}\n**New Lead:** {lead_name}\n**Assigned By:** {assigned_by}"
     send_discord_notification(content, title="LEAD ASSIGNED", color=0x8b5cf6)
+
+def notify_club_access_request(club_name: str, contact_email: str):
+    """Send the review notice after the pending request has been stored."""
+    sender = os.environ.get("KAIZEN_GMAIL_SENDER")
+    password = os.environ.get("KAIZEN_GMAIL_APP_PASSWORD")
+    logger = logging.getLogger(__name__)
+    if not sender or not password:
+        logger.warning("Club request email sender is not configured")
+        return
+
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = "vihangdroneclub@gmail.com"
+    message["Subject"] = "New Kaizen club access request"
+    message.set_content(
+        f"A club has requested access to Kaizen.\n\nClub: {club_name}\n"
+        f"Contact: {contact_email}\n\nReview the pending request in the "
+        "club_access_requests table in Supabase."
+    )
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(),
+                              timeout=5) as smtp:
+            smtp.login(sender, password)
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as exc:
+        logger.error("Club request email failed (%s)", type(exc).__name__)
