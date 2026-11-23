@@ -57,7 +57,8 @@ def notify_project_lead_assigned(project_name: str, lead_name: str, assigned_by:
     content = f"**Project Lead Assigned**\n**Project:** {project_name}\n**New Lead:** {lead_name}\n**Assigned By:** {assigned_by}"
     send_discord_notification(content, title="LEAD ASSIGNED", color=0x8b5cf6)
 
-def notify_club_access_request(club_name: str, contact_email: str):
+def notify_club_access_request(*, college_name: str, club_name: str, applicant_name: str,
+                               designation: str, contact_email: str):
     """Send the review notice after the pending request has been stored."""
     sender = os.environ.get("KAIZEN_GMAIL_SENDER")
     password = os.environ.get("KAIZEN_GMAIL_APP_PASSWORD")
@@ -71,8 +72,8 @@ def notify_club_access_request(club_name: str, contact_email: str):
     message["To"] = "vihangdroneclub@gmail.com"
     message["Subject"] = "New Kaizen club access request"
     message.set_content(
-        f"A club has requested access to Kaizen.\n\nClub: {club_name}\n"
-        f"Contact: {contact_email}\n\nReview the pending request in the "
+        f"A club has requested access to Kaizen.\n\nCollege: {college_name}\nClub or committee: {club_name}\n"
+        f"Applicant: {applicant_name}\nDesignation: {designation}\nContact: {contact_email}\n\nReview the pending request in the "
         "club_access_requests table in Supabase."
     )
     try:
