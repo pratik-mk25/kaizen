@@ -3,29 +3,29 @@
 {% block content %}
 <main class="max-w-3xl mx-auto px-6 py-16">
   {% if received %}
-  <h1 class="text-3xl font-bold">Request received</h1>
+  <h1 class="font-headline text-4xl sm:text-5xl font-bold uppercase tracking-tight leading-none">Request received</h1>
   <p class="my-6">Your club’s request is pending review. We’ll use the contact email you provided to follow up.</p>
   {% else %}
-  <h1 class="text-3xl font-bold">Request access for your club or committee</h1>
+  <h1 class="font-headline text-4xl sm:text-5xl font-bold uppercase tracking-tight leading-none">Request access for your club or committee</h1>
   <p class="my-6">Our team reviews each request and sets up approved clubs manually.</p>
   {% if error %}<p role="alert" class="my-4 text-error">{{ error }}</p>{% endif %}
   <form method="post" action="/request-access" class="grid gap-5 sm:grid-cols-2 mb-6">
-    <label class="block">College name
+    <label class="block"><span class="text-xs font-bold uppercase tracking-widest">College name</span>
       <input class="block w-full mt-1 p-4 border rounded bg-surface" name="college_name" autocomplete="organization" maxlength="120" required value="{{ college_name }}">
     </label>
-    <label class="block">Club or committee name
+    <label class="block"><span class="text-xs font-bold uppercase tracking-widest">Club or committee name</span>
       <input class="block w-full mt-1 p-4 border rounded bg-surface" name="club_name" maxlength="120" required value="{{ club_name }}">
     </label>
-    <label class="block">Your name
+    <label class="block"><span class="text-xs font-bold uppercase tracking-widest">Your name</span>
       <input class="block w-full mt-1 p-4 border rounded bg-surface" name="applicant_name" autocomplete="name" maxlength="120" required value="{{ applicant_name }}">
     </label>
-    <label class="block">Designation
+    <label class="block"><span class="text-xs font-bold uppercase tracking-widest">Designation</span>
       <input class="block w-full mt-1 p-4 border rounded bg-surface" name="designation" autocomplete="organization-title" maxlength="120" required value="{{ designation }}">
     </label>
-    <label class="block sm:col-span-2">Contact email
+    <label class="block sm:col-span-2"><span class="text-xs font-bold uppercase tracking-widest">Contact email</span>
       <input class="block w-full mt-1 p-4 border rounded bg-surface" name="contact_email" type="email" autocomplete="email" maxlength="254" required value="{{ contact_email }}">
     </label>
-    <button class="bg-primary text-on-primary px-5 py-3 rounded" type="submit">Submit request</button>
+    <button class="text-xs font-bold uppercase tracking-widest bg-primary text-on-primary px-5 py-3 rounded" type="submit">Submit request</button>
   </form>
   {% endif %}
   <a class="underline" href="/">Back to home</a>
