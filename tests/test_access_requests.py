@@ -6,7 +6,8 @@ from postgrest.exceptions import APIError
 from main import app
 
 client = TestClient(app)
-data = {"club_name": "  Robotics Club ", "contact_email": " CLUB@example.org "}
+details = {"college_name": "Example College", "applicant_name": "Sam Lee", "designation": "Secretary"}
+data = {**details, "club_name": "  Robotics Club ", "contact_email": " CLUB@example.org "}
 
 
 def test_public_form():
@@ -22,14 +23,14 @@ def test_request_only(db):
     assert "Request received" in response.text
     db.table.assert_called_once_with("club_access_requests")
     db.table.return_value.insert.assert_called_once_with(
-        {"club_name": "Robotics Club", "contact_email": "club@example.org"}, returning="minimal"
+        {**details, "club_name": "Robotics Club", "contact_email": "club@example.org"}, returning="minimal"
     )
     db.table.return_value.insert.return_value.execute.assert_called_once_with()
 
 
 @patch("routers.access_requests.supabase_admin")
 def test_invalid_input(db):
-    for fields in ({}, {"club_name": " "}, {"club_name": "x" * 121},
+    for fields in ({}, {"designation": " "}, {"college_name": ""}, {"applicant_name": "x" * 121}, {"club_name": " "}, {"club_name": "x" * 121},
                    {"club_name": "two\nlines"}, {"contact_email": "bad..local@example.org"}):
         payload = {**data, **fields} if fields else {}
         assert client.post("/request-access", data=payload).status_code == 422
@@ -51,7 +52,7 @@ def test_retries_and_storage_failures(db):
 @patch("routers.access_requests.supabase_admin")
 def test_only_new_requests_trigger_mail(db, notify):
     assert client.post("/request-access", data=data).status_code == 200
-    notify.assert_called_once_with("Robotics Club", "club@example.org")
+    notify.assert_called_once_with(club_name="Robotics Club", contact_email="club@example.org", **details)
     notify.reset_mock()
     execute = db.table.return_value.insert.return_value.execute
     for error in [APIError({"code": "23505", "message": "duplicate"}), RuntimeError()]:
@@ -66,8 +67,10 @@ def test_only_new_requests_trigger_mail(db, notify):
 def test_direct_mail_recipient(smtp):
     from notifications import notify_club_access_request
 
-    notify_club_access_request("Robotics Club", "club@example.org")
+    notify_club_access_request(club_name="Robotics Club", contact_email="club@example.org", **details)
     connection = smtp.return_value.__enter__.return_value
     message = connection.send_message.call_args.args[0]
     assert message["To"] == "vihangdroneclub@gmail.com"
     assert "club@example.org" in message.get_content()
+    for value in details.values():
+        assert value in message.get_content()

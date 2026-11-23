@@ -32,12 +32,21 @@ def received(request: Request):
 
 
 @router.post("")
-def submit(request: Request, club_name: str = Form(""), contact_email: str = Form("")):
-    club_name = club_name.strip()
+def submit(
+    request: Request, college_name: str = Form(""), club_name: str = Form(""),
+    applicant_name: str = Form(""), designation: str = Form(""), contact_email: str = Form(""),
+):
     contact_email = contact_email.strip().lower()
-    values = {"club_name": club_name, "contact_email": contact_email}
-    if not (1 <= len(club_name) <= 120 and club_name.isprintable()):
-        return page(request, 422, error="Enter a club name of up to 120 printable characters.", **values)
+    values = {
+        "college_name": college_name.strip(), "club_name": club_name.strip(),
+        "applicant_name": applicant_name.strip(), "designation": designation.strip(),
+        "contact_email": contact_email,
+    }
+    for key, label in (("college_name", "college name"), ("club_name", "club or committee name"),
+                       ("applicant_name", "name"), ("designation", "designation")):
+        value = values[key]
+        if not (1 <= len(value) <= 120 and value.isprintable()):
+            return page(request, 422, error=f"Enter your {label} using up to 120 printable characters.", **values)
     if (len(contact_email) > 254 or len(contact_email.partition("@")[0]) > 64
             or not EMAIL.fullmatch(contact_email)):
         return page(request, 422, error="Enter a valid contact email address.", **values)
@@ -51,5 +60,5 @@ def submit(request: Request, club_name: str = Form(""), contact_email: str = For
     except Exception:
         return page(request, 503, error="Unable to submit right now. Please try again.", **values)
     else:
-        notify_club_access_request(club_name, contact_email)
+        notify_club_access_request(**values)
     return RedirectResponse("/request-access/received", status_code=303)
